@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "cloudinary": "^2.7.0",
+    "date-fns": "^4.1.0",
+    "dotenv": "^17.0.1",
+    "express-session": "^1.18.2",
+    "multer": "^2.0.1",
+    "nodemailer": "^7.0.5",
+    "react-datepicker": "^8.4.0",
+    "react-responsive": "^10.0.1"
+  }
+}

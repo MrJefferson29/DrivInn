@@ -1,0 +1,776 @@
+[
+  {
+    "name": "Madrid",
+    "country": "Spain",
+    "lat": 40.4168,
+    "lng": -3.7038,
+    "population": 3223000,
+    "timezone": "Europe/Madrid"
+  },
+  {
+    "name": "Barcelona",
+    "country": "Spain",
+    "lat": 41.3851,
+    "lng": 2.1734,
+    "population": 1620000,
+    "timezone": "Europe/Madrid"
+  },
+  {
+    "name": "Rome",
+    "country": "Italy",
+    "lat": 41.9028,
+    "lng": 12.4964,
+    "population": 4342212,
+    "timezone": "Europe/Rome"
+  },
+  {
+    "name": "Milan",
+    "country": "Italy",
+    "lat": 45.4642,
+    "lng": 9.1900,
+    "population": 1352000,
+    "timezone": "Europe/Rome"
+  },
+  {
+    "name": "Venice",
+    "country": "Italy",
+    "lat": 45.4408,
+    "lng": 12.3155,
+    "population": 261905,
+    "timezone": "Europe/Rome"
+  },
+  {
+    "name": "Florence",
+    "country": "Italy",
+    "lat": 43.7696,
+    "lng": 11.2558,
+    "population": 382258,
+    "timezone": "Europe/Rome"
+  },
+  {
+    "name": "Naples",
+    "country": "Italy",
+    "lat": 40.8518,
+    "lng": 14.2681,
+    "population": 967069,
+    "timezone": "Europe/Rome"
+  },
+  {
+    "name": "Amsterdam",
+    "country": "Netherlands",
+    "lat": 52.3676,
+    "lng": 4.9041,
+    "population": 821752,
+    "timezone": "Europe/Amsterdam"
+  },
+  {
+    "name": "Rotterdam",
+    "country": "Netherlands",
+    "lat": 51.9225,
+    "lng": 4.4792,
+    "population": 651446,
+    "timezone": "Europe/Amsterdam"
+  },
+  {
+    "name": "Brussels",
+    "country": "Belgium",
+    "lat": 50.8503,
+    "lng": 4.3517,
+    "population": 1208542,
+    "timezone": "Europe/Brussels"
+  },
+  {
+    "name": "Antwerp",
+    "country": "Belgium",
+    "lat": 51.2194,
+    "lng": 4.4025,
+    "population": 523248,
+    "timezone": "Europe/Brussels"
+  },
+  {
+    "name": "Vienna",
+    "country": "Austria",
+    "lat": 48.2082,
+    "lng": 16.3738,
+    "population": 1897491,
+    "timezone": "Europe/Vienna"
+  },
+  {
+    "name": "Salzburg",
+    "country": "Austria",
+    "lat": 47.8095,
+    "lng": 13.0550,
+    "population": 155021,
+    "timezone": "Europe/Vienna"
+  },
+  {
+    "name": "Zurich",
+    "country": "Switzerland",
+    "lat": 47.3769,
+    "lng": 8.5417,
+    "population": 421878,
+    "timezone": "Europe/Zurich"
+  },
+  {
+    "name": "Geneva",
+    "country": "Switzerland",
+    "lat": 46.2044,
+    "lng": 6.1432,
+    "population": 201818,
+    "timezone": "Europe/Zurich"
+  },
+  {
+    "name": "Bern",
+    "country": "Switzerland",
+    "lat": 46.9479,
+    "lng": 7.4474,
+    "population": 133883,
+    "timezone": "Europe/Zurich"
+  },
+  {
+    "name": "Stockholm",
+    "country": "Sweden",
+    "lat": 59.3293,
+    "lng": 18.0686,
+    "population": 975551,
+    "timezone": "Europe/Stockholm"
+  },
+  {
+    "name": "Gothenburg",
+    "country": "Sweden",
+    "lat": 57.7089,
+    "lng": 11.9746,
+    "population": 579281,
+    "timezone": "Europe/Stockholm"
+  },
+  {
+    "name": "Oslo",
+    "country": "Norway",
+    "lat": 59.9139,
+    "lng": 10.7522,
+    "population": 693494,
+    "timezone": "Europe/Oslo"
+  },
+  {
+    "name": "Bergen",
+    "country": "Norway",
+    "lat": 60.3913,
+    "lng": 5.3221,
+    "population": 283929,
+    "timezone": "Europe/Oslo"
+  },
+  {
+    "name": "Copenhagen",
+    "country": "Denmark",
+    "lat": 55.6761,
+    "lng": 12.5683,
+    "population": 602481,
+    "timezone": "Europe/Copenhagen"
+  },
+  {
+    "name": "Aarhus",
+    "country": "Denmark",
+    "lat": 56.1629,
+    "lng": 10.2039,
+    "population": 273077,
+    "timezone": "Europe/Copenhagen"
+  },
+  {
+    "name": "Helsinki",
+    "country": "Finland",
+    "lat": 60.1699,
+    "lng": 24.9384,
+    "population": 656250,
+    "timezone": "Europe/Helsinki"
+  },
+  {
+    "name": "Tampere",
+    "country": "Finland",
+    "lat": 61.4978,
+    "lng": 23.7610,
+    "population": 238140,
+    "timezone": "Europe/Helsinki"
+  },
+  {
+    "name": "Reykjavik",
+    "country": "Iceland",
+    "lat": 64.1466,
+    "lng": -21.9426,
+    "population": 122853,
+    "timezone": "Atlantic/Reykjavik"
+  },
+  {
+    "name": "Dublin",
+    "country": "Ireland",
+    "lat": 53.3498,
+    "lng": -6.2603,
+    "population": 1173179,
+    "timezone": "Europe/Dublin"
+  },
+  {
+    "name": "Cork",
+    "country": "Ireland",
+    "lat": 51.8969,
+    "lng": -8.4863,
+    "population": 210000,
+    "timezone": "Europe/Dublin"
+  },
+  {
+    "name": "Glasgow",
+    "country": "United Kingdom",
+    "lat": 55.8642,
+    "lng": -4.2518,
+    "population": 598830,
+    "timezone": "Europe/London"
+  },
+  {
+    "name": "Edinburgh",
+    "country": "United Kingdom",
+    "lat": 55.9533,
+    "lng": -3.1883,
+    "population": 488050,
+    "timezone": "Europe/London"
+  },
+  {
+    "name": "Manchester",
+    "country": "United Kingdom",
+    "lat": 53.4808,
+    "lng": -2.2426,
+    "population": 547627,
+    "timezone": "Europe/London"
+  },
+  {
+    "name": "Liverpool",
+    "country": "United Kingdom",
+    "lat": 53.4084,
+    "lng": -2.9916,
+    "population": 513441,
+    "timezone": "Europe/London"
+  },
+  {
+    "name": "Birmingham",
+    "country": "United Kingdom",
+    "lat": 52.4862,
+    "lng": -1.8904,
+    "population": 1141816,
+    "timezone": "Europe/London"
+  },
+  {
+    "name": "Leeds",
+    "country": "United Kingdom",
+    "lat": 53.8008,
+    "lng": -1.5491,
+    "population": 789194,
+    "timezone": "Europe/London"
+  },
+  {
+    "name": "Sheffield",
+    "country": "United Kingdom",
+    "lat": 53.3811,
+    "lng": -1.4701,
+    "population": 584029,
+    "timezone": "Europe/London"
+  },
+  {
+    "name": "Bristol",
+    "country": "United Kingdom",
+    "lat": 51.4545,
+    "lng": -2.5879,
+    "population": 463400,
+    "timezone": "Europe/London"
+  },
+  {
+    "name": "Cardiff",
+    "country": "United Kingdom",
+    "lat": 51.4816,
+    "lng": -3.1791,
+    "population": 362310,
+    "timezone": "Europe/London"
+  },
+  {
+    "name": "Belfast",
+    "country": "United Kingdom",
+    "lat": 54.5973,
+    "lng": -5.9301,
+    "population": 341877,
+    "timezone": "Europe/London"
+  },
+  {
+    "name": "Porto",
+    "country": "Portugal",
+    "lat": 41.1579,
+    "lng": -8.6291,
+    "population": 237591,
+    "timezone": "Europe/Lisbon"
+  },
+  {
+    "name": "Faro",
+    "country": "Portugal",
+    "lat": 37.0193,
+    "lng": -7.9304,
+    "population": 118000,
+    "timezone": "Europe/Lisbon"
+  },
+  {
+    "name": "Athens",
+    "country": "Greece",
+    "lat": 37.9838,
+    "lng": 23.7275,
+    "population": 664046,
+    "timezone": "Europe/Athens"
+  },
+  {
+    "name": "Thessaloniki",
+    "country": "Greece",
+    "lat": 40.6401,
+    "lng": 22.9444,
+    "population": 325182,
+    "timezone": "Europe/Athens"
+  },
+  {
+    "name": "Heraklion",
+    "country": "Greece",
+    "lat": 35.3387,
+    "lng": 25.1442,
+    "population": 173993,
+    "timezone": "Europe/Athens"
+  },
+  {
+    "name": "Budapest",
+    "country": "Hungary",
+    "lat": 47.4979,
+    "lng": 19.0402,
+    "population": 1756000,
+    "timezone": "Europe/Budapest"
+  },
+  {
+    "name": "Debrecen",
+    "country": "Hungary",
+    "lat": 47.5316,
+    "lng": 21.6273,
+    "population": 201432,
+    "timezone": "Europe/Budapest"
+  },
+  {
+    "name": "Warsaw",
+    "country": "Poland",
+    "lat": 52.2297,
+    "lng": 21.0122,
+    "population": 1783324,
+    "timezone": "Europe/Warsaw"
+  },
+  {
+    "name": "Krakow",
+    "country": "Poland",
+    "lat": 50.0647,
+    "lng": 19.9450,
+    "population": 779115,
+    "timezone": "Europe/Warsaw"
+  },
+  {
+    "name": "Wroclaw",
+    "country": "Poland",
+    "lat": 51.1079,
+    "lng": 17.0385,
+    "population": 641607,
+    "timezone": "Europe/Warsaw"
+  },
+  {
+    "name": "Poznan",
+    "country": "Poland",
+    "lat": 52.4064,
+    "lng": 16.9252,
+    "population": 546859,
+    "timezone": "Europe/Warsaw"
+  },
+  {
+    "name": "Gdansk",
+    "country": "Poland",
+    "lat": 54.3520,
+    "lng": 18.6466,
+    "population": 470907,
+    "timezone": "Europe/Warsaw"
+  },
+  {
+    "name": "Prague",
+    "country": "Czech Republic",
+    "lat": 50.0755,
+    "lng": 14.4378,
+    "population": 1308632,
+    "timezone": "Europe/Prague"
+  },
+  {
+    "name": "Brno",
+    "country": "Czech Republic",
+    "lat": 49.1951,
+    "lng": 16.6068,
+    "population": 377440,
+    "timezone": "Europe/Prague"
+  },
+  {
+    "name": "Bratislava",
+    "country": "Slovakia",
+    "lat": 48.1486,
+    "lng": 17.1077,
+    "population": 432864,
+    "timezone": "Europe/Bratislava"
+  },
+  {
+    "name": "Ljubljana",
+    "country": "Slovenia",
+    "lat": 46.0569,
+    "lng": 14.5058,
+    "population": 300000,
+    "timezone": "Europe/Ljubljana"
+  },
+  {
+    "name": "Zagreb",
+    "country": "Croatia",
+    "lat": 45.8150,
+    "lng": 15.9819,
+    "population": 806341,
+    "timezone": "Europe/Zagreb"
+  },
+  {
+    "name": "Split",
+    "country": "Croatia",
+    "lat": 43.5081,
+    "lng": 16.4402,
+    "population": 178102,
+    "timezone": "Europe/Zagreb"
+  },
+  {
+    "name": "Dubrovnik",
+    "country": "Croatia",
+    "lat": 42.6507,
+    "lng": 18.0944,
+    "population": 42615,
+    "timezone": "Europe/Zagreb"
+  },
+  {
+    "name": "Belgrade",
+    "country": "Serbia",
+    "lat": 44.7866,
+    "lng": 20.4489,
+    "population": 1688667,
+    "timezone": "Europe/Belgrade"
+  },
+  {
+    "name": "Novi Sad",
+    "country": "Serbia",
+    "lat": 45.2551,
+    "lng": 19.8452,
+    "population": 341625,
+    "timezone": "Europe/Belgrade"
+  },
+  {
+    "name": "Sofia",
+    "country": "Bulgaria",
+    "lat": 42.6977,
+    "lng": 23.3219,
+    "population": 1308412,
+    "timezone": "Europe/Sofia"
+  },
+  {
+    "name": "Varna",
+    "country": "Bulgaria",
+    "lat": 43.2141,
+    "lng": 27.9147,
+    "population": 335177,
+    "timezone": "Europe/Sofia"
+  },
+  {
+    "name": "Bucharest",
+    "country": "Romania",
+    "lat": 44.4268,
+    "lng": 26.1025,
+    "population": 1883425,
+    "timezone": "Europe/Bucharest"
+  },
+  {
+    "name": "Cluj-Napoca",
+    "country": "Romania",
+    "lat": 46.7712,
+    "lng": 23.6236,
+    "population": 324576,
+    "timezone": "Europe/Bucharest"
+  },
+  {
+    "name": "Timișoara",
+    "country": "Romania",
+    "lat": 45.7472,
+    "lng": 21.2087,
+    "population": 319279,
+    "timezone": "Europe/Bucharest"
+  },
+  {
+    "name": "Tallinn",
+    "country": "Estonia",
+    "lat": 59.4370,
+    "lng": 24.7536,
+    "population": 437619,
+    "timezone": "Europe/Tallinn"
+  },
+  {
+    "name": "Riga",
+    "country": "Latvia",
+    "lat": 56.9496,
+    "lng": 24.1052,
+    "population": 632614,
+    "timezone": "Europe/Riga"
+  },
+  {
+    "name": "Vilnius",
+    "country": "Lithuania",
+    "lat": 54.6872,
+    "lng": 25.2797,
+    "population": 544386,
+    "timezone": "Europe/Vilnius"
+  },
+  {
+    "name": "Kiev",
+    "country": "Ukraine",
+    "lat": 50.4501,
+    "lng": 30.5234,
+    "population": 2967360,
+    "timezone": "Europe/Kiev"
+  },
+  {
+    "name": "Lviv",
+    "country": "Ukraine",
+    "lat": 49.8397,
+    "lng": 24.0297,
+    "population": 724314,
+    "timezone": "Europe/Kiev"
+  },
+  {
+    "name": "Odessa",
+    "country": "Ukraine",
+    "lat": 46.4825,
+    "lng": 30.7233,
+    "population": 1015826,
+    "timezone": "Europe/Kiev"
+  },
+  {
+    "name": "Minsk",
+    "country": "Belarus",
+    "lat": 53.9045,
+    "lng": 27.5615,
+    "population": 2009786,
+    "timezone": "Europe/Minsk"
+  },
+  {
+    "name": "Marseille",
+    "country": "France",
+    "lat": 43.2965,
+    "lng": 5.3698,
+    "population": 861635,
+    "timezone": "Europe/Paris"
+  },
+  {
+    "name": "Lyon",
+    "country": "France",
+    "lat": 45.764,
+    "lng": 4.8357,
+    "population": 515695,
+    "timezone": "Europe/Paris"
+  },
+  {
+    "name": "Turin",
+    "country": "Italy",
+    "lat": 45.0703,
+    "lng": 7.6869,
+    "population": 870952,
+    "timezone": "Europe/Rome"
+  },
+  {
+    "name": "Palermo",
+    "country": "Italy",
+    "lat": 38.1157,
+    "lng": 13.3615,
+    "population": 657561,
+    "timezone": "Europe/Rome"
+  },
+  {
+    "name": "Genoa",
+    "country": "Italy",
+    "lat": 44.4056,
+    "lng": 8.9463,
+    "population": 580097,
+    "timezone": "Europe/Rome"
+  },
+  {
+    "name": "Seville",
+    "country": "Spain",
+    "lat": 37.3891,
+    "lng": -5.9845,
+    "population": 688711,
+    "timezone": "Europe/Madrid"
+  },
+  {
+    "name": "Valencia",
+    "country": "Spain",
+    "lat": 39.4699,
+    "lng": -0.3763,
+    "population": 794288,
+    "timezone": "Europe/Madrid"
+  },
+  {
+    "name": "Zaragoza",
+    "country": "Spain",
+    "lat": 41.6488,
+    "lng": -0.8891,
+    "population": 666880,
+    "timezone": "Europe/Madrid"
+  },
+  {
+    "name": "Malaga",
+    "country": "Spain",
+    "lat": 36.7213,
+    "lng": -4.4214,
+    "population": 578460,
+    "timezone": "Europe/Madrid"
+  },
+  {
+    "name": "Frankfurt",
+    "country": "Germany",
+    "lat": 50.1109,
+    "lng": 8.6821,
+    "population": 753056,
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "name": "Hamburg",
+    "country": "Germany",
+    "lat": 53.5511,
+    "lng": 9.9937,
+    "population": 1841179,
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "name": "Munich",
+    "country": "Germany",
+    "lat": 48.1351,
+    "lng": 11.582,
+    "population": 1471508,
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "name": "Cologne",
+    "country": "Germany",
+    "lat": 50.9375,
+    "lng": 6.9603,
+    "population": 1085664,
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "name": "Düsseldorf",
+    "country": "Germany",
+    "lat": 51.2277,
+    "lng": 6.7735,
+    "population": 619294,
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "name": "Stuttgart",
+    "country": "Germany",
+    "lat": 48.7758,
+    "lng": 9.1829,
+    "population": 634830,
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "name": "Dortmund",
+    "country": "Germany",
+    "lat": 51.5136,
+    "lng": 7.4653,
+    "population": 588462,
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "name": "Essen",
+    "country": "Germany",
+    "lat": 51.4556,
+    "lng": 7.0116,
+    "population": 583109,
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "name": "Leipzig",
+    "country": "Germany",
+    "lat": 51.3397,
+    "lng": 12.3731,
+    "population": 593145,
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "name": "Bremen",
+    "country": "Germany",
+    "lat": 53.0793,
+    "lng": 8.8017,
+    "population": 567559,
+    "timezone": "Europe/Berlin"
+  },
+  {"name": "Krakow", "country": "Poland", "lat": 50.0647, "lng": 19.945, "population": 779115, "timezone": "Europe/Warsaw"},
+  {"name": "Wroclaw", "country": "Poland", "lat": 51.1079, "lng": 17.0385, "population": 641607, "timezone": "Europe/Warsaw"},
+  {"name": "Poznan", "country": "Poland", "lat": 52.4064, "lng": 16.9252, "population": 534813, "timezone": "Europe/Warsaw"},
+  {"name": "Gdansk", "country": "Poland", "lat": 54.352, "lng": 18.6466, "population": 470907, "timezone": "Europe/Warsaw"},
+  {"name": "Szczecin", "country": "Poland", "lat": 53.4285, "lng": 14.5528, "population": 402465, "timezone": "Europe/Warsaw"},
+  {"name": "Vilnius", "country": "Lithuania", "lat": 54.6872, "lng": 25.2797, "population": 544386, "timezone": "Europe/Vilnius"},
+  {"name": "Riga", "country": "Latvia", "lat": 56.9496, "lng": 24.1052, "population": 632614, "timezone": "Europe/Riga"},
+  {"name": "Tallinn", "country": "Estonia", "lat": 59.437, "lng": 24.7536, "population": 437619, "timezone": "Europe/Tallinn"},
+  {"name": "Helsinki", "country": "Finland", "lat": 60.1699, "lng": 24.9384, "population": 656250, "timezone": "Europe/Helsinki"},
+  {"name": "Oslo", "country": "Norway", "lat": 59.9139, "lng": 10.7522, "population": 693494, "timezone": "Europe/Oslo"},
+  {"name": "Bergen", "country": "Norway", "lat": 60.3913, "lng": 5.3221, "population": 283929, "timezone": "Europe/Oslo"},
+  {"name": "Gothenburg", "country": "Sweden", "lat": 57.7089, "lng": 11.9746, "population": 579281, "timezone": "Europe/Stockholm"},
+  {"name": "Malmo", "country": "Sweden", "lat": 55.604981, "lng": 13.003822, "population": 344166, "timezone": "Europe/Stockholm"},
+  {"name": "Turku", "country": "Finland", "lat": 60.4518, "lng": 22.2666, "population": 191603, "timezone": "Europe/Helsinki"},
+  {"name": "Odense", "country": "Denmark", "lat": 55.4038, "lng": 10.4024, "population": 180302, "timezone": "Europe/Copenhagen"},
+  {"name": "Aarhus", "country": "Denmark", "lat": 56.1629, "lng": 10.2039, "population": 273077, "timezone": "Europe/Copenhagen"},
+  {"name": "Brno", "country": "Czech Republic", "lat": 49.1951, "lng": 16.6068, "population": 382405, "timezone": "Europe/Prague"},
+  {"name": "Plzen", "country": "Czech Republic", "lat": 49.7475, "lng": 13.3776, "population": 175219, "timezone": "Europe/Prague"},
+  {"name": "Cluj-Napoca", "country": "Romania", "lat": 46.7712, "lng": 23.6236, "population": 324576, "timezone": "Europe/Bucharest"},
+  {"name": "Timisoara", "country": "Romania", "lat": 45.7489, "lng": 21.2087, "population": 319279, "timezone": "Europe/Bucharest"},
+  {"name": "Szczecin", "country": "Poland", "lat": 53.4285, "lng": 14.5528, "population": 402465, "timezone": "Europe/Warsaw"},
+  {"name": "Lublin", "country": "Poland", "lat": 51.2465, "lng": 22.5684, "population": 339850, "timezone": "Europe/Warsaw"},
+  {"name": "Katowice", "country": "Poland", "lat": 50.2613, "lng": 19.0239, "population": 294510, "timezone": "Europe/Warsaw"},
+  {"name": "Białystok", "country": "Poland", "lat": 53.1325, "lng": 23.1688, "population": 297554, "timezone": "Europe/Warsaw"},
+  {"name": "Gdynia", "country": "Poland", "lat": 54.5189, "lng": 18.5305, "population": 245867, "timezone": "Europe/Warsaw"},
+  {"name": "Częstochowa", "country": "Poland", "lat": 50.8118, "lng": 19.1203, "population": 223322, "timezone": "Europe/Warsaw"},
+  {"name": "Radom", "country": "Poland", "lat": 51.4025, "lng": 21.1471, "population": 214566, "timezone": "Europe/Warsaw"},
+  {"name": "Sosnowiec", "country": "Poland", "lat": 50.2863, "lng": 19.1041, "population": 199974, "timezone": "Europe/Warsaw"},
+  {"name": "Toruń", "country": "Poland", "lat": 53.0138, "lng": 18.5984, "population": 201106, "timezone": "Europe/Warsaw"},
+  {"name": "Kielce", "country": "Poland", "lat": 50.8661, "lng": 20.6286, "population": 194852, "timezone": "Europe/Warsaw"},
+  {"name": "Rzeszów", "country": "Poland", "lat": 50.0413, "lng": 21.9991, "population": 196208, "timezone": "Europe/Warsaw"},
+  {"name": "Gliwice", "country": "Poland", "lat": 50.2941, "lng": 18.6714, "population": 178186, "timezone": "Europe/Warsaw"},
+  {"name": "Zabrze", "country": "Poland", "lat": 50.3249, "lng": 18.7857, "population": 172360, "timezone": "Europe/Warsaw"},
+  {"name": "Bytom", "country": "Poland", "lat": 50.348, "lng": 18.9328, "population": 165263, "timezone": "Europe/Warsaw"},
+  {"name": "Bielsko-Biała", "country": "Poland", "lat": 49.8224, "lng": 19.0469, "population": 170303, "timezone": "Europe/Warsaw"},
+  {"name": "Olsztyn", "country": "Poland", "lat": 53.7769, "lng": 20.4867, "population": 171803, "timezone": "Europe/Warsaw"},
+  {"name": "Rybnik", "country": "Poland", "lat": 50.1022, "lng": 18.5464, "population": 138116, "timezone": "Europe/Warsaw"},
+  {"name": "Tychy", "country": "Poland", "lat": 50.1372, "lng": 18.9661, "population": 128211, "timezone": "Europe/Warsaw"},
+  {"name": "Dąbrowa Górnicza", "country": "Poland", "lat": 50.3219, "lng": 19.1947, "population": 120031, "timezone": "Europe/Warsaw"},
+  {"name": "Płock", "country": "Poland", "lat": 52.5464, "lng": 19.7061, "population": 120000, "timezone": "Europe/Warsaw"},
+  {"name": "Elbląg", "country": "Poland", "lat": 54.1561, "lng": 19.4045, "population": 119317, "timezone": "Europe/Warsaw"},
+  {"name": "Opole", "country": "Poland", "lat": 50.6751, "lng": 17.9213, "population": 128012, "timezone": "Europe/Warsaw"},
+  {"name": "Gorzów Wielkopolski", "country": "Poland", "lat": 52.7368, "lng": 15.2288, "population": 124470, "timezone": "Europe/Warsaw"},
+  {"name": "Zielona Góra", "country": "Poland", "lat": 51.9356, "lng": 15.5064, "population": 141280, "timezone": "Europe/Warsaw"},
+  {"name": "Wałbrzych", "country": "Poland", "lat": 50.7847, "lng": 16.2844, "population": 110603, "timezone": "Europe/Warsaw"},
+  {"name": "Włocławek", "country": "Poland", "lat": 52.6482, "lng": 19.0678, "population": 110287, "timezone": "Europe/Warsaw"},
+  {"name": "Tarnów", "country": "Poland", "lat": 50.0121, "lng": 20.9858, "population": 110956, "timezone": "Europe/Warsaw"},
+  {"name": "Chorzów", "country": "Poland", "lat": 50.3058, "lng": 18.9742, "population": 108434, "timezone": "Europe/Warsaw"},
+  {"name": "Kalisz", "country": "Poland", "lat": 51.7611, "lng": 18.0912, "population": 100246, "timezone": "Europe/Warsaw"},
+  {"name": "Koszalin", "country": "Poland", "lat": 54.1943, "lng": 16.1722, "population": 107783, "timezone": "Europe/Warsaw"},
+  {"name": "Legnica", "country": "Poland", "lat": 51.2076, "lng": 16.1589, "population": 100769, "timezone": "Europe/Warsaw"},
+  {"name": "Grudziądz", "country": "Poland", "lat": 53.4871, "lng": 18.7543, "population": 95828, "timezone": "Europe/Warsaw"},
+  {"name": "Słupsk", "country": "Poland", "lat": 54.4641, "lng": 17.0285, "population": 91847, "timezone": "Europe/Warsaw"},
+  {"name": "Jaworzno", "country": "Poland", "lat": 50.2043, "lng": 19.2739, "population": 91883, "timezone": "Europe/Warsaw"},
+  {"name": "Jastrzębie-Zdrój", "country": "Poland", "lat": 49.9496, "lng": 18.5748, "population": 88306, "timezone": "Europe/Warsaw"},
+  {"name": "Nowy Sącz", "country": "Poland", "lat": 49.6175, "lng": 20.7153, "population": 83476, "timezone": "Europe/Warsaw"},
+  {"name": "Piotrków Trybunalski", "country": "Poland", "lat": 51.4055, "lng": 19.7032, "population": 74787, "timezone": "Europe/Warsaw"},
+  {"name": "Lubin", "country": "Poland", "lat": 51.3979, "lng": 16.2019, "population": 73600, "timezone": "Europe/Warsaw"},
+  {"name": "Inowrocław", "country": "Poland", "lat": 52.7875, "lng": 18.2633, "population": 72361, "timezone": "Europe/Warsaw"},
+  {"name": "Siedlce", "country": "Poland", "lat": 52.1677, "lng": 22.2901, "population": 77047, "timezone": "Europe/Warsaw"},
+  {"name": "Konin", "country": "Poland", "lat": 52.2233, "lng": 18.2512, "population": 74151, "timezone": "Europe/Warsaw"},
+  {"name": "Piła", "country": "Poland", "lat": 53.1514, "lng": 16.7378, "population": 74809, "timezone": "Europe/Warsaw"}
+] 

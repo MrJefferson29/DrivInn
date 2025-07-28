@@ -1,0 +1,1186 @@
+[
+  {
+    "name": "New York",
+    "country": "United States",
+    "lat": 40.7128,
+    "lng": -74.006,
+    "population": 8336817,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "London",
+    "country": "United Kingdom",
+    "lat": 51.5074,
+    "lng": -0.1278,
+    "population": 8982000,
+    "timezone": "Europe/London"
+  },
+  {
+    "name": "Paris",
+    "country": "France",
+    "lat": 48.8566,
+    "lng": 2.3522,
+    "population": 2161000,
+    "timezone": "Europe/Paris"
+  },
+  {
+    "name": "Tokyo",
+    "country": "Japan",
+    "lat": 35.6895,
+    "lng": 139.6917,
+    "population": 13929286,
+    "timezone": "Asia/Tokyo"
+  },
+  {
+    "name": "Sydney",
+    "country": "Australia",
+    "lat": -33.8688,
+    "lng": 151.2093,
+    "population": 5312000,
+    "timezone": "Australia/Sydney"
+  },
+  {
+    "name": "Mumbai",
+    "country": "India",
+    "lat": 19.076,
+    "lng": 72.8777,
+    "population": 20411274,
+    "timezone": "Asia/Kolkata"
+  },
+  {
+    "name": "Cairo",
+    "country": "Egypt",
+    "lat": 30.0444,
+    "lng": 31.2357,
+    "population": 9539000,
+    "timezone": "Africa/Cairo"
+  },
+  {
+    "name": "Rio de Janeiro",
+    "country": "Brazil",
+    "lat": -22.9068,
+    "lng": -43.1729,
+    "population": 6748000,
+    "timezone": "America/Sao_Paulo"
+  },
+  {
+    "name": "Toronto",
+    "country": "Canada",
+    "lat": 43.65107,
+    "lng": -79.347015,
+    "population": 2930000,
+    "timezone": "America/Toronto"
+  },
+  {
+    "name": "Berlin",
+    "country": "Germany",
+    "lat": 52.52,
+    "lng": 13.405,
+    "population": 3669491,
+    "timezone": "Europe/Berlin"
+  },
+  {
+    "name": "Cape Town",
+    "country": "South Africa",
+    "lat": -33.9249,
+    "lng": 18.4241,
+    "population": 4336880,
+    "timezone": "Africa/Johannesburg"
+  },
+  {
+    "name": "Moscow",
+    "country": "Russia",
+    "lat": 55.7558,
+    "lng": 37.6173,
+    "population": 12506468,
+    "timezone": "Europe/Moscow"
+  },
+  {
+    "name": "Beijing",
+    "country": "China",
+    "lat": 39.9042,
+    "lng": 116.4074,
+    "population": 21540000,
+    "timezone": "Asia/Shanghai"
+  },
+  {
+    "name": "Los Angeles",
+    "country": "United States",
+    "lat": 34.0522,
+    "lng": -118.2437,
+    "population": 3979576,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Dubai",
+    "country": "UAE",
+    "lat": 25.2048,
+    "lng": 55.2708,
+    "population": 3331000,
+    "timezone": "Asia/Dubai"
+  },
+  {
+    "name": "Singapore",
+    "country": "Singapore",
+    "lat": 1.3521,
+    "lng": 103.8198,
+    "population": 5850342,
+    "timezone": "Asia/Singapore"
+  },
+  {
+    "name": "Hong Kong",
+    "country": "China",
+    "lat": 22.3193,
+    "lng": 114.1694,
+    "population": 7500700,
+    "timezone": "Asia/Hong_Kong"
+  },
+  {
+    "name": "Bangkok",
+    "country": "Thailand",
+    "lat": 13.7563,
+    "lng": 100.5018,
+    "population": 8280925,
+    "timezone": "Asia/Bangkok"
+  },
+  {
+    "name": "Seoul",
+    "country": "South Korea",
+    "lat": 37.5665,
+    "lng": 126.978,
+    "population": 9733509,
+    "timezone": "Asia/Seoul"
+  },
+  {
+    "name": "Istanbul",
+    "country": "Turkey",
+    "lat": 41.0082,
+    "lng": 28.9784,
+    "population": 15190336,
+    "timezone": "Europe/Istanbul"
+  },
+  {
+    "name": "Mexico City",
+    "country": "Mexico",
+    "lat": 19.4326,
+    "lng": -99.1332,
+    "population": 9209944,
+    "timezone": "America/Mexico_City"
+  },
+  {
+    "name": "São Paulo",
+    "country": "Brazil",
+    "lat": -23.5505,
+    "lng": -46.6333,
+    "population": 12325232,
+    "timezone": "America/Sao_Paulo"
+  },
+  {
+    "name": "Buenos Aires",
+    "country": "Argentina",
+    "lat": -34.6118,
+    "lng": -58.3960,
+    "population": 3075646,
+    "timezone": "America/Argentina/Buenos_Aires"
+  },
+  {
+    "name": "Lima",
+    "country": "Peru",
+    "lat": -12.0464,
+    "lng": -77.0428,
+    "population": 9562280,
+    "timezone": "America/Lima"
+  },
+  {
+    "name": "Santiago",
+    "country": "Chile",
+    "lat": -33.4489,
+    "lng": -70.6693,
+    "population": 6680000,
+    "timezone": "America/Santiago"
+  },
+  {
+    "name": "Bogotá",
+    "country": "Colombia",
+    "lat": 4.7110,
+    "lng": -74.0721,
+    "population": 7181468,
+    "timezone": "America/Bogota"
+  },
+  {
+    "name": "Caracas",
+    "country": "Venezuela",
+    "lat": 10.4806,
+    "lng": -66.9036,
+    "population": 2245744,
+    "timezone": "America/Caracas"
+  },
+  {
+    "name": "Quito",
+    "country": "Ecuador",
+    "lat": -0.2299,
+    "lng": -78.5249,
+    "population": 2011388,
+    "timezone": "America/Guayaquil"
+  },
+  {
+    "name": "Montevideo",
+    "country": "Uruguay",
+    "lat": -34.9011,
+    "lng": -56.1645,
+    "population": 1381457,
+    "timezone": "America/Montevideo"
+  },
+  {
+    "name": "Asunción",
+    "country": "Paraguay",
+    "lat": -25.2637,
+    "lng": -57.5759,
+    "population": 521559,
+    "timezone": "America/Asuncion"
+  },
+  {
+    "name": "Chicago",
+    "country": "United States",
+    "lat": 41.8781,
+    "lng": -87.6298,
+    "population": 8964448,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Houston",
+    "country": "United States",
+    "lat": 29.7604,
+    "lng": -95.3698,
+    "population": 2320268,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Phoenix",
+    "country": "United States",
+    "lat": 33.4484,
+    "lng": -112.0740,
+    "population": 1608139,
+    "timezone": "America/Phoenix"
+  },
+  {
+    "name": "Philadelphia",
+    "country": "United States",
+    "lat": 39.9526,
+    "lng": -75.1652,
+    "population": 1603797,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "San Antonio",
+    "country": "United States",
+    "lat": 29.4241,
+    "lng": -98.4936,
+    "population": 1547251,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "San Diego",
+    "country": "United States",
+    "lat": 32.7157,
+    "lng": -117.1611,
+    "population": 1423851,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Dallas",
+    "country": "United States",
+    "lat": 32.7767,
+    "lng": -96.7970,
+    "population": 1343573,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "San Jose",
+    "country": "United States",
+    "lat": 37.3382,
+    "lng": -121.8863,
+    "population": 1030119,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Austin",
+    "country": "United States",
+    "lat": 30.2672,
+    "lng": -97.7431,
+    "population": 978908,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Jacksonville",
+    "country": "United States",
+    "lat": 30.3322,
+    "lng": -81.6557,
+    "population": 949611,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Fort Worth",
+    "country": "United States",
+    "lat": 32.7555,
+    "lng": -97.3308,
+    "population": 918915,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Columbus",
+    "country": "United States",
+    "lat": 39.9612,
+    "lng": -82.9988,
+    "population": 898553,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Charlotte",
+    "country": "United States",
+    "lat": 35.2271,
+    "lng": -80.8431,
+    "population": 885708,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "San Francisco",
+    "country": "United States",
+    "lat": 37.7749,
+    "lng": -122.4194,
+    "population": 873965,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Indianapolis",
+    "country": "United States",
+    "lat": 39.7684,
+    "lng": -86.1581,
+    "population": 876384,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Seattle",
+    "country": "United States",
+    "lat": 47.6062,
+    "lng": -122.3321,
+    "population": 744955,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Denver",
+    "country": "United States",
+    "lat": 39.7392,
+    "lng": -104.9903,
+    "population": 727211,
+    "timezone": "America/Denver"
+  },
+  {
+    "name": "Washington",
+    "country": "United States",
+    "lat": 38.9072,
+    "lng": -77.0369,
+    "population": 689545,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Boston",
+    "country": "United States",
+    "lat": 42.3601,
+    "lng": -71.0589,
+    "population": 675647,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "El Paso",
+    "country": "United States",
+    "lat": 31.7619,
+    "lng": -106.4850,
+    "population": 678815,
+    "timezone": "America/Denver"
+  },
+  {
+    "name": "Nashville",
+    "country": "United States",
+    "lat": 36.1627,
+    "lng": -86.7816,
+    "population": 670820,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Detroit",
+    "country": "United States",
+    "lat": 42.3314,
+    "lng": -83.0458,
+    "population": 674841,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Oklahoma City",
+    "country": "United States",
+    "lat": 35.4676,
+    "lng": -97.5164,
+    "population": 655057,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Portland",
+    "country": "United States",
+    "lat": 45.5152,
+    "lng": -122.6784,
+    "population": 652503,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Las Vegas",
+    "country": "United States",
+    "lat": 36.1699,
+    "lng": -115.1398,
+    "population": 651319,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Memphis",
+    "country": "United States",
+    "lat": 35.1495,
+    "lng": -90.0490,
+    "population": 651073,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Louisville",
+    "country": "United States",
+    "lat": 38.2527,
+    "lng": -85.7585,
+    "population": 633045,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Baltimore",
+    "country": "United States",
+    "lat": 39.2904,
+    "lng": -76.6122,
+    "population": 585708,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Milwaukee",
+    "country": "United States",
+    "lat": 43.0389,
+    "lng": -87.9065,
+    "population": 590157,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Albuquerque",
+    "country": "United States",
+    "lat": 35.0844,
+    "lng": -106.6504,
+    "population": 564559,
+    "timezone": "America/Denver"
+  },
+  {
+    "name": "Tucson",
+    "country": "United States",
+    "lat": 32.2226,
+    "lng": -110.9747,
+    "population": 542629,
+    "timezone": "America/Phoenix"
+  },
+  {
+    "name": "Fresno",
+    "country": "United States",
+    "lat": 36.7378,
+    "lng": -119.7871,
+    "population": 542107,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Sacramento",
+    "country": "United States",
+    "lat": 38.5816,
+    "lng": -121.4944,
+    "population": 513624,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Atlanta",
+    "country": "United States",
+    "lat": 33.7490,
+    "lng": -84.3880,
+    "population": 506811,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Kansas City",
+    "country": "United States",
+    "lat": 39.0997,
+    "lng": -94.5786,
+    "population": 508090,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Long Beach",
+    "country": "United States",
+    "lat": 33.7701,
+    "lng": -118.1937,
+    "population": 466742,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Mesa",
+    "country": "United States",
+    "lat": 33.4152,
+    "lng": -111.8315,
+    "population": 504258,
+    "timezone": "America/Phoenix"
+  },
+  {
+    "name": "Colorado Springs",
+    "country": "United States",
+    "lat": 38.8339,
+    "lng": -104.8214,
+    "population": 478961,
+    "timezone": "America/Denver"
+  },
+  {
+    "name": "Virginia Beach",
+    "country": "United States",
+    "lat": 36.8529,
+    "lng": -75.9780,
+    "population": 449974,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Raleigh",
+    "country": "United States",
+    "lat": 35.7796,
+    "lng": -78.6382,
+    "population": 474069,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Omaha",
+    "country": "United States",
+    "lat": 41.2565,
+    "lng": -95.9345,
+    "population": 486051,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Miami",
+    "country": "United States",
+    "lat": 25.7617,
+    "lng": -80.1918,
+    "population": 442241,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Oakland",
+    "country": "United States",
+    "lat": 37.8044,
+    "lng": -122.2711,
+    "population": 440646,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Minneapolis",
+    "country": "United States",
+    "lat": 44.9778,
+    "lng": -93.2650,
+    "population": 429954,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Tulsa",
+    "country": "United States",
+    "lat": 36.1540,
+    "lng": -95.9928,
+    "population": 413066,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Wichita",
+    "country": "United States",
+    "lat": 37.6872,
+    "lng": -97.3301,
+    "population": 397532,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "New Orleans",
+    "country": "United States",
+    "lat": 29.9511,
+    "lng": -90.0715,
+    "population": 383997,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Arlington",
+    "country": "United States",
+    "lat": 32.7357,
+    "lng": -97.1081,
+    "population": 398112,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Cleveland",
+    "country": "United States",
+    "lat": 41.4993,
+    "lng": -81.6944,
+    "population": 372624,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Bakersfield",
+    "country": "United States",
+    "lat": 35.3733,
+    "lng": -119.0187,
+    "population": 403455,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Tampa",
+    "country": "United States",
+    "lat": 27.9506,
+    "lng": -82.4572,
+    "population": 384959,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Aurora",
+    "country": "United States",
+    "lat": 39.7294,
+    "lng": -104.8319,
+    "population": 386261,
+    "timezone": "America/Denver"
+  },
+  {
+    "name": "Honolulu",
+    "country": "United States",
+    "lat": 21.3099,
+    "lng": -157.8581,
+    "population": 347397,
+    "timezone": "Pacific/Honolulu"
+  },
+  {
+    "name": "Anaheim",
+    "country": "United States",
+    "lat": 33.8366,
+    "lng": -117.9143,
+    "population": 346824,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Corpus Christi",
+    "country": "United States",
+    "lat": 27.8006,
+    "lng": -97.3964,
+    "population": 326586,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Riverside",
+    "country": "United States",
+    "lat": 33.9533,
+    "lng": -117.3962,
+    "population": 314998,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Lexington",
+    "country": "United States",
+    "lat": 38.0406,
+    "lng": -84.5037,
+    "population": 322570,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Stockton",
+    "country": "United States",
+    "lat": 37.9577,
+    "lng": -121.2908,
+    "population": 320804,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Henderson",
+    "country": "United States",
+    "lat": 36.0395,
+    "lng": -114.9817,
+    "population": 320189,
+    "timezone": "America/Los_Angeles"
+  },
+  {
+    "name": "Saint Paul",
+    "country": "United States",
+    "lat": 44.9537,
+    "lng": -93.0900,
+    "population": 311527,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "St. Louis",
+    "country": "United States",
+    "lat": 38.6270,
+    "lng": -90.1994,
+    "population": 301578,
+    "timezone": "America/Chicago"
+  },
+  {
+    "name": "Cincinnati",
+    "country": "United States",
+    "lat": 39.1031,
+    "lng": -84.5120,
+    "population": 309317,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Pittsburgh",
+    "country": "United States",
+    "lat": 40.4406,
+    "lng": -79.9959,
+    "population": 300286,
+    "timezone": "America/New_York"
+  },
+  {
+    "name": "Anchorage",
+    "country": "United States",
+    "lat": 61.2181,
+    "lng": -149.9003,
+    "population": 291247,
+    "timezone": "America/Anchorage"
+  },
+  {
+    "name": "Vancouver",
+    "country": "Canada",
+    "lat": 49.2827,
+    "lng": -123.1207,
+    "population": 675218,
+    "timezone": "America/Vancouver"
+  },
+  {
+    "name": "Montreal",
+    "country": "Canada",
+    "lat": 45.5017,
+    "lng": -73.5673,
+    "population": 1780000,
+    "timezone": "America/Montreal"
+  },
+  {
+    "name": "Calgary",
+    "country": "Canada",
+    "lat": 51.0447,
+    "lng": -114.0719,
+    "population": 1239220,
+    "timezone": "America/Edmonton"
+  },
+  {
+    "name": "Edmonton",
+    "country": "Canada",
+    "lat": 53.5461,
+    "lng": -113.4938,
+    "population": 932546,
+    "timezone": "America/Edmonton"
+  },
+  {
+    "name": "Ottawa",
+    "country": "Canada",
+    "lat": 45.4215,
+    "lng": -75.6972,
+    "population": 994837,
+    "timezone": "America/Toronto"
+  },
+  {
+    "name": "Winnipeg",
+    "country": "Canada",
+    "lat": 49.8951,
+    "lng": -97.1384,
+    "population": 749607,
+    "timezone": "America/Winnipeg"
+  },
+  {
+    "name": "Quebec City",
+    "country": "Canada",
+    "lat": 46.8139,
+    "lng": -71.2080,
+    "population": 542298,
+    "timezone": "America/Montreal"
+  },
+  {
+    "name": "Hamilton",
+    "country": "Canada",
+    "lat": 43.2557,
+    "lng": -79.8711,
+    "population": 536917,
+    "timezone": "America/Toronto"
+  },
+  {
+    "name": "Kitchener",
+    "country": "Canada",
+    "lat": 43.4516,
+    "lng": -80.4925,
+    "population": 233222,
+    "timezone": "America/Toronto"
+  },
+  {
+    "name": "London",
+    "country": "Canada",
+    "lat": 42.9849,
+    "lng": -81.2453,
+    "population": 383822,
+    "timezone": "America/Toronto"
+  },
+  {
+    "name": "Victoria",
+    "country": "Canada",
+    "lat": 48.4284,
+    "lng": -123.3656,
+    "population": 92000,
+    "timezone": "America/Vancouver"
+  },
+  {
+    "name": "Halifax",
+    "country": "Canada",
+    "lat": 44.6488,
+    "lng": -63.5752,
+    "population": 403131,
+    "timezone": "America/Halifax"
+  },
+  {
+    "name": "St. John's",
+    "country": "Canada",
+    "lat": 47.5615,
+    "lng": -52.7126,
+    "population": 108860,
+    "timezone": "America/St_Johns"
+  },
+  {
+    "name": "Saskatoon",
+    "country": "Canada",
+    "lat": 52.1332,
+    "lng": -106.6700,
+    "population": 246376,
+    "timezone": "America/Regina"
+  },
+  {
+    "name": "Regina",
+    "country": "Canada",
+    "lat": 50.4452,
+    "lng": -104.6189,
+    "population": 215106,
+    "timezone": "America/Regina"
+  },
+  {
+    "name": "Kelowna",
+    "country": "Canada",
+    "lat": 49.8877,
+    "lng": -119.4960,
+    "population": 194882,
+    "timezone": "America/Vancouver"
+  },
+  {
+    "name": "Nanaimo",
+    "country": "Canada",
+    "lat": 49.1659,
+    "lng": -123.9401,
+    "population": 104936,
+    "timezone": "America/Vancouver"
+  },
+  {
+    "name": "Prince George",
+    "country": "Canada",
+    "lat": 53.9166,
+    "lng": -122.7530,
+    "population": 74141,
+    "timezone": "America/Vancouver"
+  },
+  {
+    "name": "Whitehorse",
+    "country": "Canada",
+    "lat": 60.7212,
+    "lng": -135.0568,
+    "population": 25085,
+    "timezone": "America/Whitehorse"
+  },
+  {
+    "name": "Yellowknife",
+    "country": "Canada",
+    "lat": 62.4540,
+    "lng": -114.3718,
+    "population": 19569,
+    "timezone": "America/Yellowknife"
+  },
+  {
+    "name": "Iqaluit",
+    "country": "Canada",
+    "lat": 63.7467,
+    "lng": -68.5170,
+    "population": 7740,
+    "timezone": "America/Iqaluit"
+  },
+  {
+    "name": "Guadalajara",
+    "country": "Mexico",
+    "lat": 20.6597,
+    "lng": -103.3496,
+    "population": 1495182,
+    "timezone": "America/Mexico_City"
+  },
+  {
+    "name": "Monterrey",
+    "country": "Mexico",
+    "lat": 25.6866,
+    "lng": -100.3161,
+    "population": 1135512,
+    "timezone": "America/Monterrey"
+  },
+  {
+    "name": "Brasília",
+    "country": "Brazil",
+    "lat": -15.7939,
+    "lng": -47.8828,
+    "population": 3055149,
+    "timezone": "America/Sao_Paulo"
+  },
+  {
+    "name": "Recife",
+    "country": "Brazil",
+    "lat": -8.0476,
+    "lng": -34.877,
+    "population": 1645727,
+    "timezone": "America/Recife"
+  },
+  {
+    "name": "Porto Alegre",
+    "country": "Brazil",
+    "lat": -30.0346,
+    "lng": -51.2177,
+    "population": 1484941,
+    "timezone": "America/Sao_Paulo"
+  },
+  {
+    "name": "Salvador",
+    "country": "Brazil",
+    "lat": -12.9777,
+    "lng": -38.5016,
+    "population": 2886698,
+    "timezone": "America/Bahia"
+  },
+  {
+    "name": "Fortaleza",
+    "country": "Brazil",
+    "lat": -3.7319,
+    "lng": -38.5267,
+    "population": 2686612,
+    "timezone": "America/Fortaleza"
+  },
+  {
+    "name": "La Paz",
+    "country": "Bolivia",
+    "lat": -16.5,
+    "lng": -68.15,
+    "population": 816044,
+    "timezone": "America/La_Paz"
+  },
+  {
+    "name": "Melbourne",
+    "country": "Australia",
+    "lat": -37.8136,
+    "lng": 144.9631,
+    "population": 5078193,
+    "timezone": "Australia/Melbourne"
+  },
+  {
+    "name": "Brisbane",
+    "country": "Australia",
+    "lat": -27.4698,
+    "lng": 153.0251,
+    "population": 2514184,
+    "timezone": "Australia/Brisbane"
+  },
+  {
+    "name": "Perth",
+    "country": "Australia",
+    "lat": -31.9505,
+    "lng": 115.8605,
+    "population": 2059484,
+    "timezone": "Australia/Perth"
+  },
+  {
+    "name": "Auckland",
+    "country": "New Zealand",
+    "lat": -36.8485,
+    "lng": 174.7633,
+    "population": 1657000,
+    "timezone": "Pacific/Auckland"
+  },
+  {
+    "name": "Wellington",
+    "country": "New Zealand",
+    "lat": -41.2865,
+    "lng": 174.7762,
+    "population": 215100,
+    "timezone": "Pacific/Auckland"
+  },
+  {
+    "name": "Suva",
+    "country": "Fiji",
+    "lat": -18.1248,
+    "lng": 178.4501,
+    "population": 88271,
+    "timezone": "Pacific/Fiji"
+  },
+  {
+    "name": "Port Moresby",
+    "country": "Papua New Guinea",
+    "lat": -9.4438,
+    "lng": 147.1803,
+    "population": 383000,
+    "timezone": "Pacific/Port_Moresby"
+  },
+  {
+    "name": "Manaus",
+    "country": "Brazil",
+    "lat": -3.119,
+    "lng": -60.0217,
+    "population": 2219580,
+    "timezone": "America/Manaus"
+  },
+  {
+    "name": "Belém",
+    "country": "Brazil",
+    "lat": -1.4558,
+    "lng": -48.4902,
+    "population": 1499641,
+    "timezone": "America/Belem"
+  },
+  {
+    "name": "Cali",
+    "country": "Colombia",
+    "lat": 3.4516,
+    "lng": -76.532,
+    "population": 2228000,
+    "timezone": "America/Bogota"
+  },
+  {
+    "name": "Medellín",
+    "country": "Colombia",
+    "lat": 6.2442,
+    "lng": -75.5812,
+    "population": 2529403,
+    "timezone": "America/Bogota"
+  },
+  {
+    "name": "Maracaibo",
+    "country": "Venezuela",
+    "lat": 10.6545,
+    "lng": -71.6502,
+    "population": 2250000,
+    "timezone": "America/Caracas"
+  },
+  {
+    "name": "Guayaquil",
+    "country": "Ecuador",
+    "lat": -2.1709,
+    "lng": -79.9224,
+    "population": 2734000,
+    "timezone": "America/Guayaquil"
+  },
+  {
+    "name": "Santa Cruz",
+    "country": "Bolivia",
+    "lat": -17.7833,
+    "lng": -63.1821,
+    "population": 1816000,
+    "timezone": "America/La_Paz"
+  },
+  {
+    "name": "Kingston",
+    "country": "Jamaica",
+    "lat": 17.9712,
+    "lng": -76.7936,
+    "population": 670000,
+    "timezone": "America/Jamaica"
+  },
+  {
+    "name": "Havana",
+    "country": "Cuba",
+    "lat": 23.1136,
+    "lng": -82.3666,
+    "population": 2135495,
+    "timezone": "America/Havana"
+  },
+  {
+    "name": "San Juan",
+    "country": "Puerto Rico",
+    "lat": 18.4655,
+    "lng": -66.1057,
+    "population": 342259,
+    "timezone": "America/Puerto_Rico"
+  },
+  {
+    "name": "San Salvador",
+    "country": "El Salvador",
+    "lat": 13.6929,
+    "lng": -89.2182,
+    "population": 2382444,
+    "timezone": "America/El_Salvador"
+  },
+  {
+    "name": "Guatemala City",
+    "country": "Guatemala",
+    "lat": 14.6349,
+    "lng": -90.5069,
+    "population": 994938,
+    "timezone": "America/Guatemala"
+  },
+  {
+    "name": "San José",
+    "country": "Costa Rica",
+    "lat": 9.9281,
+    "lng": -84.0907,
+    "population": 333980,
+    "timezone": "America/Costa_Rica"
+  },
+  {
+    "name": "Panama City",
+    "country": "Panama",
+    "lat": 8.9824,
+    "lng": -79.5199,
+    "population": 880691,
+    "timezone": "America/Panama"
+  },
+  {
+    "name": "Port-au-Prince",
+    "country": "Haiti",
+    "lat": 18.5944,
+    "lng": -72.3074,
+    "population": 987310,
+    "timezone": "America/Port-au-Prince"
+  },
+  {
+    "name": "Apia",
+    "country": "Samoa",
+    "lat": -13.8333,
+    "lng": -171.7667,
+    "population": 37708,
+    "timezone": "Pacific/Apia"
+  },
+  {
+    "name": "Honiara",
+    "country": "Solomon Islands",
+    "lat": -9.4319,
+    "lng": 159.9563,
+    "population": 84520,
+    "timezone": "Pacific/Guadalcanal"
+  },
+  {
+    "name": "Nuku'alofa",
+    "country": "Tonga",
+    "lat": -21.1394,
+    "lng": -175.2018,
+    "population": 24179,
+    "timezone": "Pacific/Tongatapu"
+  }
+] 

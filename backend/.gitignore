@@ -1,0 +1,24 @@
+# Node dependencies
+node_modules/
+
+# Yarn Plug'n'Play
+.pnp/
+.pnp.js
+
+# Test coverage
+coverage/
+
+# Production build
+build/
+
+# OS generated files
+.DS_Store
+
+# Environment variables
+.env
+.env.*
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
