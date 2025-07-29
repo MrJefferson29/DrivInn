@@ -26,6 +26,8 @@ import MoreLikeThis from './components/MoreLikeThis';
 import LikedListings from './components/LikedListings';
 import MyListings from './components/MyListings';
 import UserBookings from './components/UserBookings';
+import ChatRoomsList from './components/ChatRoomsList';
+import ChatScreen from './components/ChatScreen';
 
 function App() {
   return (
@@ -53,6 +55,8 @@ function App() {
           <Route path="/liked-listings" element={<LikedListings />} />
           <Route path="/listings" element={<MyListings />} />
           <Route path="/bookings" element={<UserBookings />} />
+          <Route path="/messages" element={<ChatRoomsList />} />
+          <Route path="/messages/:roomId" element={<ChatScreen />} />
             <Route path="/listing/:id" element={<ListingDetails />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/edit-profile" element={<EditProfile />} />

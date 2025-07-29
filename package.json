@@ -4,9 +4,13 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.0.1",
     "express-session": "^1.18.2",
-    "multer": "^2.0.1",
+    "multer": "^2.0.2",
     "nodemailer": "^7.0.5",
     "react-datepicker": "^8.4.0",
     "react-responsive": "^10.0.1"
+  },
+  "devDependencies": {
+    "@types/socket.io": "^3.0.1",
+    "@types/socket.io-client": "^1.4.36"
   }
 }

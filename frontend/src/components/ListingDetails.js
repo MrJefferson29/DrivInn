@@ -92,6 +92,7 @@ import { useAuth } from '../context/AuthContext';
 import { useMediaQuery } from 'react-responsive';
 import BookingForm from './BookingForm';
 import LikeButton from './LikeButton';
+import ChatScreen from './ChatScreen';
 
 // Airbnb color palette
 const airbnbRed = '#FF385C';
@@ -1429,6 +1430,8 @@ const ListingDetails = () => {
   const [bookingSuccess, setBookingSuccess] = useState('');
   const [bookings, setBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [showChatModal, setShowChatModal] = useState(false);
+  const [chatRoomId, setChatRoomId] = useState(null);
   const isMobile = useMediaQuery({ maxWidth: 768 });
 
   // Fetch listing data
@@ -1534,6 +1537,44 @@ const ListingDetails = () => {
     setTimeout(() => {
       setBookingSuccess('');
     }, 5000);
+  };
+
+  const handleChat = async () => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    if (isHost) {
+      alert('You cannot message yourself.');
+      return;
+    }
+
+    try {
+      // Create or get chat room
+      const response = await fetch('http://localhost:5000/chat/room', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          listingId: listing._id,
+          otherUserId: listing.owner._id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create chat room');
+      }
+
+      const chatRoom = await response.json();
+      setChatRoomId(chatRoom._id);
+      setShowChatModal(true);
+    } catch (error) {
+      console.error('Error creating chat room:', error);
+      alert('Failed to start chat. Please try again.');
+    }
   };
 
   // Helper functions for host dashboard
@@ -2054,7 +2095,34 @@ const highlightIcons = {
               <HostButton>
                 <FaPhone /> Contact
               </HostButton>
-              <HostButton className="primary">
+              <HostButton className="primary" onClick={async () => {
+                if (!isAuthenticated) {
+                  navigate('/login');
+                  return;
+                }
+                if (isHost) {
+                  alert('You cannot message yourself.');
+                  return;
+                }
+                try {
+                  const response = await fetch('http://localhost:5000/chat/room', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                      listingId: listing._id,
+                      otherUserId: listing.owner._id
+                    })
+                  });
+                  if (!response.ok) throw new Error('Failed to create chat room');
+                  const chatRoom = await response.json();
+                  navigate(`/messages/${chatRoom._id}`);
+                } catch (error) {
+                  alert('Failed to start chat. Please try again.');
+                }
+              }}>
                 <FaEnvelope /> Message
               </HostButton>
             </HostActions>
@@ -2385,6 +2453,64 @@ const highlightIcons = {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <FaCheckCircle />
             {bookingSuccess}
+          </div>
+        </div>
+      )}
+
+      {/* Chat Modal */}
+      {showChatModal && chatRoomId && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          zIndex: 3000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '600px',
+            height: '80vh',
+            display: 'flex',
+            flexDirection: 'column',
+            position: 'relative'
+          }}>
+            <div style={{
+              padding: '20px',
+              borderBottom: '1px solid #eee',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <h3 style={{ margin: 0, color: airbnbDark }}>
+                Chat with {listing.owner?.name || listing.owner?.firstName || 'Host'}
+              </h3>
+              <button
+                onClick={() => setShowChatModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '1.5rem',
+                  cursor: 'pointer',
+                  color: airbnbGray
+                }}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <ChatScreen 
+                chatRoomId={chatRoomId} 
+                userId={user?.id || user?._id}
+              />
+            </div>
           </div>
         </div>
       )}

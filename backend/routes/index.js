@@ -21,5 +21,6 @@ router.use('/users', users);
 router.use('/host-applications', hostApplications);
 router.use('/likes', likes);
 router.use('/notifications', notifications);
+router.use('/chat', require('./chat'));
 
 module.exports = router
