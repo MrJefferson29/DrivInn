@@ -28,13 +28,13 @@ const SectionHeader = styled.div`
 `;
 const SectionTitle = styled.h2`
   font-size: 2.2rem;
-  font-weight: 600;
+  font-weight: 800;
   color: ${airbnbDark};
   margin-bottom: 10px;
   letter-spacing: -0.02em;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: left;
+  justify-content: left;
   gap: 12px;
   cursor: pointer;
   transition: color 0.2s ease;
@@ -92,10 +92,11 @@ const ResponsiveListingsGrid = styled.div`
   gap: 24px;
   padding: 0 40px 8px 40px;
   max-width: 1400px;
-  margin: 0 auto;
+  margin: 10px;
   @media (max-width: 1200px) { grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 0 20px 8px 20px; }
   @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); gap: 14px; padding: 0 10px 8px 10px; }
   @media (max-width: 700px) {
+  margin: 10px;
     display: flex; flex-direction: row; overflow-x: auto; gap: 12px; padding: 0 8px 6px 8px; scroll-snap-type: x mandatory;
     & > div { scroll-snap-align: start; }
   }
@@ -226,9 +227,8 @@ const NearbyListings = () => {
     <Container>
         <SectionHeader>
         <SectionTitle onClick={handleTitleClick}>
-          Nearby Listings <FaChevronRight />
+          Available in {userCity} <FaChevronRight />
         </SectionTitle>
-        <SectionSubtitle>Find amazing stays and experiences close to your location</SectionSubtitle>
         {(userCity || userCountry) && (
           <LocationInfo>
             <FaMapMarkerAlt />

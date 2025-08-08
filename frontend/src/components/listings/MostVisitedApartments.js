@@ -70,6 +70,7 @@ const ResponsiveListingsGrid = styled.div`
   @media (max-width: 1200px) { grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 0 20px 8px 20px; }
   @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); gap: 14px; padding: 0 10px 8px 10px; }
   @media (max-width: 700px) {
+  margin: 10px;
     display: flex; flex-direction: row; overflow-x: auto; gap: 12px; padding: 0 8px 6px 8px; scroll-snap-type: x mandatory;
     & > div { scroll-snap-align: start; }
   }
@@ -133,7 +134,7 @@ const MostVisitedApartments = () => {
       <Container>
         <SectionHeader>
           <SectionTitle onClick={handleTitleClick}>
-            <FaStar /> Most Visited Apartments <FaChevronRight />
+            Most Visited Apartments <FaChevronRight />
           </SectionTitle>
         </SectionHeader>
         <LoadingContainer>
@@ -150,7 +151,7 @@ const MostVisitedApartments = () => {
       <Container>
         <SectionHeader>
           <SectionTitle onClick={handleTitleClick}>
-            <FaStar /> Most Visited Apartments <FaChevronRight />
+            Most Visited Apartments <FaChevronRight />
           </SectionTitle>
         </SectionHeader>
         <ErrorContainer>
@@ -164,7 +165,7 @@ const MostVisitedApartments = () => {
       <Container>
         <SectionHeader>
           <SectionTitle onClick={handleTitleClick}>
-            <FaStar /> Most Visited Apartments <FaChevronRight />
+           Most Visited Apartments <FaChevronRight />
           </SectionTitle>
         </SectionHeader>
         <EmptyState>
@@ -177,19 +178,11 @@ const MostVisitedApartments = () => {
   }
   return (
     <Container>
-      <SectionHeader>
-        <SectionTitle onClick={handleTitleClick}>
-          <FaStar /> Most Visited Apartments <FaChevronRight />
-        </SectionTitle>
-        <SectionSubtitle>These apartments have the highest number of bookings.</SectionSubtitle>
-      </SectionHeader>
+
       <ResultsInfo>
-        <div className="results-count">
-          {displayedApartments.length} of {apartments.length} {apartments.length === 1 ? 'apartment' : 'apartments'} shown
-        </div>
-        <div className="results-summary">
-          Based on booking popularity
-        </div>
+      <SectionTitle onClick={handleTitleClick}>
+         Most Visited Apartments <FaChevronRight />
+        </SectionTitle>
       </ResultsInfo>
       <ResponsiveListingsGrid>
         {displayedApartments.map((listing) => (

@@ -329,6 +329,7 @@ const ResponsiveListingsGrid = styled.div`
     padding: 0 10px 8px 10px;
   }
   @media (max-width: 700px) {
+  margin: 10px;
     display: flex;
     flex-direction: row;
     overflow-x: auto;
@@ -437,22 +438,11 @@ const LatestListings = () => {
 
   return (
     <LatestContainer>
-      <SectionHeader>
-        <SectionTitle onClick={handleTitleClick}>
-          Latest Listings <FaChevronRight />
-        </SectionTitle>
-        <SectionSubtitle>Discover the newest places added to our platform</SectionSubtitle>
-      </SectionHeader>
-
       <ResultsInfo>
-        <div className="results-count">
-          {displayedListings.length} of {allLatestListings.length} {allLatestListings.length === 1 ? 'listing' : 'listings'} shown
-        </div>
-        <div className="results-summary">
-          Added in the last 30 days
-        </div>
+      <SectionTitle onClick={handleTitleClick}>
+            Latest Listings <FaChevronRight />
+          </SectionTitle>
       </ResultsInfo>
-
       <ResponsiveListingsGrid>
         {displayedListings.map((listing) => (
           <div key={listing._id || listing.id} style={isHorizontal ? { minWidth: '220px', maxWidth: '260px', flex: '0 0 auto' } : {}}>

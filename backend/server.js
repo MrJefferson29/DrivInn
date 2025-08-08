@@ -17,6 +17,9 @@ connectDB()
 // Passport configuration
 require('./config/passport')
 
+// Raw body for webhooks
+app.use('/payments/webhook/stripe', express.raw({ type: 'application/json' }));
+
 app.use(express.json())
 app.use(morgan("dev"))
 app.use(cors({

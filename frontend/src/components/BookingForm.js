@@ -8,9 +8,17 @@ import {
   FaTimes, 
   FaCheck,
   FaClock,
-  FaShieldAlt
+  FaShieldAlt,
+  FaCreditCard,
+  FaPaypal,
+  FaApple,
+  FaGoogle,
+  FaUniversity,
+  FaDollarSign as FaCashApp
 } from 'react-icons/fa';
 import axios from 'axios';
+import StripePaymentForm from './StripePaymentForm';
+import { paymentApi } from '../services/paymentApi';
 
 // Airbnb color palette
 const airbnbRed = '#FF385C';
@@ -331,49 +339,82 @@ const InfoText = styled.p`
   }
 `;
 
+const PaymentMethodsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+`;
+
+const PaymentMethodCard = styled.div`
+  border: 2px solid ${props => props.selected ? airbnbRed : airbnbBorder};
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${props => props.selected ? '#fff5f5' : 'white'};
+  text-align: center;
+  position: relative;
+  
+  &:hover {
+    border-color: ${airbnbRed};
+    background: #fff5f5;
+  }
+`;
+
+const PaymentIcon = styled.div`
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+  color: ${props => props.selected ? airbnbRed : airbnbGray};
+`;
+
+const PaymentName = styled.div`
+  font-weight: 600;
+  color: ${airbnbDark};
+  font-size: 0.8rem;
+`;
+
 const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     startDate: '',
     endDate: '',
-    guests: 1
+    guests: 1,
+    paymentMethod: listing.paymentPreferences?.preferredMethod || 'stripe'
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [currentBooking, setCurrentBooking] = useState(null);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
-  // Calculate dates
   const today = new Date().toISOString().split('T')[0];
-  const maxGuests = listing.type === 'car' ? (listing.carDetails?.seats || 5) : (listing.guests || 10);
-  
-  // Calculate price
+  const maxGuests = listing.guests || 4;
+
   const calculatePrice = () => {
     if (!formData.startDate || !formData.endDate) return 0;
     
     const start = new Date(formData.startDate);
     const end = new Date(formData.endDate);
-    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
     
-    const basePrice = days * listing.price;
-    const cleaningFee = listing.cleaningFee || 0;
+    let basePrice = listing.price * nights;
+    if (listing.cleaningFee) {
+      basePrice += listing.cleaningFee;
+    }
     
-    return basePrice + cleaningFee;
+    return basePrice;
   };
 
   const totalPrice = calculatePrice();
 
   const handleDateChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleGuestChange = (increment) => {
     const newCount = formData.guests + increment;
     if (newCount >= 1 && newCount <= maxGuests) {
-      setFormData(prev => ({
-        ...prev,
-        guests: newCount
-      }));
+      setFormData(prev => ({ ...prev, guests: newCount }));
     }
   };
 
@@ -394,12 +435,14 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
     setError('');
 
     try {
+      // Step 1: Create booking with pending payment status
       const bookingData = {
         listing: listing._id,
         startDate: new Date(formData.startDate),
         endDate: new Date(formData.endDate),
         guests: formData.guests,
-        totalPrice: totalPrice
+        totalPrice: totalPrice,
+        paymentMethod: formData.paymentMethod
       };
 
       const response = await axios.post('http://localhost:5000/bookings', bookingData, {
@@ -409,8 +452,17 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
         }
       });
 
-      onSuccess(response.data);
-      onClose();
+      const booking = response.data.booking;
+      setCurrentBooking(booking);
+      
+      // Step 2: Show payment form for Stripe payments
+      if (formData.paymentMethod === 'stripe') {
+        setShowPaymentForm(true);
+      } else {
+        // For other payment methods, simulate payment success
+        await processPayment(booking._id);
+      }
+      
     } catch (err) {
       console.error('Booking error:', err);
       const errorMessage = err.response?.data?.message || 
@@ -422,7 +474,71 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
     }
   };
 
+  const processPayment = async (bookingId) => {
+    setPaymentLoading(true);
+    try {
+      // Create payment intent
+      const paymentIntentResponse = await paymentApi.createPaymentIntent(bookingId, formData.paymentMethod);
+      
+      if (paymentIntentResponse.success) {
+        // For non-credit card payments, simulate success
+        const confirmResponse = await paymentApi.confirmPayment(bookingId, paymentIntentResponse.paymentIntent.paymentIntentId || 'simulated');
+        
+        if (confirmResponse.success) {
+          onSuccess(confirmResponse.booking);
+          onClose();
+        } else {
+          throw new Error(confirmResponse.message || 'Payment confirmation failed');
+        }
+      } else {
+        throw new Error(paymentIntentResponse.message || 'Payment intent creation failed');
+      }
+    } catch (err) {
+      console.error('Payment error:', err);
+      setError(err.message || 'Payment processing failed');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handlePaymentSuccess = (booking) => {
+    onSuccess(booking);
+    onClose();
+  };
+
+  const handlePaymentError = (error) => {
+    setError(error.message || 'Payment failed');
+  };
+
   if (!isOpen) return null;
+
+  // Show payment form if booking was created and payment method is credit card
+  if (showPaymentForm && currentBooking) {
+    return (
+      <ModalOverlay onClick={onClose}>
+        <ModalContent onClick={(e) => e.stopPropagation()}>
+          <ModalHeader>
+            <ModalTitle>Complete Payment</ModalTitle>
+            <ModalSubtitle>Secure payment for your booking</ModalSubtitle>
+            <CloseButton onClick={onClose}>
+              <FaTimes />
+            </CloseButton>
+          </ModalHeader>
+          
+          <FormContent>
+            <StripePaymentForm
+              amount={totalPrice}
+              bookingId={currentBooking._id}
+              onPaymentSuccess={handlePaymentSuccess}
+              onPaymentError={handlePaymentError}
+              processingFee={totalPrice * 0.029 + 0.30} // Stripe fee
+              platformFee={totalPrice * 0.03} // 3% platform fee
+            />
+          </FormContent>
+        </ModalContent>
+      </ModalOverlay>
+    );
+  }
 
   return (
     <ModalOverlay onClick={onClose}>
@@ -475,14 +591,13 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
                 }
               </InfoText>
             </FormSection>
-
             {/* Guest Selection */}
             <FormSection>
               <SectionTitle>
                 <FaUsers /> Number of {listing.type === 'car' ? 'passengers' : 'guests'}
               </SectionTitle>
               <GuestSelector>
-                <GuestCount>{formData.guests} {listing.type === 'car' ? 'passenger(s)' : 'guest(s)'}</GuestCount>
+                <GuestCount>{formData.guests} {listing.type === 'car' ? 'passenger' : 'guest'}{formData.guests !== 1 ? 's' : ''}</GuestCount>
                 <GuestControls>
                   <GuestButton
                     type="button"
@@ -503,6 +618,41 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
               <InfoText>
                 Maximum {maxGuests} {listing.type === 'car' ? 'passengers' : 'guests'}
               </InfoText>
+            </FormSection>
+
+            {/* Payment Method Selection */}
+            <FormSection>
+              <SectionTitle>
+                <FaCreditCard /> Payment Method
+              </SectionTitle>
+              <PaymentMethodsGrid>
+                {(() => {
+                  const availableMethods = listing.paymentPreferences?.acceptedMethods || ['stripe', 'paypal'];
+                  const methodConfigs = [
+                    { id: 'stripe', name: 'Stripe (Credit/Debit Cards)', icon: FaCreditCard },
+                    { id: 'paypal', name: 'PayPal', icon: FaPaypal },
+                    { id: 'cash_app', name: 'Cash App', icon: FaCashApp },
+                    { id: 'apple_pay', name: 'Apple Pay', icon: FaApple },
+                    { id: 'google_pay', name: 'Google Pay', icon: FaGoogle },
+                    { id: 'bank_transfer', name: 'Bank Transfer', icon: FaUniversity }
+                  ];
+                  
+                  return methodConfigs
+                    .filter(method => availableMethods.includes(method.id))
+                    .map((method) => (
+                      <PaymentMethodCard
+                        key={method.id}
+                        selected={formData.paymentMethod === method.id}
+                        onClick={() => setFormData(prev => ({ ...prev, paymentMethod: method.id }))}
+                      >
+                        <PaymentIcon selected={formData.paymentMethod === method.id}>
+                          <method.icon />
+                        </PaymentIcon>
+                        <PaymentName>{method.name}</PaymentName>
+                      </PaymentMethodCard>
+                    ));
+                })()}
+              </PaymentMethodsGrid>
             </FormSection>
 
             {/* Price Breakdown */}

@@ -1,9 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const paymentsController = require('../controllers/paymentsController');
-const { verifyToken } = require('../middleware/auth');
+const paymentController = require('../controllers/paymentController');
+const { verifyToken, authorizeRole } = require('../middleware/auth');
 
-router.post('/create-payment-intent', verifyToken, paymentsController.createPaymentIntent);
-router.post('/capture-payment', verifyToken, paymentsController.capturePayment);
+// Payment routes
+router.post('/create-intent', verifyToken, paymentController.createPaymentIntent);
+router.post('/confirm', verifyToken, paymentController.confirmPayment);
+router.get('/methods/:listingId', paymentController.getPaymentMethods);
+
+// Admin/Host routes
+router.put('/release/:bookingId', verifyToken, authorizeRole('host', 'admin'), paymentController.releasePaymentToHost);
+router.post('/refund/:bookingId', verifyToken, paymentController.refundPayment);
+
+// Webhook route (no auth required)
+router.post('/webhook/stripe', express.raw({ type: 'application/json' }), paymentController.stripeWebhook);
 
 module.exports = router;

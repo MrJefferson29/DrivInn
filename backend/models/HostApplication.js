@@ -68,18 +68,25 @@ const hostApplicationSchema = new mongoose.Schema({
   paymentMethods: {
     stripeAccountId: {
       type: String,
-      required: true
+      default: ''
     },
-    creditCard: {
-      last4: { type: String, required: true },
-      brand: { type: String, required: true },
-      expiryMonth: { type: String, required: true },
-      expiryYear: { type: String, required: true },
-      isDefault: { type: Boolean, default: false }
-    },
+    acceptedPaymentMethods: [{
+      type: String,
+      enum: ['stripe', 'paypal', 'cash_app', 'apple_pay', 'google_pay', 'bank_transfer'],
+      default: []
+    }],
     paypalEmail: {
       type: String,
-      required: true
+      default: ''
+    },
+    cashAppId: {
+      type: String,
+      default: ''
+    },
+    bankAccount: {
+      accountNumber: { type: String, default: '' },
+      routingNumber: { type: String, default: '' },
+      accountType: { type: String, enum: ['checking', 'savings'], default: 'checking' }
     }
   },
   // Additional Information

@@ -43,15 +43,15 @@ exports.submitApplication = async (req, res) => {
           selfieImage: existingApplication.identityDocuments?.selfieImage || null
         },
         paymentMethods: {
+          acceptedPaymentMethods: req.body.acceptedPaymentMethods ? JSON.parse(req.body.acceptedPaymentMethods) : [],
           stripeAccountId: req.body.stripeAccountId,
-          creditCard: {
-            last4: req.body.creditCardLast4,
-            brand: req.body.creditCardBrand,
-            expiryMonth: req.body.creditCardExpiryMonth,
-            expiryYear: req.body.creditCardExpiryYear,
-            isDefault: req.body.creditCardIsDefault === 'true'
-          },
-          paypalEmail: req.body.paypalEmail
+          paypalEmail: req.body.paypalEmail,
+          cashAppId: req.body.cashAppId,
+          bankAccount: {
+            accountNumber: req.body.bankAccountAccountNumber,
+            routingNumber: req.body.bankAccountRoutingNumber,
+            accountType: req.body.bankAccountAccountType
+          }
         },
         propertyType: req.body.propertyType,
         propertyDescription: req.body.propertyDescription,
@@ -161,7 +161,7 @@ exports.submitApplication = async (req, res) => {
       console.log('Creating new application');
       
       const applicationData = {
-        user: req.user._id,
+      user: req.user._id,
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         email: req.body.email,
@@ -182,20 +182,20 @@ exports.submitApplication = async (req, res) => {
           selfieImage: null
         },
         paymentMethods: {
+          acceptedPaymentMethods: req.body.acceptedPaymentMethods ? JSON.parse(req.body.acceptedPaymentMethods) : [],
           stripeAccountId: req.body.stripeAccountId,
-          creditCard: {
-            last4: req.body.creditCardLast4,
-            brand: req.body.creditCardBrand,
-            expiryMonth: req.body.creditCardExpiryMonth,
-            expiryYear: req.body.creditCardExpiryYear,
-            isDefault: req.body.creditCardIsDefault === 'true'
-          },
-          paypalEmail: req.body.paypalEmail
+          paypalEmail: req.body.paypalEmail,
+          cashAppId: req.body.cashAppId,
+          bankAccount: {
+            accountNumber: req.body.bankAccountAccountNumber,
+            routingNumber: req.body.bankAccountRoutingNumber,
+            accountType: req.body.bankAccountAccountType
+          }
         },
         propertyType: req.body.propertyType,
         propertyDescription: req.body.propertyDescription,
         hostingExperience: req.body.hostingExperience,
-        status: 'pending',
+      status: 'pending',
         submittedAt: new Date()
       };
 
@@ -288,9 +288,9 @@ exports.submitApplication = async (req, res) => {
       }
 
       const application = new HostApplication(applicationData);
-      await application.save();
+    await application.save();
       console.log('Application created successfully');
-      res.status(201).json(application);
+    res.status(201).json(application);
     }
   } catch (err) {
     console.error('Host application submission error:', err);
@@ -333,17 +333,49 @@ exports.approveApplication = async (req, res) => {
     application.reviewedBy = req.user._id;
     await application.save();
     
-    // Update user role to host
-    await User.findByIdAndUpdate(application.user, { role: 'host' });
+    // Merge application data into user profile and update role
+    const userUpdates = {
+      role: 'host',
+      isVerified: true,
+      phoneNumber: application.phoneNumber,
+      dateOfBirth: application.dateOfBirth,
+      address: {
+        street: application.postalAddress.street,
+        city: application.postalAddress.city,
+        state: application.postalAddress.state,
+        country: application.postalAddress.country,
+        zipCode: application.postalAddress.postalCode
+      },
+      bio: application.hostingExperience || ''
+    };
+    
+    // Update user with application data
+    const updatedUser = await User.findByIdAndUpdate(
+      application.user, 
+      userUpdates,
+      { new: true, runValidators: true }
+    ).select('-password');
     
     // Create notification for the applicant
     try {
       await NotificationService.createHostApplicationNotification(application._id, 'host_application_approved');
+      
+      // Create additional notification about profile update
+      await NotificationService.createSystemNotification(
+        application.user,
+        'Profile Updated',
+        'Your profile has been automatically updated with your host application information. You are now verified and can access all features.',
+        'profile_updated'
+      );
     } catch (notificationError) {
       console.error('Error creating approval notification:', notificationError);
     }
     
-    res.json({ message: 'Application approved', application });
+    res.json({ 
+      message: 'Application approved and user profile updated', 
+      application,
+      user: updatedUser
+    });
   } catch (err) {
     res.status(400).json({ message: 'Error approving application', error: err.message });
   }

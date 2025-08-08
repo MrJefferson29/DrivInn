@@ -11,14 +11,15 @@ import Register from './components/auth/Register';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
 import SocialLoginSuccess from './components/auth/SocialLoginSuccess';
+import VerifyAccount from './components/user/VerifyAccount';
 import CreateListing from './components/CreateListing';
 import BecomeAHostInfo from './components/BecomeAHostInfo';
+import HostApplicationStatus from './components/HostApplicationStatus';
 import ListingDetails from './components/ListingDetails';
 import Profile from './components/user/Profile';
 import EditProfile from './components/user/EditProfile';
 import EditListing from './components/EditListing';
 import HostApplicationForm from './components/HostApplicationForm';
-import HostApplicationStatus from './components/HostApplicationStatus';
 import AdminHostApplicationsPanel from './components/AdminHostApplicationsPanel';
 import UserNotifications from './components/UserNotifications';
 import NotificationDetails from './components/NotificationDetails';
@@ -43,11 +44,12 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/social-login-success" element={<SocialLoginSuccess />} />
-          <Route path="/create-listing" element={<CreateListing />} />
-          <Route path="/become-a-host-info" element={<BecomeAHostInfo />} />
-          <Route path="/become-a-host/apply" element={<HostApplicationForm />} />
-          <Route path="/become-a-host/status" element={<HostApplicationStatus />} />
+                  <Route path="/social-login-success" element={<SocialLoginSuccess />} />
+        <Route path="/verify-account" element={<VerifyAccount />} />
+        <Route path="/create-listing" element={<CreateListing />} />
+                          <Route path="/become-a-host-info" element={<BecomeAHostInfo />} />
+        <Route path="/become-a-host/apply" element={<HostApplicationForm />} />
+        <Route path="/become-a-host/status" element={<HostApplicationStatus />} />
           <Route path="/admin/host-applications" element={<AdminHostApplicationsPanel />} />
           <Route path="/notifications" element={<UserNotifications />} />
           <Route path="/notification/:id" element={<NotificationDetails />} />

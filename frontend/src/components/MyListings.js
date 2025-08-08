@@ -14,6 +14,11 @@ const Container = styled.div`
   @media (max-width: 768px) {
     padding: 20px 16px;
   }
+  
+  @media (max-width: 480px) {
+    padding: 16px 12px;
+    padding-bottom: 80px; /* Space for mobile action bar */
+  }
 `;
 
 const Header = styled.div`
@@ -28,12 +33,24 @@ const Header = styled.div`
     gap: 16px;
     margin-bottom: 24px;
   }
+  
+  @media (max-width: 480px) {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
 `;
 
 const HeaderLeft = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
+  
+  @media (max-width: 480px) {
+    gap: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+  }
 `;
 
 const BackButton = styled.button`
@@ -54,6 +71,12 @@ const BackButton = styled.button`
     background: #f7f7f7;
     color: #FF385C;
   }
+  
+  @media (max-width: 480px) {
+    font-size: 1rem;
+    padding: 6px;
+    gap: 6px;
+  }
 `;
 
 const Title = styled.h1`
@@ -70,7 +93,10 @@ const Title = styled.h1`
   }
   
   @media (max-width: 480px) {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
+    gap: 8px;
+    flex-direction: row;
+    align-items: center;
   }
 `;
 
@@ -94,6 +120,11 @@ const HeaderRight = styled.div`
   @media (max-width: 768px) {
     width: 100%;
     justify-content: space-between;
+  }
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 8px;
   }
 `;
 
@@ -130,6 +161,14 @@ const ActionButton = styled.button`
     padding: 10px 20px;
     font-size: 0.9rem;
   }
+  
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    gap: 6px;
+    justify-content: center;
+    width: 100%;
+  }
 `;
 
 const Subtitle = styled.p`
@@ -141,6 +180,12 @@ const Subtitle = styled.p`
     font-size: 1rem;
     margin-bottom: 24px;
   }
+  
+  @media (max-width: 480px) {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    text-align: center;
+  }
 `;
 
 const StatsGrid = styled.div`
@@ -148,6 +193,7 @@ const StatsGrid = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   margin-bottom: 32px;
+  margin-top: 50px;
   
   @media (max-width: 768px) {
     grid-template-columns: repeat(2, 1fr);
@@ -156,8 +202,9 @@ const StatsGrid = styled.div`
   }
   
   @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 20px;
   }
 `;
 
@@ -173,7 +220,8 @@ const StatCard = styled.div`
   }
   
   @media (max-width: 480px) {
-    padding: 16px;
+    padding: 12px;
+    border-radius: 8px;
   }
 `;
 
@@ -186,6 +234,11 @@ const StatValue = styled.div`
   @media (max-width: 768px) {
     font-size: 1.75rem;
   }
+  
+  @media (max-width: 480px) {
+    font-size: 1.25rem;
+    margin-bottom: 4px;
+  }
 `;
 
 const StatLabel = styled.div`
@@ -195,6 +248,10 @@ const StatLabel = styled.div`
   
   @media (max-width: 768px) {
     font-size: 0.85rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
   }
 `;
 
@@ -210,7 +267,7 @@ const ListingsGrid = styled.div`
   
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 12px;
   }
 `;
 
@@ -223,6 +280,10 @@ const LoadingContainer = styled.div`
   .spinner-border {
     color: #FF385C;
   }
+  
+  @media (max-width: 480px) {
+    min-height: 300px;
+  }
 `;
 
 const EmptyState = styled.div`
@@ -232,6 +293,10 @@ const EmptyState = styled.div`
   
   @media (max-width: 768px) {
     padding: 60px 16px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 40px 12px;
   }
 `;
 
@@ -244,6 +309,11 @@ const EmptyIcon = styled(FaHome)`
     font-size: 3rem;
     margin-bottom: 20px;
   }
+  
+  @media (max-width: 480px) {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+  }
 `;
 
 const EmptyTitle = styled.h2`
@@ -255,6 +325,11 @@ const EmptyTitle = styled.h2`
   @media (max-width: 768px) {
     font-size: 1.25rem;
   }
+  
+  @media (max-width: 480px) {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+  }
 `;
 
 const EmptyText = styled.p`
@@ -264,6 +339,29 @@ const EmptyText = styled.p`
   
   @media (max-width: 768px) {
     font-size: 0.9rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    line-height: 1.4;
+  }
+`;
+
+const MobileActionBar = styled.div`
+  display: none;
+  
+  @media (max-width: 480px) {
+    display: block;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #ddd;
+    padding: 12px 16px;
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
   }
 `;
 
@@ -368,25 +466,6 @@ const MyListings = () => {
 
   return (
     <Container>
-      <Header>
-        <HeaderLeft>
-          <BackButton onClick={handleBackClick}>
-            <FaArrowLeft /> Back
-          </BackButton>
-          <Title>
-            <HomeIcon /> My Listings
-          </Title>
-        </HeaderLeft>
-        <HeaderRight>
-          <ActionButton onClick={handleViewDashboard}>
-            <FaChartBar /> Dashboard
-          </ActionButton>
-          <ActionButton onClick={handleCreateListing}>
-            <FaPlus /> Create Listing
-          </ActionButton>
-        </HeaderRight>
-      </Header>
-
       <Subtitle>
         {listings.length === 0 
           ? "You haven't created any listings yet."

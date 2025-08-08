@@ -93,6 +93,7 @@ import { useMediaQuery } from 'react-responsive';
 import BookingForm from './BookingForm';
 import LikeButton from './LikeButton';
 import ChatScreen from './ChatScreen';
+import CheckInButtonComponent from './CheckInButton';
 
 // Airbnb color palette
 const airbnbRed = '#FF385C';
@@ -1416,6 +1417,10 @@ const MapPlaceholder = styled.div`
   font-size: 1.1rem;
 `;
 
+const BookingStatus = styled.div`
+  margin-top: 8px;
+`;
+
 const ListingDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -1464,10 +1469,10 @@ const ListingDetails = () => {
   }, [id]);
 
   // Fetch bookings if user is the host
-  useEffect(() => {
+  const fetchBookings = () => {
     if (listing && user && listing.owner && (user.id === listing.owner._id || user._id === listing.owner._id)) {
       setBookingsLoading(true);
-      fetch(`http://localhost:5000/bookings?listingId=${listing._id}`, {
+      fetch(`http://localhost:5000/bookings?type=host&listingId=${listing._id}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -1479,6 +1484,7 @@ const ListingDetails = () => {
           return res.json();
         })
         .then(data => {
+          console.log('Host bookings fetched:', data);
           setBookings(data);
           setBookingsLoading(false);
         })
@@ -1487,6 +1493,10 @@ const ListingDetails = () => {
           setBookingsLoading(false);
         });
     }
+  };
+
+  useEffect(() => {
+    fetchBookings();
   }, [listing, user]);
 
   const handleBackClick = () => {
@@ -1533,6 +1543,28 @@ const ListingDetails = () => {
     setBookingSuccess('Booking created successfully!');
     setShowBookingForm(false);
     
+    // Refresh bookings if user is the host
+    if (isHost) {
+      fetch(`http://localhost:5000/bookings?type=host&listingId=${listing._id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+        .then(async res => {
+          if (!res.ok) {
+            throw new Error('Failed to fetch bookings');
+          }
+          return res.json();
+        })
+        .then(data => {
+          console.log('Updated host bookings:', data);
+          setBookings(data);
+        })
+        .catch(err => {
+          console.error('Error refreshing bookings:', err);
+        });
+    }
+    
     // Clear success message after 5 seconds
     setTimeout(() => {
       setBookingSuccess('');
@@ -1578,7 +1610,16 @@ const ListingDetails = () => {
   };
 
   // Helper functions for host dashboard
-  const isHost = user && listing && listing.owner && (user.id === listing.owner._id || user._id === listing.owner._id);
+  const userId = user?.id || user?._id;
+  const ownerId = listing?.owner?._id || listing?.owner?.id;
+  const isHost = user && listing && listing.owner && (userId === ownerId);
+  
+  // Debug logging for host detection
+  console.log('User:', user);
+  console.log('Listing owner:', listing?.owner);
+  console.log('Is host:', isHost);
+  console.log('User ID:', user?.id || user?._id);
+  console.log('Owner ID:', listing?.owner?._id);
   
   const getDashboardStats = () => {
     if (!bookings.length) return { total: 0, upcoming: 0, past: 0, revenue: 0 };
@@ -2194,6 +2235,9 @@ const highlightIcons = {
             <DashboardSection>
               <DashboardTitle>
                 <FaChartBar /> Dashboard Overview
+                <span style={{ fontSize: '0.9rem', color: airbnbGray, fontWeight: '400' }}>
+                  (Host View)
+                </span>
               </DashboardTitle>
               
               {/* Statistics */}
@@ -2215,55 +2259,114 @@ const highlightIcons = {
                   <StatLabel>Total Revenue</StatLabel>
                 </StatCard>
               </StatsGrid>
+              
+              {/* Show message if no bookings yet */}
+              {getDashboardStats().total === 0 && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '40px 20px',
+                  background: airbnbLightGray,
+                  borderRadius: '12px',
+                  marginBottom: '24px',
+                  border: `1px solid ${airbnbBorder}`
+                }}>
+                  <div style={{ fontSize: '1.2rem', fontWeight: '600', color: airbnbDark, marginBottom: '8px' }}>
+                    No bookings yet
+                  </div>
+                  <div style={{ color: airbnbGray, fontSize: '0.9rem', marginBottom: '16px' }}>
+                    When guests book your listing, you'll see their information and earnings here.
+                  </div>
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: '12px', 
+                    justifyContent: 'center',
+                    flexWrap: 'wrap'
+                  }}>
+                    <div style={{
+                      padding: '8px 16px',
+                      background: airbnbRed,
+                      color: 'white',
+                      borderRadius: '8px',
+                      fontSize: '0.9rem',
+                      fontWeight: '600'
+                    }}>
+                      ${listing.price}/night
+                    </div>
+                    <div style={{
+                      padding: '8px 16px',
+                      background: '#28a745',
+                      color: 'white',
+                      borderRadius: '8px',
+                      fontSize: '0.9rem',
+                      fontWeight: '600'
+                    }}>
+                      Active Listing
+                    </div>
+                  </div>
+                </div>
+              )}
 
-              {/* Bookings Lists */}
-              <BookingsGrid>
-                <BookingList>
-                  <BookingListTitle>
-                    <FaCalendarAlt /> Upcoming Bookings
-                  </BookingListTitle>
-                  {bookingsLoading ? (
-                    <EmptyState>Loading bookings...</EmptyState>
-                  ) : getUpcomingBookings().length > 0 ? (
-                    getUpcomingBookings().map((booking, index) => (
-                      <BookingItem key={booking._id || index}>
-                        <BookingGuest>
-                          {booking.guest?.firstName} {booking.guest?.lastName}
-                        </BookingGuest>
-                        <BookingDates>
-                          {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
-                        </BookingDates>
-                        <BookingPrice>${booking.totalPrice}</BookingPrice>
-                      </BookingItem>
-                    ))
-                  ) : (
-                    <EmptyState>No upcoming bookings</EmptyState>
-                  )}
-                </BookingList>
+              {/* Bookings Lists - Only show if there are bookings */}
+              {getDashboardStats().total > 0 && (
+                <BookingsGrid>
+                  <BookingList>
+                    <BookingListTitle>
+                      <FaCalendarAlt /> Upcoming Bookings
+                    </BookingListTitle>
+                    {bookingsLoading ? (
+                      <EmptyState>Loading bookings...</EmptyState>
+                    ) : getUpcomingBookings().length > 0 ? (
+                      getUpcomingBookings().map((booking, index) => (
+                        <BookingItem key={booking._id || index}>
+                          <BookingGuest>
+                            {booking.guest?.firstName} {booking.guest?.lastName}
+                          </BookingGuest>
+                          <BookingDates>
+                            {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
+                          </BookingDates>
+                          <BookingPrice>${booking.totalPrice}</BookingPrice>
+                          <BookingStatus>
+                            {booking.payment?.status === 'in_escrow' && (
+                              <CheckInButtonComponent 
+                                booking={booking} 
+                                onCheckInSuccess={() => {
+                                  // Refresh bookings after successful check-in
+                                  fetchBookings();
+                                }}
+                              />
+                            )}
+                          </BookingStatus>
+                        </BookingItem>
+                      ))
+                    ) : (
+                      <EmptyState>No upcoming bookings</EmptyState>
+                    )}
+                  </BookingList>
 
-                <BookingList>
-                  <BookingListTitle>
-                    <FaHistory /> Recent Bookings
-                  </BookingListTitle>
-                  {bookingsLoading ? (
-                    <EmptyState>Loading bookings...</EmptyState>
-                  ) : getPastBookings().length > 0 ? (
-                    getPastBookings().map((booking, index) => (
-                      <BookingItem key={booking._id || index}>
-                        <BookingGuest>
-                          {booking.guest?.firstName} {booking.guest?.lastName}
-                        </BookingGuest>
-                        <BookingDates>
-                          {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
-                        </BookingDates>
-                        <BookingPrice>${booking.totalPrice}</BookingPrice>
-                      </BookingItem>
-                    ))
-                  ) : (
-                    <EmptyState>No past bookings</EmptyState>
-                  )}
-                </BookingList>
-              </BookingsGrid>
+                  <BookingList>
+                    <BookingListTitle>
+                      <FaHistory /> Recent Bookings
+                    </BookingListTitle>
+                    {bookingsLoading ? (
+                      <EmptyState>Loading bookings...</EmptyState>
+                    ) : getPastBookings().length > 0 ? (
+                      getPastBookings().map((booking, index) => (
+                        <BookingItem key={booking._id || index}>
+                          <BookingGuest>
+                            {booking.guest?.firstName} {booking.guest?.lastName}
+                          </BookingGuest>
+                          <BookingDates>
+                            {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
+                          </BookingDates>
+                          <BookingPrice>${booking.totalPrice}</BookingPrice>
+                        </BookingItem>
+                      ))
+                    ) : (
+                      <EmptyState>No past bookings</EmptyState>
+                    )}
+                  </BookingList>
+                </BookingsGrid>
+              )}
 
               {/* Host Actions */}
               <DashboardActions>

@@ -16,7 +16,7 @@ const Card = styled.div`
   border-radius: 22px;
   box-shadow: 0 4px 32px rgba(0,0,0,0.10);
   padding: 40px 28px 32px 28px;
-  max-width: 420px;
+  max-width: 600px;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -75,6 +75,27 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 18px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 8px;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
 `;
 const Field = styled.div`
   position: relative;
@@ -149,6 +170,22 @@ const EditProfile = () => {
   const [firstName, setFirstName] = useState(user?.firstName || '');
   const [lastName, setLastName] = useState(user?.lastName || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [bio, setBio] = useState(user?.bio || '');
+  const [address, setAddress] = useState({
+    street: user?.address?.street || '',
+    city: user?.address?.city || '',
+    state: user?.address?.state || '',
+    country: user?.address?.country || '',
+    zipCode: user?.address?.zipCode || ''
+  });
+
+  const [socialLinks, setSocialLinks] = useState({
+    website: user?.socialLinks?.website || '',
+    facebook: user?.socialLinks?.facebook || '',
+    twitter: user?.socialLinks?.twitter || '',
+    instagram: user?.socialLinks?.instagram || '',
+    linkedin: user?.socialLinks?.linkedin || ''
+  });
   const [profileImage, setProfileImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(user?.profileImage || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user?.firstName + ' ' + user?.lastName));
   const [loading, setLoading] = useState(false);
@@ -177,19 +214,53 @@ const EditProfile = () => {
     setError(null);
     try {
       const updates = {};
-      if (firstName !== user.firstName) updates.firstName = firstName;
-      if (lastName !== user.lastName) updates.lastName = lastName;
-      if (email !== user.email) updates.email = email;
+      
+             // Basic info updates
+       if (firstName !== user.firstName) updates.firstName = firstName;
+       if (lastName !== user.lastName) updates.lastName = lastName;
+       if (email !== user.email) updates.email = email;
+       if (bio !== user.bio) updates.bio = bio;
+      
+             // Address updates
+       const currentAddress = user.address || {};
+       const cleanAddress = {
+         street: address.street || '',
+         city: address.city || '',
+         state: address.state || '',
+         country: address.country || '',
+         zipCode: address.zipCode || ''
+       };
+       if (JSON.stringify(cleanAddress) !== JSON.stringify(currentAddress)) {
+         updates.address = cleanAddress;
+       }
+      
+      
+      
+             // Social links updates
+       const currentSocialLinks = user.socialLinks || {};
+       const cleanSocialLinks = {
+         website: socialLinks.website || '',
+         facebook: socialLinks.facebook || '',
+         twitter: socialLinks.twitter || '',
+         instagram: socialLinks.instagram || '',
+         linkedin: socialLinks.linkedin || ''
+       };
+       if (JSON.stringify(cleanSocialLinks) !== JSON.stringify(currentSocialLinks)) {
+         updates.socialLinks = cleanSocialLinks;
+       }
+      
       let updatedUser = user;
       if (Object.keys(updates).length === 0 && !profileImage) {
         setError('No changes to update.');
         setLoading(false);
         return;
       }
+      
       if (Object.keys(updates).length > 0) {
         const res = await api.put(`/users/${user._id}`, updates);
         if (res.data) updatedUser = res.data;
       }
+      
       if (profileImage) {
         const formData = new FormData();
         formData.append('image', profileImage);
@@ -205,17 +276,19 @@ const EditProfile = () => {
           return;
         }
       }
+      
       if (!updatedUser || !updatedUser._id) {
         setError('Failed to update user profile.');
         setLoading(false);
         return;
       }
+      
       setUser(updatedUser);
       navigate('/profile');
       return;
     } catch (err) {
-      console.log(err);
-      setError(err.response?.data?.message || 'Failed to update profile');
+      console.log('Error details:', err.response?.data);
+      setError(err.response?.data?.message || err.response?.data?.error || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -233,6 +306,7 @@ const EditProfile = () => {
           </ChangeImageButton>
         </ProfileImageWrapper>
         <Form onSubmit={handleSubmit}>
+          {/* Basic Information */}
           <Field>
             <Input id="firstName" value={firstName} onChange={e => setFirstName(e.target.value)} required autoComplete="off" />
             <FloatingLabel htmlFor="firstName" active={!!firstName}>First Name</FloatingLabel>
@@ -245,6 +319,72 @@ const EditProfile = () => {
             <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="off" />
             <FloatingLabel htmlFor="email" active={!!email}>Email</FloatingLabel>
           </Field>
+          
+          <Field>
+            <textarea 
+              id="bio" 
+              value={bio} 
+              onChange={e => setBio(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '14px 12px',
+                borderRadius: '8px',
+                border: '1.5px solid #e0e7ef',
+                fontSize: '1.08rem',
+                background: '#f8fafc',
+                outline: 'none',
+                minHeight: '80px',
+                resize: 'vertical'
+              }}
+              placeholder="Tell us about yourself..."
+            />
+            <FloatingLabel htmlFor="bio" active={!!bio}>Bio</FloatingLabel>
+          </Field>
+          
+          {/* Address Information */}
+          <Field>
+            <Input id="street" value={address.street} onChange={e => setAddress({...address, street: e.target.value})} autoComplete="off" />
+            <FloatingLabel htmlFor="street" active={!!address.street}>Street Address</FloatingLabel>
+          </Field>
+          <Field>
+            <Input id="city" value={address.city} onChange={e => setAddress({...address, city: e.target.value})} autoComplete="off" />
+            <FloatingLabel htmlFor="city" active={!!address.city}>City</FloatingLabel>
+          </Field>
+          <Field>
+            <Input id="state" value={address.state} onChange={e => setAddress({...address, state: e.target.value})} autoComplete="off" />
+            <FloatingLabel htmlFor="state" active={!!address.state}>State/Province</FloatingLabel>
+          </Field>
+          <Field>
+            <Input id="country" value={address.country} onChange={e => setAddress({...address, country: e.target.value})} autoComplete="off" />
+            <FloatingLabel htmlFor="country" active={!!address.country}>Country</FloatingLabel>
+          </Field>
+          <Field>
+            <Input id="zipCode" value={address.zipCode} onChange={e => setAddress({...address, zipCode: e.target.value})} autoComplete="off" />
+            <FloatingLabel htmlFor="zipCode" active={!!address.zipCode}>Zip Code</FloatingLabel>
+          </Field>
+          
+          {/* Social Links */}
+          <Field>
+            <Input id="website" value={socialLinks.website} onChange={e => setSocialLinks({...socialLinks, website: e.target.value})} autoComplete="off" />
+            <FloatingLabel htmlFor="website" active={!!socialLinks.website}>Website</FloatingLabel>
+          </Field>
+          <Field>
+            <Input id="facebook" value={socialLinks.facebook} onChange={e => setSocialLinks({...socialLinks, facebook: e.target.value})} autoComplete="off" />
+            <FloatingLabel htmlFor="facebook" active={!!socialLinks.facebook}>Facebook</FloatingLabel>
+          </Field>
+          <Field>
+            <Input id="twitter" value={socialLinks.twitter} onChange={e => setSocialLinks({...socialLinks, twitter: e.target.value})} autoComplete="off" />
+            <FloatingLabel htmlFor="twitter" active={!!socialLinks.twitter}>Twitter</FloatingLabel>
+          </Field>
+          <Field>
+            <Input id="instagram" value={socialLinks.instagram} onChange={e => setSocialLinks({...socialLinks, instagram: e.target.value})} autoComplete="off" />
+            <FloatingLabel htmlFor="instagram" active={!!socialLinks.instagram}>Instagram</FloatingLabel>
+          </Field>
+          <Field>
+            <Input id="linkedin" value={socialLinks.linkedin} onChange={e => setSocialLinks({...socialLinks, linkedin: e.target.value})} autoComplete="off" />
+            <FloatingLabel htmlFor="linkedin" active={!!socialLinks.linkedin}>LinkedIn</FloatingLabel>
+          </Field>
+          
           {error && <ErrorMsg>{error}</ErrorMsg>}
           <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</Button>
         </Form>

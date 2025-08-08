@@ -59,7 +59,7 @@ const SectionHeader = styled.div`
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 600;
   color: ${airbnbDark};
   margin-bottom: 16px;
@@ -291,6 +291,7 @@ const ResponsiveListingsGrid = styled.div`
     padding: 0 10px 8px 10px;
   }
   @media (max-width: 700px) {
+  margin: 10px;
     display: flex;
     flex-direction: row;
     overflow-x: auto;
@@ -395,20 +396,10 @@ const RecommendedListings = () => {
 
   return (
     <RecommendedContainer>
-      <SectionHeader>
-        <SectionTitle onClick={handleTitleClick}>
-          Recommended Listings <FaChevronRight />
-        </SectionTitle>
-        <SectionSubtitle>Discover amazing places tailored to your preferences</SectionSubtitle>
-      </SectionHeader>
-
       <ResultsInfo>
-        <div className="results-count">
-          {displayedListings.length} of {filteredListings.length} {filteredListings.length === 1 ? 'listing' : 'listings'} shown
-        </div>
-        <div className="results-summary">
-          Based on your current filters
-        </div>
+      <SectionTitle onClick={handleTitleClick}>
+            Recommended Listings <FaChevronRight />
+          </SectionTitle>
       </ResultsInfo>
 
       <ResponsiveListingsGrid>

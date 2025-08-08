@@ -16,7 +16,8 @@ import {
   FaPlus, FaTrash, FaChevronLeft, FaChevronRight, FaCheckCircle, 
   FaHome, FaMapMarkerAlt, FaCog, FaStar, FaCamera, FaEdit, 
   FaDollarSign, FaShieldAlt, FaEye, FaUpload, FaTimes, FaSearch,
-  FaGlobe, FaLocationArrow, FaCompass, FaClock
+  FaGlobe, FaLocationArrow, FaCompass, FaClock, FaCreditCard,
+  FaPaypal, FaApple, FaGoogle, FaUniversity, FaDollarSign as FaCashApp
 } from 'react-icons/fa';
 
 // Airbnb color palette and style variables
@@ -814,6 +815,15 @@ const CAR_RULES = [
   'No smoking', 'No pets', 'No off-roading', 'No racing', 'Return with full tank', 'No eating/drinking', 'Valid license required'
 ];
 
+const PAYMENT_METHODS = [
+  { id: 'stripe', name: 'Stripe (Credit/Debit Cards)', icon: FaCreditCard, description: 'Visa, Mastercard, American Express, Discover' },
+  { id: 'paypal', name: 'PayPal', icon: FaPaypal, description: 'PayPal account payments' },
+  { id: 'cash_app', name: 'Cash App', icon: FaCashApp, description: 'Cash App payments' },
+  { id: 'apple_pay', name: 'Apple Pay', icon: FaApple, description: 'Apple Pay mobile payments' },
+  { id: 'google_pay', name: 'Google Pay', icon: FaGoogle, description: 'Google Pay mobile payments' },
+  { id: 'bank_transfer', name: 'Bank Transfer', icon: FaUniversity, description: 'Direct bank transfers' }
+];
+
 // Enhanced location search with comprehensive world cities data
 // Configure Fuse.js for fuzzy searching
 const fuseOptions = {
@@ -894,6 +904,22 @@ const initialState = {
   cancellationPolicy: '',
   checkIn: '',
   checkOut: '',
+  // Payment preferences
+  paymentPreferences: {
+    acceptedMethods: ['stripe', 'paypal'],
+    preferredMethod: 'stripe',
+    hostPayoutMethod: 'stripe',
+    hostPayoutDetails: {
+      stripeAccountId: '',
+      paypalEmail: '',
+      cashAppId: '',
+      bankAccount: {
+        accountNumber: '',
+        routingNumber: '',
+        accountType: 'checking'
+      }
+    }
+  },
   // Car
   carDetails: {
     make: '',
@@ -914,7 +940,7 @@ const initialState = {
 };
 
 const steps = [
-  'Type', 'Location', 'Details', 'Amenities', 'Photos', 'Description', 'Pricing', 'Rules', 'Review'
+  'Type', 'Location', 'Details', 'Amenities', 'Photos', 'Description', 'Pricing', 'Payment', 'Rules', 'Review'
 ];
 
 const CreateListing = () => {
@@ -925,6 +951,8 @@ const CreateListing = () => {
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
   const [showSummary, setShowSummary] = useState(false);
+  const [hostPaymentMethods, setHostPaymentMethods] = useState([]);
+  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
 
   // Autocomplete and map state
   const [locationQuery, setLocationQuery] = useState('');
@@ -959,6 +987,44 @@ const CreateListing = () => {
       setLocationQuery(form.location);
     }
   }, [form.location]);
+
+  // Fetch host's payment methods from their approved application
+  useEffect(() => {
+    const fetchHostPaymentMethods = async () => {
+      if (!user || (user.role !== 'host' && user.role !== 'admin')) return;
+      
+      setLoadingPaymentMethods(true);
+      try {
+        const response = await axios.get(`http://localhost:5000/host-applications/me`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response.data && response.data.paymentMethods) {
+          const methods = response.data.paymentMethods.acceptedPaymentMethods || ['stripe', 'paypal'];
+          setHostPaymentMethods(methods);
+          
+          // Update form with host's available payment methods
+          setForm(prev => ({
+            ...prev,
+            paymentPreferences: {
+              acceptedMethods: methods,
+              preferredMethod: methods[0] || 'stripe'
+            }
+          }));
+        }
+      } catch (err) {
+        console.error('Error fetching host payment methods:', err);
+        // Default to stripe and paypal if fetch fails
+        setHostPaymentMethods(['stripe', 'paypal']);
+      } finally {
+        setLoadingPaymentMethods(false);
+      }
+    };
+
+    fetchHostPaymentMethods();
+  }, [user, token]);
 
   useEffect(() => {
     if (locationQuery.length > 1) {
@@ -1600,7 +1666,265 @@ const CreateListing = () => {
       case 7:
         return (
           <>
-            <StepTitle>Set your rules and policies</StepTitle>
+            <StepTitle>Payment Methods</StepTitle>
+            <FormField>
+              <Label>Select payment methods for this listing</Label>
+              <div style={{ marginBottom: '16px', color: '#666', fontSize: '0.9rem' }}>
+                Choose which payment methods you want to accept for this listing. 
+                These are based on your approved host application.
+              </div>
+              
+              {loadingPaymentMethods ? (
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  <Spinner animation="border" size="sm" style={{ marginRight: '8px' }} />
+                  Loading your payment methods...
+                </div>
+              ) : (
+                <CheckboxGrid>
+                  {PAYMENT_METHODS.map(method => {
+                    const isAvailable = hostPaymentMethods.includes(method.id);
+                    const isSelected = form.paymentPreferences.acceptedMethods.includes(method.id);
+                    
+                    return (
+                      <CustomCheckbox 
+                        key={method.id}
+                        style={{
+                          opacity: isAvailable ? 1 : 0.5,
+                          cursor: isAvailable ? 'pointer' : 'not-allowed'
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          name={`payment_${method.id}`}
+                          checked={isSelected}
+                          onChange={(e) => {
+                            if (!isAvailable) return;
+                            
+                            const newMethods = e.target.checked
+                              ? [...form.paymentPreferences.acceptedMethods, method.id]
+                              : form.paymentPreferences.acceptedMethods.filter(m => m !== method.id);
+                            
+                            setForm(prev => ({
+                              ...prev,
+                              paymentPreferences: {
+                                ...prev.paymentPreferences,
+                                acceptedMethods: newMethods,
+                                preferredMethod: newMethods.length > 0 ? newMethods[0] : 'credit_card'
+                              }
+                            }));
+                          }}
+                          disabled={!isAvailable}
+                        />
+                        <div className="checkbox-custom">
+                          {isSelected && <FaCheckCircle />}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <method.icon style={{ color: isAvailable ? airbnbRed : '#ccc' }} />
+                          <div>
+                            <div style={{ fontWeight: '600', color: isAvailable ? airbnbDark : '#999' }}>
+                              {method.name}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                              {method.description}
+                            </div>
+                          </div>
+                        </div>
+                      </CustomCheckbox>
+                    );
+                  })}
+                </CheckboxGrid>
+              )}
+              
+              {form.paymentPreferences.acceptedMethods.length > 0 && (
+                <FormField>
+                  <Label>Preferred Payment Method</Label>
+                  <StyledSelect 
+                    value={form.paymentPreferences.preferredMethod} 
+                    onChange={(e) => setForm(prev => ({
+                      ...prev,
+                      paymentPreferences: {
+                        ...prev.paymentPreferences,
+                        preferredMethod: e.target.value
+                      }
+                    }))}
+                  >
+                    {form.paymentPreferences.acceptedMethods.map(methodId => {
+                      const method = PAYMENT_METHODS.find(m => m.id === methodId);
+                      return (
+                        <option key={methodId} value={methodId}>
+                          {method ? method.name : methodId}
+                        </option>
+                      );
+                    })}
+                  </StyledSelect>
+                  <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '8px' }}>
+                    This will be the default payment method shown to guests
+                  </div>
+                </FormField>
+              )}
+              
+              <FormField>
+                <Label>Host Payout Method</Label>
+                <div style={{ marginBottom: '16px', color: '#666', fontSize: '0.9rem' }}>
+                  Choose how you want to receive payments for this listing after guest check-in
+                </div>
+                
+                <StyledSelect 
+                  value={form.paymentPreferences.hostPayoutMethod} 
+                  onChange={(e) => setForm(prev => ({
+                    ...prev,
+                    paymentPreferences: {
+                      ...prev.paymentPreferences,
+                      hostPayoutMethod: e.target.value
+                    }
+                  }))}
+                >
+                  <option value="stripe">Stripe Account</option>
+                  <option value="paypal">PayPal</option>
+                  <option value="cash_app">Cash App</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                </StyledSelect>
+                
+                {form.paymentPreferences.hostPayoutMethod === 'stripe' && (
+                  <FormField>
+                    <Label>Stripe Account ID</Label>
+                    <StyledInput
+                      name="paymentPreferences.hostPayoutDetails.stripeAccountId"
+                      value={form.paymentPreferences.hostPayoutDetails.stripeAccountId}
+                      onChange={(e) => setForm(prev => ({
+                        ...prev,
+                        paymentPreferences: {
+                          ...prev.paymentPreferences,
+                          hostPayoutDetails: {
+                            ...prev.paymentPreferences.hostPayoutDetails,
+                            stripeAccountId: e.target.value
+                          }
+                        }
+                      }))}
+                      placeholder="acct_1234567890"
+                    />
+                  </FormField>
+                )}
+                
+                {form.paymentPreferences.hostPayoutMethod === 'paypal' && (
+                  <FormField>
+                    <Label>PayPal Email</Label>
+                    <StyledInput
+                      name="paymentPreferences.hostPayoutDetails.paypalEmail"
+                      value={form.paymentPreferences.hostPayoutDetails.paypalEmail}
+                      onChange={(e) => setForm(prev => ({
+                        ...prev,
+                        paymentPreferences: {
+                          ...prev.paymentPreferences,
+                          hostPayoutDetails: {
+                            ...prev.paymentPreferences.hostPayoutDetails,
+                            paypalEmail: e.target.value
+                          }
+                        }
+                      }))}
+                      placeholder="your-email@paypal.com"
+                    />
+                  </FormField>
+                )}
+                
+                {form.paymentPreferences.hostPayoutMethod === 'cash_app' && (
+                  <FormField>
+                    <Label>Cash App ID</Label>
+                    <StyledInput
+                      name="paymentPreferences.hostPayoutDetails.cashAppId"
+                      value={form.paymentPreferences.hostPayoutDetails.cashAppId}
+                      onChange={(e) => setForm(prev => ({
+                        ...prev,
+                        paymentPreferences: {
+                          ...prev.paymentPreferences,
+                          hostPayoutDetails: {
+                            ...prev.paymentPreferences.hostPayoutDetails,
+                            cashAppId: e.target.value
+                          }
+                        }
+                      }))}
+                      placeholder="$yourcashappid"
+                    />
+                  </FormField>
+                )}
+                
+                {form.paymentPreferences.hostPayoutMethod === 'bank_transfer' && (
+                  <>
+                    <FormField>
+                      <Label>Account Number</Label>
+                      <StyledInput
+                        name="paymentPreferences.hostPayoutDetails.bankAccount.accountNumber"
+                        value={form.paymentPreferences.hostPayoutDetails.bankAccount.accountNumber}
+                        onChange={(e) => setForm(prev => ({
+                          ...prev,
+                          paymentPreferences: {
+                            ...prev.paymentPreferences,
+                            hostPayoutDetails: {
+                              ...prev.paymentPreferences.hostPayoutDetails,
+                              bankAccount: {
+                                ...prev.paymentPreferences.hostPayoutDetails.bankAccount,
+                                accountNumber: e.target.value
+                              }
+                            }
+                          }
+                        }))}
+                        placeholder="1234567890"
+                      />
+                    </FormField>
+                    <FormField>
+                      <Label>Routing Number</Label>
+                      <StyledInput
+                        name="paymentPreferences.hostPayoutDetails.bankAccount.routingNumber"
+                        value={form.paymentPreferences.hostPayoutDetails.bankAccount.routingNumber}
+                        onChange={(e) => setForm(prev => ({
+                          ...prev,
+                          paymentPreferences: {
+                            ...prev.paymentPreferences,
+                            hostPayoutDetails: {
+                              ...prev.paymentPreferences.hostPayoutDetails,
+                              bankAccount: {
+                                ...prev.paymentPreferences.hostPayoutDetails.bankAccount,
+                                routingNumber: e.target.value
+                              }
+                            }
+                          }
+                        }))}
+                        placeholder="123456789"
+                      />
+                    </FormField>
+                    <FormField>
+                      <Label>Account Type</Label>
+                      <StyledSelect
+                        name="paymentPreferences.hostPayoutDetails.bankAccount.accountType"
+                        value={form.paymentPreferences.hostPayoutDetails.bankAccount.accountType}
+                        onChange={(e) => setForm(prev => ({
+                          ...prev,
+                          paymentPreferences: {
+                            ...prev.paymentPreferences,
+                            hostPayoutDetails: {
+                              ...prev.paymentPreferences.hostPayoutDetails,
+                              bankAccount: {
+                                ...prev.paymentPreferences.hostPayoutDetails.bankAccount,
+                                accountType: e.target.value
+                              }
+                            }
+                          }
+                        }))}
+                      >
+                        <option value="checking">Checking</option>
+                        <option value="savings">Savings</option>
+                      </StyledSelect>
+                    </FormField>
+                  </>
+                )}
+              </FormField>
+            </FormField>
+          </>
+        );
+              case 8:
+          return (
+            <>
+              <StepTitle>Set your rules and policies</StepTitle>
             <FormField>
               <Label>{form.type === 'car' ? 'Car Rules' : 'House Rules'}</Label>
               <CheckboxGrid>
@@ -1641,10 +1965,10 @@ const CreateListing = () => {
             )}
           </>
         );
-      case 8:
-        return (
-          <>
-            <StepTitle>Review your listing</StepTitle>
+              case 9:
+          return (
+            <>
+              <StepTitle>Review your listing</StepTitle>
             <ReviewBox>
               <ReviewItem>
                 <span className="label">Type:</span>
@@ -1701,6 +2025,31 @@ const CreateListing = () => {
               <ReviewItem>
                 <span className="label">Images:</span>
                 <span className="value">{form.images.length} photos</span>
+              </ReviewItem>
+              <ReviewItem>
+                <span className="label">Payment Methods:</span>
+                <span className="value">
+                  {form.paymentPreferences.acceptedMethods.map(methodId => {
+                    const method = PAYMENT_METHODS.find(m => m.id === methodId);
+                    return method ? method.name : methodId;
+                  }).join(', ')}
+                </span>
+              </ReviewItem>
+              <ReviewItem>
+                <span className="label">Preferred Method:</span>
+                <span className="value">
+                  {PAYMENT_METHODS.find(m => m.id === form.paymentPreferences.preferredMethod)?.name || form.paymentPreferences.preferredMethod}
+                </span>
+              </ReviewItem>
+              <ReviewItem>
+                <span className="label">Host Payout Method:</span>
+                <span className="value">
+                  {form.paymentPreferences.hostPayoutMethod === 'stripe' ? 'Stripe Account' :
+                   form.paymentPreferences.hostPayoutMethod === 'paypal' ? 'PayPal' :
+                   form.paymentPreferences.hostPayoutMethod === 'cash_app' ? 'Cash App' :
+                   form.paymentPreferences.hostPayoutMethod === 'bank_transfer' ? 'Bank Transfer' :
+                   form.paymentPreferences.hostPayoutMethod}
+                </span>
               </ReviewItem>
             </ReviewBox>
             {form.imagePreviews.length > 0 && (
@@ -1789,8 +2138,9 @@ const CreateListing = () => {
         data.append('calendar', JSON.stringify(form.calendar));
         data.append('houseRules', JSON.stringify(form.houseRules));
         data.append('cancellationPolicy', form.cancellationPolicy);
-        data.append('checkIn', form.checkIn);
-        data.append('checkOut', form.checkOut);
+              data.append('checkIn', form.checkIn);
+      data.append('checkOut', form.checkOut);
+      data.append('paymentPreferences', JSON.stringify(form.paymentPreferences));
       } else {
         data.append('carDetails', JSON.stringify({
           make: form.carDetails.make,
@@ -1820,6 +2170,7 @@ const CreateListing = () => {
         price: form.price,
         location: form.location,
         images: form.images.length,
+        paymentPreferences: form.paymentPreferences,
         carDetails: form.type === 'car' ? form.carDetails : null
       });
       
@@ -1876,7 +2227,8 @@ const CreateListing = () => {
                  idx === 4 ? <FaCamera /> :
                  idx === 5 ? <FaEdit /> :
                  idx === 6 ? <FaDollarSign /> :
-                 idx === 7 ? <FaShieldAlt /> :
+                 idx === 7 ? <FaCreditCard /> :
+                 idx === 8 ? <FaShieldAlt /> :
                  <FaEye />}
               </div>
               <span>{label}</span>

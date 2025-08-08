@@ -73,6 +73,36 @@ const listingSchema = new mongoose.Schema({
         calendar: [{ from: Date, to: Date }],
         rules: [String],
         cancellationPolicy: String
+    },
+    
+    // Payment preferences for this listing
+    paymentPreferences: {
+        acceptedMethods: [{
+            type: String,
+            enum: ['credit_card', 'paypal', 'cash_app', 'apple_pay', 'google_pay', 'bank_transfer'],
+            default: ['credit_card', 'paypal']
+        }],
+        preferredMethod: {
+            type: String,
+            enum: ['credit_card', 'paypal', 'cash_app', 'apple_pay', 'google_pay', 'bank_transfer'],
+            default: 'credit_card'
+        },
+        // Host's payout method for this listing
+        hostPayoutMethod: {
+            type: String,
+            enum: ['stripe', 'paypal', 'cash_app', 'bank_transfer'],
+            default: 'stripe'
+        },
+        hostPayoutDetails: {
+            stripeAccountId: { type: String, default: '' },
+            paypalEmail: { type: String, default: '' },
+            cashAppId: { type: String, default: '' },
+            bankAccount: {
+                accountNumber: { type: String, default: '' },
+                routingNumber: { type: String, default: '' },
+                accountType: { type: String, enum: ['checking', 'savings'], default: 'checking' }
+            }
+        }
     }
 });
 

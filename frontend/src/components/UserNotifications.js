@@ -649,7 +649,7 @@ const UserNotifications = () => {
                       </NotificationBadge>
                     </NotificationMeta>
                   </NotificationContent>
-                </div>
+    </div>
               </NotificationHeader>
               
               <NotificationActions>

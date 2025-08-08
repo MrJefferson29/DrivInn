@@ -540,15 +540,45 @@ const ListingCard = ({ listing, onCardClick }) => {
 
   const handleShareClick = (e) => {
     e.stopPropagation();
+    
+    // Create the listing details URL
+    const listingUrl = `${window.location.origin}/listing/${listing._id}`;
+    
+    // Create a rich share text with details
+    const shareText = `Check out this amazing ${listing.type} in ${listing.location || listing.address}! 
+    
+${listing.title}
+${listing.type === 'apartment' ? 
+  `• ${listing.beds || 0} beds • ${listing.bathrooms || 0} baths • ${listing.guests || 0} guests` :
+  `• ${listing.carDetails?.seats || 0} seats • ${listing.carDetails?.transmission || 'Auto'} • ${listing.carDetails?.fuelType || 'Gas'}`
+}
+• Rating: ${listing.rating || 4.5} ⭐ (${listing.reviews || 0} reviews)
+• Price: $${listing.price}${listing.type === 'apartment' ? '/night' : '/day'}
+
+${listingUrl}`;
+
     if (navigator.share) {
       navigator.share({
-        title: listing.title,
-        text: `Check out this amazing ${listing.type} in ${listing.location}`,
-        url: window.location.href
+        title: `${listing.title} - ${listing.type} in ${listing.location || listing.address}`,
+        text: shareText,
+        url: listingUrl
+      }).catch((error) => {
+        console.log('Share failed:', error);
+        // Fallback to clipboard
+        navigator.clipboard.writeText(shareText);
+        showShareSuccess();
       });
     } else {
-      navigator.clipboard.writeText(`${listing.title} - ${listing.location}`);
+      // Fallback for browsers without native sharing
+      navigator.clipboard.writeText(shareText);
+      showShareSuccess();
     }
+  };
+
+  const showShareSuccess = () => {
+    // You can add a toast notification here if you have a toast system
+    // For now, we'll just log to console
+    console.log('Listing link copied to clipboard!');
   };
 
   const handleCardClick = () => {

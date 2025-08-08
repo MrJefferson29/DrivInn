@@ -18,7 +18,12 @@ import {
   FaSpinner,
   FaExclamationTriangle,
   FaInfoCircle,
-  FaFileAlt
+  FaFileAlt,
+  FaDollarSign,
+  FaApple,
+  FaGoogle,
+  FaUniversity,
+  FaCheckCircle
 } from 'react-icons/fa';
 import { Spinner, Alert } from 'react-bootstrap';
 
@@ -349,6 +354,36 @@ const FormActions = styled.div`
   }
 `;
 
+const PaymentMethodOption = styled.div`
+  border: 2px solid ${props => props.checked ? '#FF385C' : '#DDDDDD'};
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: ${props => props.checked ? '#fff5f5' : 'white'};
+  
+  &:hover {
+    border-color: #FF385C;
+    background: #fff5f5;
+  }
+`;
+
+const PaymentMethodOptionContent = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const PaymentMethodIcon = styled.div`
+  font-size: 1.5rem;
+  color: ${props => props.checked ? '#FF385C' : '#717171'};
+`;
+
+const PaymentMethodLabel = styled.div`
+  font-weight: 600;
+  color: #222222;
+`;
+
 const Button = styled.button`
   padding: 12px 24px;
   border: none;
@@ -411,6 +446,15 @@ const InfoText = styled.div`
   line-height: 1.5;
 `;
 
+const PaymentMethodOptionComponent = ({ id, label, icon, checked, onChange }) => (
+  <PaymentMethodOption checked={checked} onClick={() => onChange(!checked)}>
+    <PaymentMethodOptionContent>
+      <PaymentMethodIcon checked={checked}>{icon}</PaymentMethodIcon>
+      <PaymentMethodLabel>{label}</PaymentMethodLabel>
+    </PaymentMethodOptionContent>
+  </PaymentMethodOption>
+);
+
 const steps = [
   { id: 0, label: 'Personal Info', icon: FaUser },
   { id: 1, label: 'Identity Verification', icon: FaIdCard },
@@ -449,6 +493,7 @@ const HostApplicationForm = () => {
     idBackImage: null,
     selfieImage: null,
     // Payment Information
+    acceptedPaymentMethods: [],
     stripeAccountId: '',
     creditCardLast4: '',
     creditCardBrand: '',
@@ -456,6 +501,12 @@ const HostApplicationForm = () => {
     creditCardExpiryYear: '',
     creditCardIsDefault: false,
     paypalEmail: '',
+    cashAppId: '',
+    bankAccount: {
+      accountNumber: '',
+      routingNumber: '',
+      accountType: 'checking'
+    },
     // Property Information
     propertyType: '',
     propertyDescription: '',
@@ -486,6 +537,7 @@ const HostApplicationForm = () => {
         idBackImage: null,
         selfieImage: null,
         // Payment Information
+        acceptedPaymentMethods: existingApplication.paymentMethods?.acceptedPaymentMethods || [],
         stripeAccountId: existingApplication.paymentMethods?.stripeAccountId || '',
         creditCardLast4: existingApplication.paymentMethods?.creditCard?.last4 || '',
         creditCardBrand: existingApplication.paymentMethods?.creditCard?.brand || '',
@@ -493,6 +545,12 @@ const HostApplicationForm = () => {
         creditCardExpiryYear: existingApplication.paymentMethods?.creditCard?.expiryYear || '',
         creditCardIsDefault: existingApplication.paymentMethods?.creditCard?.isDefault || false,
         paypalEmail: existingApplication.paymentMethods?.paypalEmail || '',
+        cashAppId: existingApplication.paymentMethods?.cashAppId || '',
+        bankAccount: {
+          accountNumber: existingApplication.paymentMethods?.bankAccount?.accountNumber || '',
+          routingNumber: existingApplication.paymentMethods?.bankAccount?.routingNumber || '',
+          accountType: existingApplication.paymentMethods?.bankAccount?.accountType || 'checking'
+        },
         // Property Information
         propertyType: existingApplication.propertyType || '',
         propertyDescription: existingApplication.propertyDescription || '',
@@ -524,6 +582,15 @@ const HostApplicationForm = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handlePaymentMethodChange = (method, checked) => {
+    setFormData(prev => ({
+      ...prev,
+      acceptedPaymentMethods: checked
+        ? [...prev.acceptedPaymentMethods, method]
+        : prev.acceptedPaymentMethods.filter(m => m !== method)
+    }));
+  };
+
   const handleFileChange = (field, file) => {
     console.log(`File change for ${field}:`, file);
     setFormData(prev => ({ ...prev, [field]: file }));
@@ -546,6 +613,42 @@ const HostApplicationForm = () => {
     setError('');
 
     try {
+      // Validate that at least one payment method is selected
+      if (formData.acceptedPaymentMethods.length === 0) {
+        setError('Please select at least one payment method to accept from guests.');
+        setLoading(false);
+        return;
+      }
+
+      // Validate required fields for selected payment methods
+      const validationErrors = [];
+
+      if (formData.acceptedPaymentMethods.includes('stripe')) {
+        if (!formData.stripeAccountId) {
+          validationErrors.push('Stripe Account ID is required for Stripe payments');
+        }
+      }
+
+      if (formData.acceptedPaymentMethods.includes('paypal') && !formData.paypalEmail) {
+        validationErrors.push('PayPal email is required for PayPal payments');
+      }
+
+      if (formData.acceptedPaymentMethods.includes('cash_app') && !formData.cashAppId) {
+        validationErrors.push('Cash App ID is required for Cash App payments');
+      }
+
+      if (formData.acceptedPaymentMethods.includes('bank_transfer')) {
+        if (!formData.bankAccount.accountNumber || !formData.bankAccount.routingNumber) {
+          validationErrors.push('Bank account details are incomplete for Bank Transfer payments');
+        }
+      }
+
+      if (validationErrors.length > 0) {
+        setError(validationErrors.join('. '));
+        setLoading(false);
+        return;
+      }
+
       const formDataToSend = new FormData();
       
       console.log('Submitting form data:', formData);
@@ -556,6 +659,14 @@ const HostApplicationForm = () => {
           if (key.includes('Image') && formData[key] instanceof File) {
             console.log(`Adding file ${key}:`, formData[key].name);
             formDataToSend.append(key, formData[key]);
+          } else if (key === 'acceptedPaymentMethods') {
+            console.log(`Adding acceptedPaymentMethods:`, formData[key]);
+            formDataToSend.append(key, JSON.stringify(formData[key]));
+          } else if (key === 'bankAccount') {
+            console.log(`Adding bankAccount fields:`, formData[key]);
+            formDataToSend.append('bankAccountAccountNumber', formData[key].accountNumber);
+            formDataToSend.append('bankAccountRoutingNumber', formData[key].routingNumber);
+            formDataToSend.append('bankAccountAccountType', formData[key].accountType);
           } else {
             console.log(`Adding field ${key}:`, formData[key]);
             formDataToSend.append(key, formData[key]);
@@ -845,130 +956,221 @@ const HostApplicationForm = () => {
         <FaCreditCard /> Payment Setup
       </StepTitle>
       <StepSubtitle>
-        Set up your payment methods to receive payments from guests.
+        Select the payment methods you want to accept and provide your payout details.
       </StepSubtitle>
       
       <InfoBox>
         <InfoIcon />
         <InfoText>
-          We use Stripe for secure payment processing. Your payment information is encrypted and secure.
+          Choose which payment methods you want to accept from guests. You must select at least one method.
+          All payments are held in escrow and transferred to you after guest check-in through your chosen payout method.
         </InfoText>
       </InfoBox>
 
-      <PaymentMethodCard>
-        <PaymentMethodHeader>
-          <PaymentIcon type="stripe">
-            <FaCreditCard />
-          </PaymentIcon>
-          <PaymentTitle>Stripe Account</PaymentTitle>
-        </PaymentMethodHeader>
-        
-        <FormGrid>
-          <FormGroup>
-            <Label>Stripe Account ID<Required>*</Required></Label>
-            <Input
-              type="text"
-              value={formData.stripeAccountId}
-              onChange={(e) => handleInputChange('stripeAccountId', e.target.value)}
-              placeholder="acct_1234567890"
-              required
-            />
-          </FormGroup>
-        </FormGrid>
-      </PaymentMethodCard>
-
-      <PaymentMethodCard style={{ marginTop: '24px' }}>
-        <PaymentMethodHeader>
-          <PaymentIcon type="credit">
-            <FaCreditCard />
-          </PaymentIcon>
-          <PaymentTitle>Credit Card</PaymentTitle>
-        </PaymentMethodHeader>
-        
-        <FormGrid>
-          <FormGroup>
-            <Label>Card Brand<Required>*</Required></Label>
-            <Select
-              value={formData.creditCardBrand}
-              onChange={(e) => handleInputChange('creditCardBrand', e.target.value)}
-              required
-            >
-              <option value="">Select Brand</option>
-              <option value="visa">Visa</option>
-              <option value="mastercard">Mastercard</option>
-              <option value="amex">American Express</option>
-              <option value="discover">Discover</option>
-            </Select>
-          </FormGroup>
-          
-          <FormGroup>
-            <Label>Last 4 Digits<Required>*</Required></Label>
-            <Input
-              type="text"
-              value={formData.creditCardLast4}
-              onChange={(e) => handleInputChange('creditCardLast4', e.target.value)}
-              placeholder="1234"
-              maxLength="4"
-              required
-            />
-          </FormGroup>
-          
-          <FormGroup>
-            <Label>Expiry Month<Required>*</Required></Label>
-            <Select
-              value={formData.creditCardExpiryMonth}
-              onChange={(e) => handleInputChange('creditCardExpiryMonth', e.target.value)}
-              required
-            >
-              <option value="">Month</option>
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i + 1} value={String(i + 1).padStart(2, '0')}>
-                  {String(i + 1).padStart(2, '0')}
-                </option>
-              ))}
-            </Select>
-          </FormGroup>
-          
-          <FormGroup>
-            <Label>Expiry Year<Required>*</Required></Label>
-            <Select
-              value={formData.creditCardExpiryYear}
-              onChange={(e) => handleInputChange('creditCardExpiryYear', e.target.value)}
-              required
-            >
-              <option value="">Year</option>
-              {Array.from({ length: 10 }, (_, i) => {
-                const year = new Date().getFullYear() + i;
-                return (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                );
-              })}
-            </Select>
-          </FormGroup>
-        </FormGrid>
-      </PaymentMethodCard>
-
-      <PaymentMethodCard style={{ marginTop: '24px' }}>
-        <PaymentMethodHeader>
-          <PaymentIcon type="paypal">
-            <FaPaypal />
-          </PaymentIcon>
-          <PaymentTitle>PayPal</PaymentTitle>
-        </PaymentMethodHeader>
-        
-        <FormGroup>
-          <Label>PayPal Email<Required>*</Required></Label>
-          <Input
-            type="email"
-            value={formData.paypalEmail}
-            onChange={(e) => handleInputChange('paypalEmail', e.target.value)}
-            placeholder="your-email@paypal.com"
-            required
+      {/* Payment Method Selection */}
+      <FormGroup>
+        <Label style={{ marginBottom: '16px' }}>Select Payment Methods to Accept<Required>*</Required></Label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+          <PaymentMethodOptionComponent
+            id="stripe"
+            label="Stripe (Credit/Debit Cards)"
+            icon={<FaCreditCard />}
+            checked={formData.acceptedPaymentMethods.includes('stripe')}
+            onChange={(checked) => handlePaymentMethodChange('stripe', checked)}
           />
-        </FormGroup>
-      </PaymentMethodCard>
+          <PaymentMethodOptionComponent
+            id="paypal"
+            label="PayPal"
+            icon={<FaPaypal />}
+            checked={formData.acceptedPaymentMethods.includes('paypal')}
+            onChange={(checked) => handlePaymentMethodChange('paypal', checked)}
+          />
+          <PaymentMethodOptionComponent
+            id="cash_app"
+            label="Cash App"
+            icon={<FaDollarSign />}
+            checked={formData.acceptedPaymentMethods.includes('cash_app')}
+            onChange={(checked) => handlePaymentMethodChange('cash_app', checked)}
+          />
+          <PaymentMethodOptionComponent
+            id="apple_pay"
+            label="Apple Pay"
+            icon={<FaApple />}
+            checked={formData.acceptedPaymentMethods.includes('apple_pay')}
+            onChange={(checked) => handlePaymentMethodChange('apple_pay', checked)}
+          />
+          <PaymentMethodOptionComponent
+            id="google_pay"
+            label="Google Pay"
+            icon={<FaGoogle />}
+            checked={formData.acceptedPaymentMethods.includes('google_pay')}
+            onChange={(checked) => handlePaymentMethodChange('google_pay', checked)}
+          />
+          <PaymentMethodOptionComponent
+            id="bank_transfer"
+            label="Bank Transfer"
+            icon={<FaUniversity />}
+            checked={formData.acceptedPaymentMethods.includes('bank_transfer')}
+            onChange={(checked) => handlePaymentMethodChange('bank_transfer', checked)}
+          />
+        </div>
+      </FormGroup>
+
+      {/* Stripe Account - Only if Stripe is selected as a payment method */}
+      {formData.acceptedPaymentMethods.includes('stripe') && (
+        <PaymentMethodCard>
+          <PaymentMethodHeader>
+            <PaymentIcon type="stripe">
+              <FaCreditCard />
+            </PaymentIcon>
+            <PaymentTitle>Stripe Account</PaymentTitle>
+          </PaymentMethodHeader>
+          
+          <div style={{ padding: '16px', background: '#f8f9fa', borderRadius: '8px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#007bff' }}>
+              <FaInfoCircle />
+              <span style={{ fontWeight: '600' }}>Stripe Payment Processing</span>
+            </div>
+            <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '8px' }}>
+              Stripe allows guests to pay with credit cards, debit cards, and other payment methods. 
+              You'll receive payouts through your chosen payout method after check-in.
+            </div>
+          </div>
+          
+          <FormGrid>
+            <FormGroup>
+              <Label>Stripe Account ID<Required>*</Required></Label>
+              <Input
+                type="text"
+                value={formData.stripeAccountId}
+                onChange={(e) => handleInputChange('stripeAccountId', e.target.value)}
+                placeholder="acct_1234567890"
+                required
+              />
+            </FormGroup>
+          </FormGrid>
+        </PaymentMethodCard>
+      )}
+
+
+
+      {formData.acceptedPaymentMethods.includes('paypal') && (
+        <PaymentMethodCard style={{ marginTop: '24px' }}>
+          <PaymentMethodHeader>
+            <PaymentIcon type="paypal">
+              <FaPaypal />
+            </PaymentIcon>
+            <PaymentTitle>PayPal</PaymentTitle>
+          </PaymentMethodHeader>
+          
+          <FormGroup>
+            <Label>PayPal Email<Required>*</Required></Label>
+            <Input
+              type="email"
+              value={formData.paypalEmail}
+              onChange={(e) => handleInputChange('paypalEmail', e.target.value)}
+              placeholder="your-email@paypal.com"
+              required
+            />
+          </FormGroup>
+        </PaymentMethodCard>
+      )}
+
+      {formData.acceptedPaymentMethods.includes('cash_app') && (
+        <PaymentMethodCard style={{ marginTop: '24px' }}>
+          <PaymentMethodHeader>
+            <PaymentIcon type="cash">
+              <FaDollarSign />
+            </PaymentIcon>
+            <PaymentTitle>Cash App</PaymentTitle>
+          </PaymentMethodHeader>
+          
+          <FormGroup>
+            <Label>Cash App ID<Required>*</Required></Label>
+            <Input
+              type="text"
+              value={formData.cashAppId}
+              onChange={(e) => handleInputChange('cashAppId', e.target.value)}
+              placeholder="$yourcashappid"
+              required
+            />
+          </FormGroup>
+        </PaymentMethodCard>
+      )}
+
+      {formData.acceptedPaymentMethods.includes('bank_transfer') && (
+        <PaymentMethodCard style={{ marginTop: '24px' }}>
+          <PaymentMethodHeader>
+            <PaymentIcon type="bank">
+              <FaUniversity />
+            </PaymentIcon>
+            <PaymentTitle>Bank Transfer</PaymentTitle>
+          </PaymentMethodHeader>
+          
+          <FormGrid>
+            <FormGroup>
+              <Label>Account Number<Required>*</Required></Label>
+              <Input
+                type="text"
+                value={formData.bankAccount.accountNumber}
+                onChange={(e) => handleInputChange('bankAccount', { ...formData.bankAccount, accountNumber: e.target.value })}
+                placeholder="1234567890"
+                required
+              />
+            </FormGroup>
+            
+            <FormGroup>
+              <Label>Routing Number<Required>*</Required></Label>
+              <Input
+                type="text"
+                value={formData.bankAccount.routingNumber}
+                onChange={(e) => handleInputChange('bankAccount', { ...formData.bankAccount, routingNumber: e.target.value })}
+                placeholder="123456789"
+                required
+              />
+            </FormGroup>
+            
+            <FormGroup>
+              <Label>Account Type<Required>*</Required></Label>
+              <Select
+                value={formData.bankAccount.accountType}
+                onChange={(e) => handleInputChange('bankAccount', { ...formData.bankAccount, accountType: e.target.value })}
+                required
+              >
+                <option value="checking">Checking</option>
+                <option value="savings">Savings</option>
+              </Select>
+            </FormGroup>
+          </FormGrid>
+        </PaymentMethodCard>
+      )}
+
+      {/* Apple Pay and Google Pay don't require additional details */}
+      {(formData.acceptedPaymentMethods.includes('apple_pay') || formData.acceptedPaymentMethods.includes('google_pay')) && (
+        <PaymentMethodCard style={{ marginTop: '24px' }}>
+          <PaymentMethodHeader>
+            <PaymentIcon type="digital">
+              {formData.acceptedPaymentMethods.includes('apple_pay') ? <FaApple /> : <FaGoogle />}
+            </PaymentIcon>
+            <PaymentTitle>
+              {formData.acceptedPaymentMethods.includes('apple_pay') ? 'Apple Pay' : 'Google Pay'}
+            </PaymentTitle>
+          </PaymentMethodHeader>
+          
+          <div style={{ padding: '16px', background: '#f8f9fa', borderRadius: '8px', marginTop: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#28a745' }}>
+              <FaCheckCircle />
+              <span style={{ fontWeight: '600' }}>No additional setup required</span>
+            </div>
+            <div style={{ fontSize: '0.9rem', color: '#666', marginTop: '8px' }}>
+              {formData.acceptedPaymentMethods.includes('apple_pay') 
+                ? 'Apple Pay will be automatically configured through your device settings.'
+                : 'Google Pay will be automatically configured through your device settings.'
+              }
+            </div>
+          </div>
+        </PaymentMethodCard>
+      )}
     </>
   );
 
@@ -1046,9 +1248,27 @@ const HostApplicationForm = () => {
         <div><strong>Documents:</strong> {formData.idFrontImage ? 'Front ✓' : 'Front ✗'}, {formData.idBackImage ? 'Back ✓' : 'Back ✗'}, {formData.selfieImage ? 'Selfie ✓' : 'Selfie ✗'}</div>
         
         <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Payment Methods</h3>
-        <div><strong>Stripe Account:</strong> {formData.stripeAccountId}</div>
-        <div><strong>Credit Card:</strong> {formData.creditCardBrand} ending in {formData.creditCardLast4}</div>
-        <div><strong>PayPal:</strong> {formData.paypalEmail}</div>
+        <div><strong>Accepted Payment Methods:</strong> {formData.acceptedPaymentMethods.length > 0 ? formData.acceptedPaymentMethods.join(', ') : 'None selected'}</div>
+        
+        {formData.acceptedPaymentMethods.includes('stripe') && (
+          <div><strong>Stripe Account:</strong> {formData.stripeAccountId}</div>
+        )}
+        
+        {formData.acceptedPaymentMethods.includes('paypal') && (
+          <div><strong>PayPal:</strong> {formData.paypalEmail}</div>
+        )}
+        
+        {formData.acceptedPaymentMethods.includes('cash_app') && (
+          <div><strong>Cash App ID:</strong> {formData.cashAppId}</div>
+        )}
+        
+        {formData.acceptedPaymentMethods.includes('bank_transfer') && formData.bankAccount.accountNumber && (
+          <div><strong>Bank Account:</strong> {formData.bankAccount.accountType} account ending in {formData.bankAccount.accountNumber.slice(-4)}</div>
+        )}
+        
+        {(formData.acceptedPaymentMethods.includes('apple_pay') || formData.acceptedPaymentMethods.includes('google_pay')) && (
+          <div><strong>Digital Wallets:</strong> {formData.acceptedPaymentMethods.filter(m => m === 'apple_pay' || m === 'google_pay').join(', ')} (No additional setup required)</div>
+        )}
         
         <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Property Information</h3>
         <div><strong>Type:</strong> {formData.propertyType}</div>

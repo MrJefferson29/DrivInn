@@ -144,41 +144,43 @@ const Home = () => {
           <Container fluid>
             <div className="section-header">
               <h2 className="section-title">Inspiration for your next trip</h2>
+              <p className="section-subtitle">Discover amazing destinations across the United States</p>
             </div>
             <div className="inspiration-grid">
               <div className="inspiration-item large">
-                <img src="https://images.unsplash.com/photo-1480714378408-67cf0d13bc12?w=600&h=400&fit=crop" alt="New York" loading="lazy" />
+                <img src="https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=600&h=400&fit=crop" alt="New York City" loading="lazy" />
                 <div className="inspiration-content">
-                  <h3>New York</h3>
-                  <p>United States</p>
+                  <h3>New York City</h3>
+                  <p>New York, USA</p>
+                  <span className="inspiration-badge">Trending</span>
                 </div>
               </div>
               <div className="inspiration-item">
-                <img src="https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=300&h=200&fit=crop" alt="London" loading="lazy" />
+                <img src="https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=300&h=200&fit=crop" alt="San Francisco" loading="lazy" />
                 <div className="inspiration-content">
-                  <h3>London</h3>
-                  <p>United Kingdom</p>
+                  <h3>San Francisco</h3>
+                  <p>California, USA</p>
                 </div>
               </div>
               <div className="inspiration-item">
-                <img src="https://images.unsplash.com/photo-1502602898534-47d22c0d8060?w=300&h=200&fit=crop" alt="Paris" loading="lazy" />
+                <img src="https://images.unsplash.com/photo-1514565131-fce0801e5785?w=300&h=200&fit=crop" alt="Miami Beach" loading="lazy" />
                 <div className="inspiration-content">
-                  <h3>Paris</h3>
-                  <p>France</p>
+                  <h3>Miami Beach</h3>
+                  <p>Florida, USA</p>
                 </div>
               </div>
               <div className="inspiration-item">
-                <img src="https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=300&h=200&fit=crop" alt="Venice" loading="lazy" />
+                <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=300&h=200&fit=crop" alt="Los Angeles" loading="lazy" />
                 <div className="inspiration-content">
-                  <h3>Venice</h3>
-                  <p>Italy</p>
+                  <h3>Los Angeles</h3>
+                  <p>California, USA</p>
                 </div>
               </div>
               <div className="inspiration-item">
-                <img src="https://images.unsplash.com/photo-1548013146-72479768bada?w=300&h=200&fit=crop" alt="Tokyo" loading="lazy" />
+                <img src="https://images.unsplash.com/photo-1502602898534-47d22c0d8060?w=300&h=200&fit=crop" alt="Chicago" loading="lazy" />
                 <div className="inspiration-content">
-                  <h3>Tokyo</h3>
-                  <p>Japan</p>
+                  <h3>Chicago</h3>
+                  <p>Illinois, USA</p>
                 </div>
               </div>
             </div>
@@ -189,27 +191,39 @@ const Home = () => {
         <section className="live-anywhere-section">
           <Container fluid>
             <div className="section-header">
-              <h2 className="section-title">Live anywhere</h2>
+              <h2 className="section-title">Live anywhere in the USA</h2>
               <Button variant="link" className="see-all-btn">
                 See all <FaArrowRight />
               </Button>
             </div>
             <div className="live-anywhere-grid">
               <div className="live-anywhere-item">
-                <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=300&h=200&fit=crop" alt="Outdoor getaways" loading="lazy" />
-                <h3>Outdoor getaways</h3>
+                <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=300&h=200&fit=crop" alt="Mountain Getaways" loading="lazy" />
+                <div className="live-anywhere-content">
+                  <h3>Mountain Getaways</h3>
+                  <p>Colorado Rockies</p>
+                </div>
               </div>
               <div className="live-anywhere-item">
-                <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=300&h=200&fit=crop" alt="Unique stays" loading="lazy" />
-                <h3>Unique stays</h3>
+                <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=300&h=200&fit=crop" alt="Beach Houses" loading="lazy" />
+                <div className="live-anywhere-content">
+                  <h3>Beach Houses</h3>
+                  <p>California Coast</p>
+                </div>
               </div>
               <div className="live-anywhere-item">
-                <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=300&h=200&fit=crop" alt="Entire homes" loading="lazy" />
-                <h3>Entire homes</h3>
+                <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=300&h=200&fit=crop" alt="City Apartments" loading="lazy" />
+                <div className="live-anywhere-content">
+                  <h3>City Apartments</h3>
+                  <p>Urban Centers</p>
+                </div>
               </div>
               <div className="live-anywhere-item">
-                <img src="https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=300&h=200&fit=crop" alt="Pets allowed" loading="lazy" />
-                <h3>Pets allowed</h3>
+                <img src="https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=300&h=200&fit=crop" alt="Pet-Friendly" loading="lazy" />
+                <div className="live-anywhere-content">
+                  <h3>Pet-Friendly</h3>
+                  <p>Nationwide</p>
+                </div>
               </div>
             </div>
           </Container>
@@ -219,10 +233,20 @@ const Home = () => {
         <section className="host-section">
           <Container fluid>
             <Row className="align-items-center">
-              <Col lg={6}>
+              <Col lg={6} className="host-content-col">
                 <div className="host-content">
                   <h2>Become a Host</h2>
-                  <p>Share your space to let us build that to the world.</p>
+                  <p>Share your space and earn extra income. Join thousands of successful hosts across the United States.</p>
+                  <div className="host-stats">
+                    <div className="host-stat">
+                      <h4>$2,000+</h4>
+                      <p>Average monthly earnings</p>
+                    </div>
+                    <div className="host-stat">
+                      <h4>24/7</h4>
+                      <p>Support available</p>
+                    </div>
+                  </div>
                   <Button variant="outline-dark" size="lg" className="host-btn" onClick={() => navigate('/become-a-host-info')}>
                     Learn more
                   </Button>
@@ -231,6 +255,25 @@ const Home = () => {
               <Col lg={6}>
                 <div className="host-image">
                   <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=400&fit=crop" alt="Become a Host" loading="lazy" />
+                  <div className="host-overlay">
+                    <div className="host-overlay-content">
+                      <h3>Become a Host</h3>
+                      <p>Share your space and earn extra income. Join thousands of successful hosts across the United States.</p>
+                      <div className="host-overlay-stats">
+                        <div className="host-overlay-stat">
+                          <h4>$2,000+</h4>
+                          <p>Average monthly earnings</p>
+                        </div>
+                        <div className="host-overlay-stat">
+                          <h4>24/7</h4>
+                          <p>Support available</p>
+                        </div>
+                      </div>
+                      <Button variant="light" size="lg" className="host-overlay-btn">
+                        Learn more
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </Col>
             </Row>
@@ -242,25 +285,36 @@ const Home = () => {
           <Container fluid>
             <div className="section-header">
               <h2 className="section-title">Discover things to do</h2>
+              <p className="section-subtitle">Unique experiences across America</p>
             </div>
             <div className="discover-grid">
               <div className="discover-item">
-                <img src="https://images.unsplash.com/photo-1480714378408-67cf0d13bc12?w=400&h=300&fit=crop" alt="Experiences" loading="lazy" />
+                <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=300&fit=crop" alt="Local Experiences" loading="lazy" />
                 <div className="discover-content">
-                  <h3>Experiences</h3>
-                  <p>Find unforgettable activities near you.</p>
+                  <h3>Local Experiences</h3>
+                  <p>Discover authentic experiences led by local hosts across the United States.</p>
+                  <div className="discover-features">
+                    <span className="discover-feature">Food Tours</span>
+                    <span className="discover-feature">City Walks</span>
+                    <span className="discover-feature">Art Classes</span>
+                  </div>
                   <Button variant="link" className="discover-btn">
-                    Learn more <FaArrowRight />
+                    Explore experiences <FaArrowRight />
                   </Button>
                 </div>
               </div>
               <div className="discover-item">
-                <img src="https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop" alt="Online Experiences" loading="lazy" />
+                <img src="https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=400&h=300&fit=crop" alt="Virtual Experiences" loading="lazy" />
                 <div className="discover-content">
-                  <h3>Online Experiences</h3>
-                  <p>Interactive activities you can do together online.</p>
+                  <h3>Virtual Experiences</h3>
+                  <p>Connect with hosts from anywhere in the world through interactive online experiences.</p>
+                  <div className="discover-features">
+                    <span className="discover-feature">Cooking Classes</span>
+                    <span className="discover-feature">Music Sessions</span>
+                    <span className="discover-feature">Fitness Training</span>
+                  </div>
                   <Button variant="link" className="discover-btn">
-                    Learn more <FaArrowRight />
+                    Join online <FaArrowRight />
                   </Button>
                 </div>
               </div>
@@ -272,16 +326,16 @@ const Home = () => {
         <section className="trust-section">
           <Container fluid>
             <div className="trust-content">
-              <h2>Trusted by travelers worldwide</h2>
+              <h2>Trusted by travelers across America</h2>
               <div className="trust-stats">
                 <div className="trust-stat">
                   <FaAward className="trust-icon" />
-                  <h3>4.8</h3>
+                  <h3>4.9</h3>
                   <p>Average rating</p>
                 </div>
                 <div className="trust-stat">
                   <FaCheckCircle className="trust-icon" />
-                  <h3>2M+</h3>
+                  <h3>500K+</h3>
                   <p>Happy guests</p>
                 </div>
                 <div className="trust-stat">

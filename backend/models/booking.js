@@ -7,7 +7,7 @@ const bookingSchema = new mongoose.Schema({
     required: true,
   },
   guest: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  hosts: { type: mongoose.Schema.ObjectId, ref: "User", required: true },
+  hosts: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
   guests: { type: Number, required: true },
@@ -20,6 +20,29 @@ const bookingSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   checkInTime: { type: String, default: "14:00" }, // Default check-in time
   checkOutTime: { type: String, default: "11:00" }, // Default check-out time
+  
+  // Payment information
+  payment: {
+    method: {
+      type: String,
+      enum: ['credit_card', 'paypal', 'cash_app', 'apple_pay', 'google_pay', 'bank_transfer'],
+      required: true
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'paid', 'in_escrow', 'released', 'refunded'],
+      default: 'pending'
+    },
+    stripePaymentIntentId: { type: String },
+    paypalOrderId: { type: String },
+    cashAppPaymentId: { type: String },
+    amount: { type: Number, required: true },
+    processingFee: { type: Number, default: 0 },
+    platformFee: { type: Number, default: 0 },
+    hostAmount: { type: Number, required: true },
+    paidAt: { type: Date },
+    releasedAt: { type: Date }
+  }
 });
 
 // Pre-save middleware to automatically update booking status based on dates

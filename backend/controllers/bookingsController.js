@@ -1,5 +1,6 @@
 const Booking = require('../models/booking');
 const NotificationService = require('../services/notificationService');
+const PaymentService = require('../services/paymentService');
 
 exports.createBooking = async (req, res) => {
   try {
@@ -76,7 +77,15 @@ exports.createBooking = async (req, res) => {
       totalPrice: parseFloat(totalPrice),
       status: 'pending', // Will be automatically updated to 'reserved' by pre-save middleware
       checkInTime,
-      checkOutTime
+      checkOutTime,
+      payment: {
+        method: req.body.paymentMethod || 'credit_card',
+        status: 'pending',
+        amount: parseFloat(totalPrice),
+        processingFee: 0,
+        platformFee: 0,
+        hostAmount: parseFloat(totalPrice)
+      }
     };
     console.log('Booking data to save:', bookingData);
 
@@ -110,8 +119,21 @@ exports.getUserBookings = async (req, res) => {
     // Update all booking statuses first
     await Booking.updateAllStatuses();
     
-    // Only get bookings for the current authenticated user
-    const query = { guest: req.user._id };
+    // Check if user wants host bookings or guest bookings
+    const { type, listingId } = req.query;
+    
+    let query = {};
+    
+    if (type === 'host' && listingId) {
+      // Get bookings where user is the host for a specific listing
+      query = { 
+        hosts: req.user._id,
+        listing: listingId
+      };
+    } else {
+      // Default: get bookings where user is the guest
+      query = { guest: req.user._id };
+    }
     
     const bookings = await Booking.find(query)
       .populate('listing', 'title images price city country rating checkIn checkOut')

@@ -126,6 +126,20 @@ exports.createListing = async (req, res) => {
       }
     }
     
+    // Parse payment preferences
+    let paymentPreferences = {
+      acceptedMethods: ['credit_card', 'paypal'],
+      preferredMethod: 'credit_card'
+    };
+    if (req.body.paymentPreferences && req.body.paymentPreferences.trim() !== '') {
+      try {
+        paymentPreferences = JSON.parse(req.body.paymentPreferences);
+      } catch (parseError) {
+        console.error('Error parsing paymentPreferences:', parseError);
+        // Keep default values
+      }
+    }
+    
     const listingData = {
       ...req.body,
       images: imageUrls,
@@ -135,6 +149,7 @@ exports.createListing = async (req, res) => {
       bedTypes: parseArray(req.body.bedTypes),
       houseRules: parseArray(req.body.houseRules),
       calendar: calendar,
+      paymentPreferences: paymentPreferences,
       carDetails: carDetails ? {
         ...carDetails,
         features: parseArray(carDetails.features),

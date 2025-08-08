@@ -22,6 +22,39 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    // Optional profile fields
+    phoneNumber: {
+        type: String,
+        default: ''
+    },
+    dateOfBirth: {
+        type: Date,
+        default: null
+    },
+    gender: {
+        type: String,
+        enum: ['male', 'female', 'other', 'prefer-not-to-say'],
+        default: null
+    },
+    address: {
+        street: { type: String, default: '' },
+        city: { type: String, default: '' },
+        state: { type: String, default: '' },
+        country: { type: String, default: '' },
+        zipCode: { type: String, default: '' }
+    },
+    bio: {
+        type: String,
+        default: ''
+    },
+
+    socialLinks: {
+        website: { type: String, default: '' },
+        facebook: { type: String, default: '' },
+        twitter: { type: String, default: '' },
+        instagram: { type: String, default: '' },
+        linkedin: { type: String, default: '' }
+    },
     role: {
         type: String,
         enum: ['guest', 'host', 'admin'],

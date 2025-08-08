@@ -23,7 +23,8 @@ import {
   MdInfo,
   MdPhone,
   MdEmail,
-  MdLanguage
+  MdLanguage,
+  MdMessage
 } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
 import { useListings } from '../context/ListingsContext';
@@ -159,10 +160,10 @@ const NavbarComponent = () => {
             {/* Navigation Links */}
             <Nav className="navbar-nav me-auto">
               <Nav.Link as={Link} to="/" className="nav-link">
-                <MdHome /> Home
-              </Nav.Link>
-              <Nav.Link as={Link} to="/explore" className="nav-link">
                 <MdTravelExplore /> Explore
+              </Nav.Link>
+              <Nav.Link as={Link} to="/messages" className="nav-link">
+                <MdMessage /> Messages
               </Nav.Link>
               <Nav.Link as={Link} to="/experiences" className="nav-link">
                 <MdEmojiEvents /> Experiences
@@ -266,9 +267,6 @@ const NavbarComponent = () => {
                           <MdAddCircle /> Become a Host
                         </Dropdown.Item>
                       )}
-                      <Dropdown.Item as={Link} to="/wishlist">
-                        <MdBookmark /> Wishlist
-                      </Dropdown.Item>
                       <Dropdown.Item as={Link} to="/settings">
                         <MdSettings /> Settings
                       </Dropdown.Item>

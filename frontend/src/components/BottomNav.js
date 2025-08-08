@@ -83,7 +83,7 @@ const navItems = [
 ];
 
 // Routes where bottom nav should be visible
-const bottomNavRoutes = ['/', '/experiences', '/messages', '/bookings'];
+const bottomNavRoutes = ['/', '/experiences', '/messages', '/bookings', '/listings'];
 
 const BottomNav = () => {
   const [visible, setVisible] = useState(true);
