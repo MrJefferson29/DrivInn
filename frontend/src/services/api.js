@@ -67,6 +67,8 @@ export const bookingsAPI = {
   getUserBookings: () => api.get('/bookings'),
   createBooking: (bookingData) => api.post('/bookings', bookingData),
   cancelBooking: (id) => api.delete(`/bookings/${id}`),
+  verifyPayment: (sessionId) => api.get(`/bookings/verify-payment/${sessionId}`),
+  updateBookingStatus: (bookingId, status) => api.put('/bookings/update-status', { bookingId, status }),
 };
 
 // Host Applications API calls
@@ -88,6 +90,14 @@ export const notificationsAPI = {
   getUnreadCount: (userId) => api.get(`/notifications/user/${userId}/unread-count`),
   deleteNotification: (notificationId) => api.delete(`/notifications/${notificationId}`),
   deleteAllNotifications: (userId) => api.delete(`/notifications/user/${userId}/all`)
+};
+
+// Payments API calls
+export const paymentsAPI = {
+  createPaymentIntent: (data) => api.post('/payments/create-payment-intent', data),
+  capturePayment: (data) => api.post('/payments/capture-payment', data),
+  getPaymentStatus: (paymentId) => api.get(`/payments/status/${paymentId}`),
+  getUserPayments: () => api.get('/payments/user-payments'),
 };
 
 export default api; 

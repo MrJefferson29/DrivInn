@@ -1530,13 +1530,20 @@ const ListingDetails = () => {
   };
 
   const handleBookingSuccess = (bookingData) => {
-    setBookingSuccess('Booking created successfully!');
-    setShowBookingForm(false);
-    
-    // Clear success message after 5 seconds
-    setTimeout(() => {
-      setBookingSuccess('');
-    }, 5000);
+    // Check if we have a checkout URL for payment
+    if (bookingData.checkoutUrl) {
+      // Redirect to Stripe checkout for payment
+      window.location.href = bookingData.checkoutUrl;
+    } else {
+      // Fallback for successful booking without payment
+      setBookingSuccess('Booking created successfully!');
+      setShowBookingForm(false);
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        setBookingSuccess('');
+      }, 5000);
+    }
   };
 
   const handleChat = async () => {

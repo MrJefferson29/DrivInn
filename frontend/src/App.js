@@ -28,6 +28,9 @@ import MyListings from './components/MyListings';
 import UserBookings from './components/UserBookings';
 import ChatRoomsList from './components/ChatRoomsList';
 import ChatScreen from './components/ChatScreen';
+import BookingSuccess from './components/BookingSuccess';
+import BookingCancel from './components/BookingCancel';
+import TestBookingStatus from './components/TestBookingStatus';
 
 function App() {
   return (
@@ -55,12 +58,15 @@ function App() {
           <Route path="/liked-listings" element={<LikedListings />} />
           <Route path="/listings" element={<MyListings />} />
           <Route path="/bookings" element={<UserBookings />} />
+          <Route path="/booking-success" element={<BookingSuccess />} />
+          <Route path="/booking-cancel" element={<BookingCancel />} />
+          <Route path="/test-booking-status" element={<TestBookingStatus />} />
           <Route path="/messages" element={<ChatRoomsList />} />
           <Route path="/messages/:roomId" element={<ChatScreen />} />
-            <Route path="/listing/:id" element={<ListingDetails />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/edit-profile" element={<EditProfile />} />
-            <Route path="/edit-listing/:id" element={<EditListing />} />
+          <Route path="/listing/:id" element={<ListingDetails />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/edit-profile" element={<EditProfile />} />
+          <Route path="/edit-listing/:id" element={<EditListing />} />
         </Routes>
       </Router>
         </FiltersProvider>

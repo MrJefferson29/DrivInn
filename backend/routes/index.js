@@ -8,7 +8,7 @@ const users = require('./users');
 const hostApplications = require('./hostApplications');
 const likes = require('./likes');
 const notifications = require('./notifications');
-// const payments = require('./payments')
+const payments = require('./payments')
 
 const router = express.Router()
 
@@ -22,5 +22,6 @@ router.use('/host-applications', hostApplications);
 router.use('/likes', likes);
 router.use('/notifications', notifications);
 router.use('/chat', require('./chat'));
+router.use('/payments', payments);
 
 module.exports = router

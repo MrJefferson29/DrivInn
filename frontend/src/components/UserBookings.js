@@ -126,7 +126,7 @@ const UserBookings = () => {
 
   const isBookingCancellable = (booking) => {
     const now = new Date();
-    const startDate = new Date(booking.startDate);
+    const startDate = new Date(booking.checkIn);
     const daysUntilBooking = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
     
     // Can cancel if booking is pending or reserved and more than 24 hours before start
@@ -239,17 +239,17 @@ const UserBookings = () => {
                         <div className="booking-dates">
                           <MdCalendarToday className="date-icon" />
                           <span>
-                            {formatDate(booking.startDate)} - {formatDate(booking.endDate)}
+                            {formatDate(booking.checkIn)} - {formatDate(booking.checkOut)}
                           </span>
                         </div>
                       </div>
 
                       <div className="listing-info">
-                        {booking.listing?.images?.[0] && (
+                        {booking.home?.images?.[0] && (
                           <div className="listing-image">
                             <img 
-                              src={booking.listing.images[0]} 
-                              alt={booking.listing.title}
+                              src={booking.home.images[0]} 
+                              alt={booking.home.title}
                               onError={(e) => {
                                 e.target.src = 'https://via.placeholder.com/300x200?text=No+Image';
                               }}
@@ -261,33 +261,33 @@ const UserBookings = () => {
                         )}
                         
                         <div className="listing-details">
-                          <h4 className="listing-title">{booking.listing?.title || 'Unknown Listing'}</h4>
+                          <h4 className="listing-title">{booking.home?.title || 'Unknown Listing'}</h4>
                           
                           <div className="listing-meta">
                             <div className="meta-item">
                               <MdLocationOn className="meta-icon" />
                               <span>
-                                {booking.listing?.city 
-                                  ? `${booking.listing.city}${booking.listing?.country ? `, ${booking.listing.country}` : ''}`
+                                {booking.home?.city 
+                                  ? `${booking.home.city}${booking.home?.country ? `, ${booking.home.country}` : ''}`
                                   : 'Location not available'}
                               </span>
                             </div>
                             
                             <div className="meta-item">
                               <MdPerson className="meta-icon" />
-                              <span>{booking.guests} guest{booking.guests !== 1 ? 's' : ''}</span>
+                              <span>{booking.guests || 1} guest{(booking.guests || 1) !== 1 ? 's' : ''}</span>
                             </div>
                             
                             <div className="meta-item">
                               <MdAccessTime className="meta-icon" />
-                              <span>{calculateNights(booking.startDate, booking.endDate)} night{calculateNights(booking.startDate, booking.endDate) !== 1 ? 's' : ''}</span>
+                              <span>{calculateNights(booking.checkIn, booking.checkOut)} night{calculateNights(booking.checkIn, booking.checkOut) !== 1 ? 's' : ''}</span>
                             </div>
                           </div>
 
-                          {booking.listing?.rating && (
+                          {booking.home?.rating && (
                             <div className="listing-rating">
                               <MdStar className="star-icon" />
-                              <span>{booking.listing.rating.toFixed(1)}</span>
+                              <span>{booking.home.rating.toFixed(1)}</span>
                             </div>
                           )}
                         </div>
@@ -337,19 +337,19 @@ const UserBookings = () => {
           
           <p>Are you sure you want to cancel this booking?</p>
           
-          {selectedBooking && (
-            <div className="cancel-details">
-              <h6>{selectedBooking.listing?.title}</h6>
-              <p>
-                <MdCalendarToday className="detail-icon" />
-                {formatDate(selectedBooking.startDate)} - {formatDate(selectedBooking.endDate)}
-              </p>
-              <p>
-                <MdAttachMoney className="detail-icon" />
-                {formatPrice(selectedBooking.totalPrice)} total
-              </p>
-            </div>
-          )}
+                     {selectedBooking && (
+             <div className="cancel-details">
+               <h6>{selectedBooking.home?.title}</h6>
+               <p>
+                 <MdCalendarToday className="detail-icon" />
+                 {formatDate(selectedBooking.checkIn)} - {formatDate(selectedBooking.checkOut)}
+               </p>
+               <p>
+                 <MdAttachMoney className="detail-icon" />
+                 {formatPrice(selectedBooking.totalPrice)} total
+               </p>
+             </div>
+           )}
           
           <Alert variant="warning" className="mt-3">
             <MdInfo className="alert-icon" />

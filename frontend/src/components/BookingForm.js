@@ -10,7 +10,7 @@ import {
   FaClock,
   FaShieldAlt
 } from 'react-icons/fa';
-import axios from 'axios';
+import { bookingsAPI } from '../services/api';
 
 // Airbnb color palette
 const airbnbRed = '#FF385C';
@@ -402,13 +402,7 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
         totalPrice: totalPrice
       };
 
-      const response = await axios.post('http://localhost:5000/bookings', bookingData, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
+      const response = await bookingsAPI.createBooking(bookingData);
       onSuccess(response.data);
       onClose();
     } catch (err) {

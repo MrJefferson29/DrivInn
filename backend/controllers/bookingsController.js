@@ -1,123 +1,117 @@
 const Booking = require('../models/booking');
+const Payment = require('../models/payment');
 const NotificationService = require('../services/notificationService');
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 
 exports.createBooking = async (req, res) => {
   try {
-    console.log('Creating booking with data:', req.body);
-    console.log('User from token:', req.user);
-    
     const { listing, startDate, endDate, guests, totalPrice } = req.body;
-    
-    // Validate required fields
-    if (!listing || !startDate || !endDate || !guests || !totalPrice) {
-      return res.status(400).json({ 
-        message: 'Missing required fields: listing, startDate, endDate, guests, totalPrice' 
-      });
-    }
+    const userId = req.user._id; // Get userId from authenticated user
 
-    // Validate dates
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return res.status(400).json({ message: 'Invalid date format' });
-    }
-    
-    if (start >= end) {
-      return res.status(400).json({ message: 'End date must be after start date' });
-    }
-    
-    if (start < new Date()) {
-      return res.status(400).json({ message: 'Start date cannot be in the past' });
-    }
-
-    // Get user ID from authenticated request
-    const guest = req.user._id;
-    
-    // Get host ID from listing
-    const Listing = require('../models/listing');
-    const listingDoc = await Listing.findById(listing);
-    console.log('Found listing:', listingDoc);
-    if (!listingDoc) {
-      return res.status(404).json({ message: 'Listing not found' });
-    }
-    
-    const hosts = listingDoc.owner;
-    console.log('Host ID:', hosts);
-
-    // Check for date conflicts for this listing
-    const conflict = await Booking.findOne({
+    console.log('📋 Creating booking with data:', {
       listing,
-      status: { $nin: ['cancelled'] }, // Exclude cancelled bookings
-      $or: [
-        {
-          startDate: { $lte: end },
-          endDate: { $gte: start }
-        }
-      ]
+      startDate,
+      endDate,
+      guests,
+      totalPrice,
+      userId
     });
-    
-    if (conflict) {
-      return res.status(400).json({ message: 'Selected dates are already booked.' });
-    }
 
-    // Get check-in and check-out times from listing
-    const checkInTime = listingDoc.checkIn || "14:00";
-    const checkOutTime = listingDoc.checkOut || "11:00";
+    // 1️⃣ Create booking in DB with "pending" status
+    const booking = await Booking.create({
+      user: userId,
+      home: listing, // Map listing to home
+      checkIn: startDate, // Map startDate to checkIn
+      checkOut: endDate, // Map endDate to checkOut
+      guests,
+      totalPrice,
+      status: 'pending'
+    });
 
-    // Create booking object with all required fields
-    const bookingData = {
-      listing,
-      guest,
-      hosts,
-      startDate: start,
-      endDate: end,
-      guests: parseInt(guests),
-      totalPrice: parseFloat(totalPrice),
-      status: 'pending', // Will be automatically updated to 'reserved' by pre-save middleware
-      checkInTime,
-      checkOutTime
-    };
-    console.log('Booking data to save:', bookingData);
+    console.log('✅ Booking created:', booking._id);
 
-    // Create and save booking
-    const booking = new Booking(bookingData);
+    // 2️⃣ Create payment record
+    const payment = await Payment.create({
+      user: userId,
+      booking: booking._id,
+      amount: totalPrice,
+      currency: 'usd',
+      status: 'pending',
+      paymentMethod: 'card',
+      stripeSessionId: null // Will be updated after Stripe session creation
+    });
+
+    // 3️⃣ Create Stripe Checkout session
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      success_url: `${process.env.FRONTEND_URL}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/booking-cancel?session_id={CHECKOUT_SESSION_ID}`,
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `Booking for ${listing}`,
+            },
+            unit_amount: Math.round(totalPrice * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        bookingId: booking._id.toString(),
+        paymentId: payment._id.toString(),
+      },
+    });
+
+    // 4️⃣ Update booking and payment with Stripe session ID
+    booking.paymentSessionId = session.id;
     await booking.save();
 
-    // Increment bookingCount for the listing
-    await Listing.findByIdAndUpdate(booking.listing, { $inc: { bookingCount: 1 } });
-
-    // Create notifications using the notification service
-    try {
-      await NotificationService.createBookingNotification(booking._id, 'booking');
-    } catch (notificationError) {
-      console.error('Error creating notifications:', notificationError);
-      // Don't fail the booking if notifications fail
-    }
+    payment.stripeSessionId = session.id;
+    await payment.save();
 
     res.status(201).json({
-      message: 'Booking created successfully',
-      booking
+      booking,
+      payment: {
+        id: payment._id,
+        status: payment.status
+      },
+      checkoutUrl: session.url
     });
-  } catch (err) {
-    console.error('Error creating booking:', err);
-    res.status(500).json({ message: 'Server error', error: err.message });
+
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    res.status(500).json({ message: 'Failed to create booking' });
   }
 };
 
+
 exports.getUserBookings = async (req, res) => {
   try {
-    // Update all booking statuses first
-    await Booking.updateAllStatuses();
-    
     // Only get bookings for the current authenticated user
-    const query = { guest: req.user._id };
+    const query = { user: req.user._id };
+    
+    console.log('📋 Fetching bookings for user:', req.user._id);
     
     const bookings = await Booking.find(query)
-      .populate('listing', 'title images price city country rating checkIn checkOut')
-      .populate('guest', 'firstName lastName email')
-      .populate('hosts', 'firstName lastName email')
+      .populate('home', 'title images price city country rating checkIn checkOut')
+      .populate('user', 'firstName lastName email')
       .sort({ createdAt: -1 });
+      
+    console.log('✅ Found bookings:', bookings.length);
+    console.log('📋 First booking sample:', bookings[0] ? {
+      id: bookings[0]._id,
+      status: bookings[0].status,
+      checkIn: bookings[0].checkIn,
+      checkOut: bookings[0].checkOut,
+      home: bookings[0].home ? {
+        title: bookings[0].home.title,
+        city: bookings[0].home.city
+      } : null
+    } : 'No bookings');
       
     res.json(bookings);
   } catch (err) {
@@ -134,7 +128,7 @@ exports.cancelBooking = async (req, res) => {
     }
 
     // Check if user is authorized to cancel this booking
-    if (booking.guest.toString() !== req.user.id && booking.hosts.toString() !== req.user.id) {
+    if (booking.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized to cancel this booking' });
     }
 
@@ -164,10 +158,71 @@ exports.cancelBooking = async (req, res) => {
 // Function to update all booking statuses (can be called by a cron job)
 exports.updateAllBookingStatuses = async (req, res) => {
   try {
-    await Booking.updateAllStatuses();
-    res.json({ message: 'All booking statuses updated successfully' });
+    // TODO: Implement booking status updates based on dates
+    res.json({ message: 'Booking status update functionality not yet implemented' });
   } catch (err) {
     console.error('Update booking statuses error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Temporary endpoint to manually update booking status (for testing)
+exports.updateBookingStatus = async (req, res) => {
+  try {
+    const { bookingId, status } = req.body;
+    
+    if (!bookingId || !status) {
+      return res.status(400).json({ message: 'Booking ID and status are required' });
+    }
+
+    const booking = await Booking.findByIdAndUpdate(
+      bookingId,
+      { status },
+      { new: true }
+    ).populate('home', 'title images price city country');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    console.log(`✅ Booking ${bookingId} status updated to ${status}`);
+    res.json({ message: 'Booking status updated successfully', booking });
+  } catch (err) {
+    console.error('Update booking status error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Verify payment and get booking details
+exports.verifyPayment = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    if (!sessionId) {
+      return res.status(400).json({ message: 'Session ID is required' });
+    }
+
+    // Find booking by session ID
+    const booking = await Booking.findOne({ paymentSessionId: sessionId })
+      .populate('home', 'title images price city country')
+      .populate('user', 'firstName lastName email');
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    // Check if user is authorized to view this booking
+    if (booking.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to view this booking' });
+    }
+
+    res.json({ 
+      booking,
+      paymentStatus: booking.status === 'reserved' ? 'completed' : 'pending'
+    });
+
+  } catch (err) {
+    console.error('Verify payment error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 }; 
