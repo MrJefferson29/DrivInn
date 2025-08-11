@@ -19,8 +19,12 @@ exports.submitApplication = async (req, res) => {
     const existingApplication = await HostApplication.findOne({ user: req.user._id });
     
     if (existingApplication) {
-      console.log('User already has an application, updating existing one');
-      
+      // Payment methods: only stripeAccountId and creditCardLast4
+      const stripeAccountId = req.body.stripeAccountId;
+      const creditCardLast4 = req.body.creditCardLast4;
+      if (!stripeAccountId && !creditCardLast4) {
+        return res.status(400).json({ message: 'At least one payment method (Stripe Account or Credit/Debit Card) is required.' });
+      }
       // Update existing application with new data
       const applicationData = {
         firstName: req.body.firstName,
@@ -43,15 +47,8 @@ exports.submitApplication = async (req, res) => {
           selfieImage: existingApplication.identityDocuments?.selfieImage || null
         },
         paymentMethods: {
-          stripeAccountId: req.body.stripeAccountId,
-          creditCard: {
-            last4: req.body.creditCardLast4,
-            brand: req.body.creditCardBrand,
-            expiryMonth: req.body.creditCardExpiryMonth,
-            expiryYear: req.body.creditCardExpiryYear,
-            isDefault: req.body.creditCardIsDefault === 'true'
-          },
-          paypalEmail: req.body.paypalEmail
+          stripeAccountId: stripeAccountId || undefined,
+          creditCard: creditCardLast4 ? { last4: creditCardLast4 } : undefined
         },
         propertyType: req.body.propertyType,
         propertyDescription: req.body.propertyDescription,
@@ -157,9 +154,13 @@ exports.submitApplication = async (req, res) => {
       console.log('Application updated successfully');
       res.json(updatedApplication);
     } else {
+      // Payment methods: only stripeAccountId and creditCardLast4
+      const stripeAccountId = req.body.stripeAccountId;
+      const creditCardLast4 = req.body.creditCardLast4;
+      if (!stripeAccountId && !creditCardLast4) {
+        return res.status(400).json({ message: 'At least one payment method (Stripe Account or Credit/Debit Card) is required.' });
+      }
       // Create new application (existing logic)
-      console.log('Creating new application');
-      
       const applicationData = {
         user: req.user._id,
         firstName: req.body.firstName,
@@ -182,15 +183,8 @@ exports.submitApplication = async (req, res) => {
           selfieImage: null
         },
         paymentMethods: {
-          stripeAccountId: req.body.stripeAccountId,
-          creditCard: {
-            last4: req.body.creditCardLast4,
-            brand: req.body.creditCardBrand,
-            expiryMonth: req.body.creditCardExpiryMonth,
-            expiryYear: req.body.creditCardExpiryYear,
-            isDefault: req.body.creditCardIsDefault === 'true'
-          },
-          paypalEmail: req.body.paypalEmail
+          stripeAccountId: stripeAccountId || undefined,
+          creditCard: creditCardLast4 ? { last4: creditCardLast4 } : undefined
         },
         propertyType: req.body.propertyType,
         propertyDescription: req.body.propertyDescription,

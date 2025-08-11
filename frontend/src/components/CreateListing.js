@@ -910,11 +910,15 @@ const initialState = {
     calendar: [],
     rules: [],
     cancellationPolicy: ''
-  }
+  },
+  // Payout preference inputs
+  payoutMethod: '', // '', 'stripe', 'card'
+  stripeAccountId: '',
+  cardLast4: ''
 };
 
 const steps = [
-  'Type', 'Location', 'Details', 'Amenities', 'Photos', 'Description', 'Pricing', 'Rules', 'Review'
+  'Type', 'Location', 'Details', 'Amenities', 'Photos', 'Description', 'Pricing', 'Payout', 'Rules', 'Review'
 ];
 
 const CreateListing = () => {
@@ -1600,6 +1604,31 @@ const CreateListing = () => {
       case 7:
         return (
           <>
+            <StepTitle>Choose how to receive your funds</StepTitle>
+            <FormField>
+              <Label>Payout Method</Label>
+              <StyledSelect name="payoutMethod" value={form.payoutMethod} onChange={handleChange}>
+                <option value="">Select payout method...</option>
+                <option value="stripe">Stripe Account</option>
+                <option value="card">Credit/Debit Card (last 4)</option>
+              </StyledSelect>
+            </FormField>
+            <FormField>
+              <Label>Stripe Account ID</Label>
+              <StyledInput name="stripeAccountId" value={form.stripeAccountId} onChange={handleChange} placeholder="acct_1234567890" />
+            </FormField>
+            <FormField>
+              <Label>Card Number (Last 4)</Label>
+              <StyledInput name="cardLast4" value={form.cardLast4} maxLength={4} onChange={handleChange} placeholder="1234" />
+            </FormField>
+            <Alert variant="info">
+              Provide either Stripe Account ID, Card last 4, or both. If both are provided, select your preferred payout method above.
+            </Alert>
+          </>
+        );
+      case 7:
+        return (
+          <>
             <StepTitle>Set your rules and policies</StepTitle>
             <FormField>
               <Label>{form.type === 'car' ? 'Car Rules' : 'House Rules'}</Label>
@@ -1641,7 +1670,7 @@ const CreateListing = () => {
             )}
           </>
         );
-      case 8:
+      case 9:
         return (
           <>
             <StepTitle>Review your listing</StepTitle>
@@ -1697,6 +1726,18 @@ const CreateListing = () => {
               <ReviewItem>
                 <span className="label">Price:</span>
                 <span className="value">${form.price} {form.type === 'car' ? 'per day' : 'per night'}</span>
+              </ReviewItem>
+              <ReviewItem>
+                <span className="label">Payout Method:</span>
+                <span className="value">{form.payoutMethod || 'Not selected'}</span>
+              </ReviewItem>
+              <ReviewItem>
+                <span className="label">Stripe Account ID:</span>
+                <span className="value">{form.stripeAccountId || 'N/A'}</span>
+              </ReviewItem>
+              <ReviewItem>
+                <span className="label">Card Last 4:</span>
+                <span className="value">{form.cardLast4 || 'N/A'}</span>
               </ReviewItem>
               <ReviewItem>
                 <span className="label">Images:</span>
@@ -1811,6 +1852,11 @@ const CreateListing = () => {
       }
       
       form.images.forEach(img => data.append('images', img));
+
+      // Append payout preference
+      if (form.payoutMethod) data.append('payoutMethod', form.payoutMethod);
+      if (form.stripeAccountId) data.append('stripeAccountId', form.stripeAccountId);
+      if (form.cardLast4) data.append('cardLast4', form.cardLast4);
       
       // Log what's being sent for debugging
       console.log('Submitting listing data:', {

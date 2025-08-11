@@ -68,18 +68,10 @@ const hostApplicationSchema = new mongoose.Schema({
   paymentMethods: {
     stripeAccountId: {
       type: String,
-      required: true
+      required: false
     },
     creditCard: {
-      last4: { type: String, required: true },
-      brand: { type: String, required: true },
-      expiryMonth: { type: String, required: true },
-      expiryYear: { type: String, required: true },
-      isDefault: { type: Boolean, default: false }
-    },
-    paypalEmail: {
-      type: String,
-      required: true
+      last4: { type: String, required: false }
     }
   },
   // Additional Information
@@ -119,6 +111,16 @@ const hostApplicationSchema = new mongoose.Schema({
 // Update the updatedAt field before saving
 hostApplicationSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
+  next();
+});
+
+// Custom validation: at least one of stripeAccountId or creditCard.last4 must be present
+hostApplicationSchema.pre('validate', function(next) {
+  const hasStripe = this.paymentMethods && this.paymentMethods.stripeAccountId;
+  const hasCard = this.paymentMethods && this.paymentMethods.creditCard && this.paymentMethods.creditCard.last4;
+  if (!hasStripe && !hasCard) {
+    this.invalidate('paymentMethods', 'At least one payment method (Stripe Account or Credit/Debit Card) is required.');
+  }
   next();
 });
 

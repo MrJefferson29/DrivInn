@@ -38,6 +38,15 @@ const listingSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now },
     isActive: { type: Boolean, default: true },
 
+    // Payout preference for this listing
+    payoutPreference: {
+        method: { type: String, enum: ['stripe', 'card'], default: undefined },
+        details: {
+            stripeAccountId: { type: String, default: undefined },
+            cardLast4: { type: String, default: undefined }
+        }
+    },
+
     // Apartment/Room fields
     propertyType: { type: String }, // e.g., Apartment, House, Villa
     roomType: { type: String }, // e.g., Entire place, Private room, Shared room

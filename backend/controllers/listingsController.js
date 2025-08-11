@@ -135,6 +135,21 @@ exports.createListing = async (req, res) => {
       bedTypes: parseArray(req.body.bedTypes),
       houseRules: parseArray(req.body.houseRules),
       calendar: calendar,
+      // Map payout preference if provided
+      payoutPreference: (() => {
+        const method = req.body.payoutMethod; // 'stripe' | 'card'
+        const stripeAccountId = req.body.stripeAccountId;
+        const cardLast4 = req.body.cardLast4;
+        if (!method && !stripeAccountId && !cardLast4) return undefined;
+        // Build minimal object
+        return {
+          method: method || (stripeAccountId ? 'stripe' : (cardLast4 ? 'card' : undefined)),
+          details: {
+            stripeAccountId: stripeAccountId || undefined,
+            cardLast4: cardLast4 || undefined
+          }
+        };
+      })(),
       carDetails: carDetails ? {
         ...carDetails,
         features: parseArray(carDetails.features),
@@ -150,6 +165,17 @@ exports.createListing = async (req, res) => {
       } : undefined
     };
     
+    // Validate payout preference consistency
+    if (listingData.payoutPreference) {
+      const { method, details } = listingData.payoutPreference;
+      if (method === 'stripe' && !details?.stripeAccountId) {
+        return res.status(400).json({ message: 'Stripe payout selected but no Stripe Account ID provided.' });
+      }
+      if (method === 'card' && !details?.cardLast4) {
+        return res.status(400).json({ message: 'Card payout selected but no Card last 4 provided.' });
+      }
+    }
+
     // Add geocoded lat/lng if possible
     const coords = getLatLngFromLocation(listingData.location);
     if (!coords) {

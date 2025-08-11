@@ -429,6 +429,7 @@ const HostApplicationForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // In formData, only keep stripeAccountId and creditCardLast4 for payment
   const [formData, setFormData] = useState({
     // Personal Information (pre-filled from user profile)
     firstName: user?.firstName || '',
@@ -451,11 +452,6 @@ const HostApplicationForm = () => {
     // Payment Information
     stripeAccountId: '',
     creditCardLast4: '',
-    creditCardBrand: '',
-    creditCardExpiryMonth: '',
-    creditCardExpiryYear: '',
-    creditCardIsDefault: false,
-    paypalEmail: '',
     // Property Information
     propertyType: '',
     propertyDescription: '',
@@ -488,11 +484,6 @@ const HostApplicationForm = () => {
         // Payment Information
         stripeAccountId: existingApplication.paymentMethods?.stripeAccountId || '',
         creditCardLast4: existingApplication.paymentMethods?.creditCard?.last4 || '',
-        creditCardBrand: existingApplication.paymentMethods?.creditCard?.brand || '',
-        creditCardExpiryMonth: existingApplication.paymentMethods?.creditCard?.expiryMonth || '',
-        creditCardExpiryYear: existingApplication.paymentMethods?.creditCard?.expiryYear || '',
-        creditCardIsDefault: existingApplication.paymentMethods?.creditCard?.isDefault || false,
-        paypalEmail: existingApplication.paymentMethods?.paypalEmail || '',
         // Property Information
         propertyType: existingApplication.propertyType || '',
         propertyDescription: existingApplication.propertyDescription || '',
@@ -544,6 +535,11 @@ const HostApplicationForm = () => {
   const handleSubmit = async () => {
     setLoading(true);
     setError('');
+    if (!formData.stripeAccountId && !formData.creditCardLast4) {
+      setError('At least one payment method (Stripe Account or Credit/Debit Card) is required.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const formDataToSend = new FormData();
@@ -845,16 +841,14 @@ const HostApplicationForm = () => {
         <FaCreditCard /> Payment Setup
       </StepTitle>
       <StepSubtitle>
-        Set up your payment methods to receive payments from guests.
+        Enter your Stripe Account ID and/or Credit/Debit Card Number (last 4 digits). At least one is required.
       </StepSubtitle>
-      
       <InfoBox>
         <InfoIcon />
         <InfoText>
-          We use Stripe for secure payment processing. Your payment information is encrypted and secure.
+          You can provide either your Stripe Account ID, your credit/debit card number (last 4 digits), or both. At least one is required to receive payments.
         </InfoText>
       </InfoBox>
-
       <PaymentMethodCard>
         <PaymentMethodHeader>
           <PaymentIcon type="stripe">
@@ -862,112 +856,37 @@ const HostApplicationForm = () => {
           </PaymentIcon>
           <PaymentTitle>Stripe Account</PaymentTitle>
         </PaymentMethodHeader>
-        
         <FormGrid>
           <FormGroup>
-            <Label>Stripe Account ID<Required>*</Required></Label>
+            <Label>Stripe Account ID</Label>
             <Input
               type="text"
               value={formData.stripeAccountId}
               onChange={(e) => handleInputChange('stripeAccountId', e.target.value)}
               placeholder="acct_1234567890"
-              required
             />
           </FormGroup>
         </FormGrid>
       </PaymentMethodCard>
-
       <PaymentMethodCard style={{ marginTop: '24px' }}>
         <PaymentMethodHeader>
           <PaymentIcon type="credit">
             <FaCreditCard />
           </PaymentIcon>
-          <PaymentTitle>Credit Card</PaymentTitle>
+          <PaymentTitle>Credit/Debit Card</PaymentTitle>
         </PaymentMethodHeader>
-        
         <FormGrid>
           <FormGroup>
-            <Label>Card Brand<Required>*</Required></Label>
-            <Select
-              value={formData.creditCardBrand}
-              onChange={(e) => handleInputChange('creditCardBrand', e.target.value)}
-              required
-            >
-              <option value="">Select Brand</option>
-              <option value="visa">Visa</option>
-              <option value="mastercard">Mastercard</option>
-              <option value="amex">American Express</option>
-              <option value="discover">Discover</option>
-            </Select>
-          </FormGroup>
-          
-          <FormGroup>
-            <Label>Last 4 Digits<Required>*</Required></Label>
+            <Label>Card Number (Last 4 Digits)</Label>
             <Input
               type="text"
               value={formData.creditCardLast4}
               onChange={(e) => handleInputChange('creditCardLast4', e.target.value)}
               placeholder="1234"
               maxLength="4"
-              required
             />
           </FormGroup>
-          
-          <FormGroup>
-            <Label>Expiry Month<Required>*</Required></Label>
-            <Select
-              value={formData.creditCardExpiryMonth}
-              onChange={(e) => handleInputChange('creditCardExpiryMonth', e.target.value)}
-              required
-            >
-              <option value="">Month</option>
-              {Array.from({ length: 12 }, (_, i) => (
-                <option key={i + 1} value={String(i + 1).padStart(2, '0')}>
-                  {String(i + 1).padStart(2, '0')}
-                </option>
-              ))}
-            </Select>
-          </FormGroup>
-          
-          <FormGroup>
-            <Label>Expiry Year<Required>*</Required></Label>
-            <Select
-              value={formData.creditCardExpiryYear}
-              onChange={(e) => handleInputChange('creditCardExpiryYear', e.target.value)}
-              required
-            >
-              <option value="">Year</option>
-              {Array.from({ length: 10 }, (_, i) => {
-                const year = new Date().getFullYear() + i;
-                return (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                );
-              })}
-            </Select>
-          </FormGroup>
         </FormGrid>
-      </PaymentMethodCard>
-
-      <PaymentMethodCard style={{ marginTop: '24px' }}>
-        <PaymentMethodHeader>
-          <PaymentIcon type="paypal">
-            <FaPaypal />
-          </PaymentIcon>
-          <PaymentTitle>PayPal</PaymentTitle>
-        </PaymentMethodHeader>
-        
-        <FormGroup>
-          <Label>PayPal Email<Required>*</Required></Label>
-          <Input
-            type="email"
-            value={formData.paypalEmail}
-            onChange={(e) => handleInputChange('paypalEmail', e.target.value)}
-            placeholder="your-email@paypal.com"
-            required
-          />
-        </FormGroup>
       </PaymentMethodCard>
     </>
   );
@@ -1046,9 +965,8 @@ const HostApplicationForm = () => {
         <div><strong>Documents:</strong> {formData.idFrontImage ? 'Front ✓' : 'Front ✗'}, {formData.idBackImage ? 'Back ✓' : 'Back ✗'}, {formData.selfieImage ? 'Selfie ✓' : 'Selfie ✗'}</div>
         
         <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Payment Methods</h3>
-        <div><strong>Stripe Account:</strong> {formData.stripeAccountId}</div>
-        <div><strong>Credit Card:</strong> {formData.creditCardBrand} ending in {formData.creditCardLast4}</div>
-        <div><strong>PayPal:</strong> {formData.paypalEmail}</div>
+        <div><strong>Stripe Account:</strong> {formData.stripeAccountId || 'N/A'}</div>
+        <div><strong>Credit/Debit Card (Last 4):</strong> {formData.creditCardLast4 || 'N/A'}</div>
         
         <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Property Information</h3>
         <div><strong>Type:</strong> {formData.propertyType}</div>
