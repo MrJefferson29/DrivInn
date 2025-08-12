@@ -13,7 +13,8 @@ import {
   MdAccessTime,
   MdInfo,
   MdHome,
-  MdExplore
+  MdExplore,
+  MdPayment
 } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
 import { bookingsAPI } from '../services/api';
@@ -278,10 +279,15 @@ const UserBookings = () => {
                               <span>{booking.guests || 1} guest{(booking.guests || 1) !== 1 ? 's' : ''}</span>
                             </div>
                             
-                            <div className="meta-item">
-                              <MdAccessTime className="meta-icon" />
-                              <span>{calculateNights(booking.checkIn, booking.checkOut)} night{calculateNights(booking.checkIn, booking.checkOut) !== 1 ? 's' : ''}</span>
-                            </div>
+                                                       <div className="meta-item">
+                             <MdAccessTime className="meta-icon" />
+                             <span>{calculateNights(booking.checkIn, booking.checkOut)} night{calculateNights(booking.checkIn, booking.checkOut) !== 1 ? 's' : ''}</span>
+                           </div>
+                           
+                           <div className="meta-item">
+                             <MdPayment className="meta-icon" />
+                             <span>{booking.paymentMethod === 'cashapp' ? 'Cash App Pay' : 'Credit Card'}</span>
+                           </div>
                           </div>
 
                           {booking.home?.rating && (

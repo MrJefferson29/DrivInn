@@ -6,7 +6,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 exports.createBooking = async (req, res) => {
   try {
-    const { listing, startDate, endDate, guests, totalPrice } = req.body;
+    const { listing, startDate, endDate, guests, totalPrice, paymentMethod = 'card' } = req.body;
     const userId = req.user._id; // Get userId from authenticated user
 
     console.log('📋 Creating booking with data:', {
@@ -15,6 +15,7 @@ exports.createBooking = async (req, res) => {
       endDate,
       guests,
       totalPrice,
+      paymentMethod,
       userId
     });
 
@@ -38,13 +39,15 @@ exports.createBooking = async (req, res) => {
       amount: totalPrice,
       currency: 'usd',
       status: 'pending',
-      paymentMethod: 'card',
+      paymentMethod: paymentMethod, // Use selected payment method
       stripeSessionId: null // Will be updated after Stripe session creation
     });
 
-    // 3️⃣ Create Stripe Checkout session
+    // 3️⃣ Create Stripe Checkout session with selected payment method
+    const paymentMethodTypes = paymentMethod === 'cashapp' ? ['cashapp'] : ['card'];
+    
     const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
+      payment_method_types: paymentMethodTypes,
       mode: 'payment',
       success_url: `${process.env.FRONTEND_URL}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL}/booking-cancel?session_id={CHECKOUT_SESSION_ID}`,
@@ -63,6 +66,7 @@ exports.createBooking = async (req, res) => {
       metadata: {
         bookingId: booking._id.toString(),
         paymentId: payment._id.toString(),
+        paymentMethod: paymentMethod, // Store payment method in metadata
       },
     });
 
@@ -77,7 +81,8 @@ exports.createBooking = async (req, res) => {
       booking,
       payment: {
         id: payment._id,
-        status: payment.status
+        status: payment.status,
+        method: paymentMethod
       },
       checkoutUrl: session.url
     });

@@ -8,8 +8,10 @@ import {
   FaTimes, 
   FaCheck,
   FaClock,
-  FaShieldAlt
+  FaShieldAlt,
+  FaCreditCard
 } from 'react-icons/fa';
+import { FaMobileAlt } from 'react-icons/fa';
 import { bookingsAPI } from '../services/api';
 
 // Airbnb color palette
@@ -331,12 +333,57 @@ const InfoText = styled.p`
   }
 `;
 
+const PaymentMethodSection = styled.div`
+  margin-bottom: 24px;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 20px;
+  }
+`;
+
+const PaymentMethodGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+  
+  @media (max-width: 768px) {
+    gap: 10px;
+  }
+`;
+
+const PaymentMethodOption = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  border: 2px solid ${props => props.selected ? airbnbRed : airbnbBorder};
+  border-radius: 12px;
+  background: ${props => props.selected ? '#fff5f5' : 'white'};
+  color: ${props => props.selected ? airbnbRed : airbnbDark};
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: ${airbnbRed};
+    background: #fff5f5;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 14px;
+    font-size: 0.9rem;
+  }
+`;
+
 const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     startDate: '',
     endDate: '',
     guests: 1
   });
+  const [paymentMethod, setPaymentMethod] = useState('card');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -399,7 +446,8 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
         startDate: new Date(formData.startDate),
         endDate: new Date(formData.endDate),
         guests: formData.guests,
-        totalPrice: totalPrice
+        totalPrice: totalPrice,
+        paymentMethod: paymentMethod
       };
 
       const response = await bookingsAPI.createBooking(bookingData);
@@ -499,6 +547,37 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
               </InfoText>
             </FormSection>
 
+            {/* Payment Method Selection */}
+            <PaymentMethodSection>
+              <SectionTitle>
+                <FaDollarSign /> Payment method
+              </SectionTitle>
+              <PaymentMethodGrid>
+                <PaymentMethodOption
+                  type="button"
+                  selected={paymentMethod === 'card'}
+                  onClick={() => setPaymentMethod('card')}
+                >
+                  <FaCreditCard />
+                  Credit Card
+                </PaymentMethodOption>
+                <PaymentMethodOption
+                  type="button"
+                  selected={paymentMethod === 'cashapp'}
+                  onClick={() => setPaymentMethod('cashapp')}
+                >
+                  <FaMobileAlt />
+                  Cash App Pay
+                </PaymentMethodOption>
+              </PaymentMethodGrid>
+              <InfoText>
+                {paymentMethod === 'cashapp' 
+                  ? 'You will be redirected to Cash App to complete your payment securely.'
+                  : 'Your payment will be processed securely through Stripe.'
+                }
+              </InfoText>
+            </PaymentMethodSection>
+
             {/* Price Breakdown */}
             {totalPrice > 0 && (
               <PriceBreakdown>
@@ -551,7 +630,7 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
                   Creating booking...
                 </>
               ) : (
-                `Book now • $${totalPrice}`
+                `Book now with ${paymentMethod === 'cashapp' ? 'Cash App Pay' : 'Credit Card'} • $${totalPrice}`
               )}
             </SubmitButton>
           </form>

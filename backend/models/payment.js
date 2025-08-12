@@ -26,7 +26,7 @@ const paymentSchema = new mongoose.Schema({
   },
   paymentMethod: { 
     type: String, 
-    enum: ['card', 'stripe'], 
+    enum: ['card', 'cashapp'], 
     required: true 
   },
   stripePaymentIntentId: { 
