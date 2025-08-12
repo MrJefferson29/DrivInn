@@ -44,7 +44,20 @@ exports.createBooking = async (req, res) => {
     });
 
     // 3️⃣ Create Stripe Checkout session with selected payment method
-    const paymentMethodTypes = paymentMethod === 'cashapp' ? ['cashapp'] : ['card'];
+    let paymentMethodTypes;
+    switch (paymentMethod) {
+      case 'cashapp':
+        paymentMethodTypes = ['cashapp'];
+        break;
+      case 'bank_transfer':
+        paymentMethodTypes = ['card', 'us_bank_account'];
+        break;
+      case 'samsung_pay':
+        paymentMethodTypes = ['card', 'samsung_pay'];
+        break;
+      default:
+        paymentMethodTypes = ['card'];
+    }
     
     const session = await stripe.checkout.sessions.create({
       payment_method_types: paymentMethodTypes,
@@ -121,6 +134,51 @@ exports.getUserBookings = async (req, res) => {
     res.json(bookings);
   } catch (err) {
     console.error('Get bookings error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Get bookings for listings owned by the authenticated user (host view)
+exports.getHostBookings = async (req, res) => {
+  try {
+    console.log('📋 Fetching host bookings for user:', req.user._id);
+    
+    // First, get all listings owned by this user
+    const Listing = require('../models/listing');
+    const userListings = await Listing.find({ owner: req.user._id }).select('_id');
+    const listingIds = userListings.map(listing => listing._id);
+    
+    console.log('📋 Found listings owned by user:', listingIds.length);
+    
+    if (listingIds.length === 0) {
+      return res.json([]);
+    }
+    
+    // Get all bookings for these listings
+    const bookings = await Booking.find({ home: { $in: listingIds } })
+      .populate('home', 'title images price city country rating checkIn checkOut')
+      .populate('user', 'firstName lastName email')
+      .sort({ createdAt: -1 });
+      
+    console.log('✅ Found host bookings:', bookings.length);
+    console.log('📋 First host booking sample:', bookings[0] ? {
+      id: bookings[0]._id,
+      status: bookings[0].status,
+      checkIn: bookings[0].checkIn,
+      checkOut: bookings[0].checkOut,
+      home: bookings[0].home ? {
+        title: bookings[0].home.title,
+        city: bookings[0].home.city
+      } : null,
+      guest: bookings[0].user ? {
+        firstName: bookings[0].user.firstName,
+        lastName: bookings[0].user.lastName
+      } : null
+    } : 'No host bookings');
+      
+    res.json(bookings);
+  } catch (err) {
+    console.error('Get host bookings error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -207,6 +265,14 @@ exports.verifyPayment = async (req, res) => {
       return res.status(400).json({ message: 'Session ID is required' });
     }
 
+    // Retrieve Stripe session to confirm payment state
+    let session;
+    try {
+      session = await stripe.checkout.sessions.retrieve(sessionId);
+    } catch (stripeErr) {
+      console.error('Stripe session retrieve error:', stripeErr.message);
+    }
+
     // Find booking by session ID
     const booking = await Booking.findOne({ paymentSessionId: sessionId })
       .populate('home', 'title images price city country')
@@ -219,6 +285,36 @@ exports.verifyPayment = async (req, res) => {
     // Check if user is authorized to view this booking
     if (booking.user._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: 'Not authorized to view this booking' });
+    }
+
+    // If Stripe confirms the payment is complete/paid, update booking and payment
+    const isPaid = session && (session.payment_status === 'paid' || session.status === 'complete');
+    if (isPaid && booking.status !== 'reserved') {
+      booking.status = 'reserved';
+      await booking.save();
+
+      // Update payment record if available
+      try {
+        let payment;
+        if (session && session.metadata && session.metadata.paymentId) {
+          payment = await Payment.findById(session.metadata.paymentId);
+        }
+        if (!payment) {
+          payment = await Payment.findOne({ stripeSessionId: sessionId });
+        }
+        if (payment) {
+          payment.status = 'completed';
+          payment.transactionId = session.payment_intent || session.id;
+          payment.metadata = {
+            ...(payment.metadata || {}),
+            stripeSessionId: session.id,
+            paymentIntentId: session.payment_intent,
+          };
+          await payment.save();
+        }
+      } catch (updatePaymentErr) {
+        console.error('Payment update error (verifyPayment):', updatePaymentErr.message);
+      }
     }
 
     res.json({ 

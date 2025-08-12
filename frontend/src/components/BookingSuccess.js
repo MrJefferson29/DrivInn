@@ -10,7 +10,7 @@ import {
   FaHome,
   FaCreditCard
 } from 'react-icons/fa';
-import { FaMobileAlt } from 'react-icons/fa';
+import { FaMobileAlt, FaUniversity, FaMobile } from 'react-icons/fa';
 import { bookingsAPI } from '../services/api';
 
 // Airbnb color palette
@@ -304,10 +304,18 @@ const BookingSuccess = () => {
             
             <DetailRow>
               <DetailIcon>
-                {booking.paymentMethod === 'cashapp' ? <FaMobileAlt /> : <FaCreditCard />}
+                {booking.paymentMethod === 'cashapp' ? <FaMobileAlt /> 
+                 : booking.paymentMethod === 'bank_transfer' ? <FaUniversity />
+                 : booking.paymentMethod === 'samsung_pay' ? <FaMobile />
+                 : <FaCreditCard />}
               </DetailIcon>
               <DetailText>
-                <strong>Payment Method:</strong> {booking.paymentMethod === 'cashapp' ? 'Cash App Pay' : 'Credit Card'}
+                <strong>Payment Method:</strong> {
+                  booking.paymentMethod === 'cashapp' ? 'Cash App Pay'
+                  : booking.paymentMethod === 'bank_transfer' ? 'Bank Transfer'
+                  : booking.paymentMethod === 'samsung_pay' ? 'Samsung Pay'
+                  : 'Credit Card'
+                }
               </DetailText>
             </DetailRow>
           </BookingDetails>

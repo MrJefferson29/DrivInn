@@ -284,10 +284,15 @@ const UserBookings = () => {
                              <span>{calculateNights(booking.checkIn, booking.checkOut)} night{calculateNights(booking.checkIn, booking.checkOut) !== 1 ? 's' : ''}</span>
                            </div>
                            
-                           <div className="meta-item">
-                             <MdPayment className="meta-icon" />
-                             <span>{booking.paymentMethod === 'cashapp' ? 'Cash App Pay' : 'Credit Card'}</span>
-                           </div>
+                                                       <div className="meta-item">
+                              <MdPayment className="meta-icon" />
+                              <span>{
+                                booking.paymentMethod === 'cashapp' ? 'Cash App Pay'
+                                : booking.paymentMethod === 'bank_transfer' ? 'Bank Transfer'
+                                : booking.paymentMethod === 'samsung_pay' ? 'Samsung Pay'
+                                : 'Credit Card'
+                              }</span>
+                            </div>
                           </div>
 
                           {booking.home?.rating && (

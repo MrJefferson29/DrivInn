@@ -5,6 +5,7 @@ const { verifyToken, authorizeRole } = require('../middleware/auth');
 
 // All bookings routes require authentication
 router.get('/', verifyToken, bookingsController.getUserBookings);
+router.get('/host', verifyToken, bookingsController.getHostBookings);
 router.post('/', verifyToken, bookingsController.createBooking);
 router.delete('/:id', verifyToken, bookingsController.cancelBooking);
 

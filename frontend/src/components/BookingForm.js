@@ -11,7 +11,7 @@ import {
   FaShieldAlt,
   FaCreditCard
 } from 'react-icons/fa';
-import { FaMobileAlt } from 'react-icons/fa';
+import { FaMobileAlt, FaUniversity, FaMobile } from 'react-icons/fa';
 import { bookingsAPI } from '../services/api';
 
 // Airbnb color palette
@@ -348,6 +348,7 @@ const PaymentMethodGrid = styled.div`
   margin-top: 12px;
   
   @media (max-width: 768px) {
+    grid-template-columns: 1fr;
     gap: 10px;
   }
 `;
@@ -569,10 +570,30 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
                   <FaMobileAlt />
                   Cash App Pay
                 </PaymentMethodOption>
+                <PaymentMethodOption
+                  type="button"
+                  selected={paymentMethod === 'bank_transfer'}
+                  onClick={() => setPaymentMethod('bank_transfer')}
+                >
+                  <FaUniversity />
+                  Bank Transfer
+                </PaymentMethodOption>
+                <PaymentMethodOption
+                  type="button"
+                  selected={paymentMethod === 'samsung_pay'}
+                  onClick={() => setPaymentMethod('samsung_pay')}
+                >
+                  <FaMobile />
+                  Samsung Pay
+                </PaymentMethodOption>
               </PaymentMethodGrid>
               <InfoText>
                 {paymentMethod === 'cashapp' 
                   ? 'You will be redirected to Cash App to complete your payment securely.'
+                  : paymentMethod === 'bank_transfer'
+                  ? 'You will be redirected to complete your bank transfer securely.'
+                  : paymentMethod === 'samsung_pay'
+                  ? 'You will be redirected to Samsung Pay to complete your payment securely.'
                   : 'Your payment will be processed securely through Stripe.'
                 }
               </InfoText>
@@ -630,7 +651,12 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
                   Creating booking...
                 </>
               ) : (
-                `Book now with ${paymentMethod === 'cashapp' ? 'Cash App Pay' : 'Credit Card'} • $${totalPrice}`
+                `Book now with ${
+                  paymentMethod === 'cashapp' ? 'Cash App Pay' 
+                  : paymentMethod === 'bank_transfer' ? 'Bank Transfer'
+                  : paymentMethod === 'samsung_pay' ? 'Samsung Pay'
+                  : 'Credit Card'
+                } • $${totalPrice}`
               )}
             </SubmitButton>
           </form>

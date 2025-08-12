@@ -1467,25 +1467,18 @@ const ListingDetails = () => {
   useEffect(() => {
     if (listing && user && listing.owner && (user.id === listing.owner._id || user._id === listing.owner._id)) {
       setBookingsLoading(true);
-      fetch(`http://localhost:5000/bookings?listingId=${listing._id}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
-        .then(async res => {
-          if (!res.ok) {
-            throw new Error('Failed to fetch bookings');
-          }
-          return res.json();
-        })
-        .then(data => {
-          setBookings(data);
-          setBookingsLoading(false);
-        })
-        .catch(err => {
-          console.error('Error fetching bookings:', err);
-          setBookingsLoading(false);
-        });
+      // Use the new host bookings API
+      import('../services/api').then(({ bookingsAPI }) => {
+        bookingsAPI.getHostBookings()
+          .then(response => {
+            setBookings(response.data);
+            setBookingsLoading(false);
+          })
+          .catch(err => {
+            console.error('Error fetching host bookings:', err);
+            setBookingsLoading(false);
+          });
+      });
     }
   }, [listing, user]);
 
@@ -1605,8 +1598,8 @@ const ListingDetails = () => {
     if (!bookings.length) return [];
     const now = new Date();
     return bookings
-      .filter(b => new Date(b.startDate) > now && b.status !== 'cancelled')
-      .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+      .filter(b => new Date(b.checkIn) > now && b.status !== 'cancelled')
+      .sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn))
       .slice(0, 5);
   };
 
@@ -1614,8 +1607,8 @@ const ListingDetails = () => {
     if (!bookings.length) return [];
     const now = new Date();
     return bookings
-      .filter(b => new Date(b.endDate) < now && b.status !== 'cancelled')
-      .sort((a, b) => new Date(b.endDate) - new Date(a.endDate))
+      .filter(b => new Date(b.checkOut) < now && b.status !== 'cancelled')
+      .sort((a, b) => new Date(b.checkOut) - new Date(a.checkOut))
       .slice(0, 5);
   };
 
@@ -2235,10 +2228,10 @@ const highlightIcons = {
                     getUpcomingBookings().map((booking, index) => (
                       <BookingItem key={booking._id || index}>
                         <BookingGuest>
-                          {booking.guest?.firstName} {booking.guest?.lastName}
+                          {booking.user?.firstName} {booking.user?.lastName}
                         </BookingGuest>
                         <BookingDates>
-                          {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
+                          {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
                         </BookingDates>
                         <BookingPrice>${booking.totalPrice}</BookingPrice>
                       </BookingItem>
@@ -2258,10 +2251,10 @@ const highlightIcons = {
                     getPastBookings().map((booking, index) => (
                       <BookingItem key={booking._id || index}>
                         <BookingGuest>
-                          {booking.guest?.firstName} {booking.guest?.lastName}
+                          {booking.user?.firstName} {booking.user?.lastName}
                         </BookingGuest>
                         <BookingDates>
-                          {new Date(booking.startDate).toLocaleDateString()} - {new Date(booking.endDate).toLocaleDateString()}
+                          {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
                         </BookingDates>
                         <BookingPrice>${booking.totalPrice}</BookingPrice>
                       </BookingItem>

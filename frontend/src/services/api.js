@@ -65,6 +65,7 @@ export const reviewsAPI = {
 // Bookings API calls
 export const bookingsAPI = {
   getUserBookings: () => api.get('/bookings'),
+  getHostBookings: () => api.get('/bookings/host'),
   createBooking: (bookingData) => api.post('/bookings', bookingData),
   cancelBooking: (id) => api.delete(`/bookings/${id}`),
   verifyPayment: (sessionId) => api.get(`/bookings/verify-payment/${sessionId}`),
