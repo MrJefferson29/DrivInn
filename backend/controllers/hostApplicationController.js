@@ -43,6 +43,8 @@ const uploadFileToStripe = async (fileUrl, purpose = 'identity_document') => {
 };
 
 // Submit host application
+// NOTE: This function creates the Stripe Connect account during submission.
+// The admin approval process only stores the remediation link and does NOT create duplicate accounts.
 exports.submitApplication = async (req, res) => {
   try {
     console.log('Submit application request:', {
@@ -1421,6 +1423,9 @@ exports.listApplications = async (req, res) => {
 };
 
 // Admin: approve application
+// NOTE: This function only approves applications and stores the remediation link.
+// Stripe Connect accounts are created during the initial application submission,
+// not during approval. This prevents duplicate account creation.
 exports.approveApplication = async (req, res) => {
   try {
     const { adminNote, stripeRemediationLink } = req.body;
@@ -1437,175 +1442,26 @@ exports.approveApplication = async (req, res) => {
     if (!application) return res.status(404).json({ message: 'Application not found' });
     if (application.status === 'approved') return res.status(400).json({ message: 'Already approved' });
     
-    // Create Stripe Connect Express account for the host
-    try {
-      console.log('Creating Stripe Connect Express account for host:', application.user);
-      
-      // Validate that all required information is present
-      const requiredFields = [
-        'firstName', 'lastName', 'email', 'phoneNumber', 'dateOfBirth',
-        'postalAddress.street', 'postalAddress.city', 'postalAddress.state', 
-        'postalAddress.postalCode', 'postalAddress.country'
-      ];
-      
-      const missingFields = requiredFields.filter(field => {
-        const value = field.split('.').reduce((obj, key) => obj?.[key], application);
-        return !value || (typeof value === 'string' && value.trim() === '');
-      });
-      
-      if (missingFields.length > 0) {
-        return res.status(400).json({
-          message: 'Missing required fields for Stripe Connect account creation',
-          error: 'MISSING_REQUIRED_FIELDS',
-          missingFields: missingFields
-        });
-      }
-      
-      // Upload ID front image to Stripe if available
-      let stripeFileId = null;
-      if (application.identityDocuments?.idFrontImage) {
-        try {
-          console.log('Uploading ID front image to Stripe...');
-          stripeFileId = await uploadFileToStripe(application.identityDocuments.idFrontImage);
-          console.log('ID front image uploaded to Stripe:', stripeFileId);
-        } catch (uploadError) {
-          console.error('Failed to upload ID front image to Stripe:', uploadError);
-          // Continue without the document for now
-        }
-      }
-      
-      // Helper function to convert country name to ISO code
-      const getCountryCode = (countryName) => {
-        if (!countryName) return 'US';
-        const countryMap = {
-          'United States': 'US',
-          'Canada': 'CA',
-          'United Kingdom': 'GB',
-          'Australia': 'AU',
-          'Germany': 'DE',
-          'France': 'FR',
-          'Spain': 'ES',
-          'Italy': 'IT',
-          'Netherlands': 'NL',
-          'Belgium': 'BE',
-          'Switzerland': 'CH',
-          'Austria': 'AT',
-          'Sweden': 'SE',
-          'Norway': 'NO',
-          'Denmark': 'DK',
-          'Finland': 'FI',
-          'Ireland': 'IE',
-          'Portugal': 'PT',
-          'Greece': 'GR',
-          'Poland': 'PL',
-          'Czech Republic': 'CZ',
-          'Hungary': 'HU',
-          'Slovakia': 'SK',
-          'Slovenia': 'SI',
-          'Croatia': 'HR',
-          'Romania': 'RO',
-          'Bulgaria': 'BG',
-          'Estonia': 'EE',
-          'Latvia': 'LV',
-          'Lithuania': 'LT',
-          'Luxembourg': 'LU',
-          'Malta': 'MT',
-          'Cyprus': 'CY'
-        };
-        return countryMap[countryName] || countryName;
-      };
-
-      // Create Stripe account with available information
-      const account = await stripe.accounts.create({
-        type: 'express',
-        country: getCountryCode(application.postalAddress?.country),
-        email: application.email,
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
-          tax_reporting_us_1099_k: { requested: true },
-        },
-        business_type: application.businessStructure === 'individual' ? 'individual' : 'company',
-        company: application.businessStructure !== 'individual' ? {
-          name: application.businessName || `${application.firstName} ${application.lastName} Hosting Services`,
-          tax_id: application.businessTaxId || null,
-          phone: application.supportPhone || application.phoneNumber,
-          address: {
-            line1: application.businessAddress?.street || application.postalAddress?.street,
-            city: application.businessAddress?.city || application.postalAddress?.city,
-            state: application.businessAddress?.state || application.postalAddress?.state,
-            postal_code: application.businessAddress?.postalCode || application.postalAddress?.postalCode,
-            country: getCountryCode(application.businessAddress?.country || application.postalAddress?.country),
-          },
-          structure: application.businessStructure || 'individual',
-        } : undefined,
-        individual: application.businessStructure === 'individual' ? {
-          first_name: application.firstName,
-          last_name: application.lastName,
-          email: application.email,
-          phone: application.supportPhone || application.phoneNumber,
-          dob: {
-            day: application.dateOfBirth.getDate(),
-            month: application.dateOfBirth.getMonth() + 1,
-            year: application.dateOfBirth.getFullYear(),
-          },
-          ssn_last_4: application.ssnLast4 || null,
-          id_number: application.ssn ? application.ssn.replace(/[^0-9]/g, '') : null,
-          address: {
-            line1: application.postalAddress.street,
-            city: application.postalAddress.city,
-            state: application.postalAddress.state,
-            postal_code: application.postalAddress.postalCode,
-            country: getCountryCode(application.postalAddress.country),
-          },
-        } : undefined,
-        business_profile: {
-          support_phone: application.supportPhone || application.phoneNumber,
-          url: null,
-          mcc: '7399', // Computer Software Stores
-        },
-        settings: {
-          payouts: {
-            schedule: {
-              interval: 'manual', // Payouts are triggered manually by our scheduler
-            },
-          },
-        },
-        metadata: {
-          business_category: 'rental_services',
-          platform: 'DrivInn',
-          account_type: 'host',
-        },
-      });
-
-      console.log('Stripe Connect Express account created:', account.id);
-      
-      // Update application with Stripe Connect account info
-      application.stripeConnect = {
-        accountId: account.id,
-        accountStatus: account.charges_enabled && account.payouts_enabled ? 'active' : 'pending',
-        onboardingCompleted: account.charges_enabled
-      };
-      
-      // Store any pending requirements for better guidance
-      if (account.requirements && Object.keys(account.requirements).length > 0) {
-        application.stripeConnect.pendingRequirements = account.requirements;
-      }
-      
-    } catch (stripeError) {
-      console.error('Error creating Stripe Connect account:', stripeError);
-      return res.status(500).json({ 
-        message: 'Failed to create payment account. Please try again.',
-        error: stripeError.message 
+    // Verify that Stripe Connect account already exists (created during submission)
+    if (!application.stripeConnect || !application.stripeConnect.accountId) {
+      console.error('No Stripe Connect account found for application:', application._id);
+      return res.status(400).json({ 
+        message: 'Stripe Connect account not found. The application may not have been properly submitted.',
+        error: 'STRIPE_ACCOUNT_MISSING'
       });
     }
     
+    console.log('Stripe Connect account already exists:', application.stripeConnect.accountId);
+    console.log('Account status:', application.stripeConnect.accountStatus);
+    
+    // Update application status to approved
     console.log('Updating application status to approved');
     application.status = 'approved';
     application.reviewedAt = new Date();
     application.reviewedBy = req.user._id;
     application.adminNote = adminNote;
     application.stripeRemediationLink = stripeRemediationLink;
+    
     await application.save();
     
     console.log('Updating user profile with host application data');
@@ -1640,7 +1496,7 @@ exports.approveApplication = async (req, res) => {
     }
     
     res.json({ 
-      message: 'Application approved', 
+      message: 'Application approved successfully', 
       application,
       stripeAccount: {
         id: application.stripeConnect.accountId,
