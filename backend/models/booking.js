@@ -5,10 +5,27 @@ const bookingSchema = new mongoose.Schema({
   home: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
   checkIn: { type: Date, required: true },
   checkOut: { type: Date, required: true },
-  guests: { type: Number, required: true, default: 1 },
+  guests: { type: Number, required: true },
   totalPrice: { type: Number, required: true },
-  status: { type: String, enum: ['pending', 'reserved', 'cancelled'], default: 'pending' },
-  paymentSessionId: { type: String }
-}, { timestamps: true });
+  status: { 
+    type: String, 
+    enum: ['pending', 'reserved', 'cancelled', 'completed'], 
+    default: 'pending' 
+  },
+  paymentSessionId: { type: String },
+  payoutStatus: { 
+    type: String, 
+    enum: ['pending', 'processing', 'completed', 'failed'], 
+    default: 'pending' 
+  },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
+// Update the updatedAt field on save
+bookingSchema.pre('save', function(next) {
+  this.updatedAt = new Date();
+  next();
+});
 
 module.exports = mongoose.model('Booking', bookingSchema);

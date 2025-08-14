@@ -54,6 +54,9 @@ export const listingsAPI = {
   updateListing: (id, data) => api.put(`/listings/${id}`, data),
   deleteListing: (id) => api.delete(`/listings/${id}`),
   getNearbyListings: (lat, lng, radius = 50) => api.get('/listings/nearby', { params: { lat, lng, radius } }),
+  deactivateListing: (listingId, data) => api.post(`/listings/${listingId}/deactivate`, data),
+  activateListing: (listingId) => api.post(`/listings/${listingId}/activate`),
+  getListingStatus: (listingId) => api.get(`/listings/${listingId}/status`),
 };
 
 // Reviews API calls
@@ -70,6 +73,7 @@ export const bookingsAPI = {
   cancelBooking: (id) => api.delete(`/bookings/${id}`),
   verifyPayment: (sessionId) => api.get(`/bookings/verify-payment/${sessionId}`),
   updateBookingStatus: (bookingId, status) => api.put('/bookings/update-status', { bookingId, status }),
+  checkDateAvailability: (listingId, startDate, endDate) => api.get(`/bookings/check-availability/${listingId}/${startDate}/${endDate}`),
 };
 
 // Host Applications API calls
@@ -78,9 +82,12 @@ export const hostApplicationsAPI = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
   getMy: () => api.get('/host-applications/me'),
+  refreshStripeStatus: () => api.post('/host-applications/refresh-stripe-status'),
+  createStripeLoginLink: () => api.post('/host-applications/create-stripe-login-link'),
+  getStripeSetupStatus: () => api.get('/host-applications/stripe-setup-status'),
   // Admin
   list: (status) => api.get('/host-applications', { params: status ? { status } : {} }),
-  approve: (id) => api.put(`/host-applications/${id}/approve`),
+  approve: (id, data) => api.put(`/host-applications/${id}/approve`, data),
   decline: (id, adminNote) => api.put(`/host-applications/${id}/decline`, { adminNote }),
 };
 
@@ -99,6 +106,7 @@ export const paymentsAPI = {
   capturePayment: (data) => api.post('/payments/capture-payment', data),
   getPaymentStatus: (paymentId) => api.get(`/payments/status/${paymentId}`),
   getUserPayments: () => api.get('/payments/user-payments'),
+  adminGetAllPayments: () => api.get('/payments/admin/all'),
 };
 
 export default api; 

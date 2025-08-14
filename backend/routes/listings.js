@@ -28,4 +28,9 @@ router.post('/', verifyToken, authorizeRole('host', 'admin'), upload.array('imag
 router.put('/:id', verifyToken, authorizeRole('host', 'admin'), upload.array('images', 10), listingsController.updateListing);
 router.delete('/:id', verifyToken, authorizeRole('host', 'admin'), listingsController.deleteListing);
 
+// Listing deactivation routes
+router.post('/:listingId/deactivate', verifyToken, listingsController.deactivateListing);
+router.post('/:listingId/activate', verifyToken, listingsController.activateListing);
+router.get('/:listingId/status', verifyToken, listingsController.getListingStatus);
+
 module.exports = router; 

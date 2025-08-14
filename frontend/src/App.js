@@ -22,6 +22,7 @@ import HostApplicationStatus from './components/HostApplicationStatus';
 import AdminHostApplicationsPanel from './components/AdminHostApplicationsPanel';
 import UserNotifications from './components/UserNotifications';
 import NotificationDetails from './components/NotificationDetails';
+import AdminPaymentsDashboard from './components/AdminPaymentsDashboard';
 import MoreLikeThis from './components/MoreLikeThis';
 import LikedListings from './components/LikedListings';
 import MyListings from './components/MyListings';
@@ -52,6 +53,7 @@ function App() {
           <Route path="/become-a-host/apply" element={<HostApplicationForm />} />
           <Route path="/become-a-host/status" element={<HostApplicationStatus />} />
           <Route path="/admin/host-applications" element={<AdminHostApplicationsPanel />} />
+          <Route path="/admin/payments" element={<AdminPaymentsDashboard />} />
           <Route path="/notifications" element={<UserNotifications />} />
           <Route path="/notification/:id" element={<NotificationDetails />} />
           <Route path="/more-like-this/:category" element={<MoreLikeThis />} />

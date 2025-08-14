@@ -11,7 +11,7 @@ const hostApplicationSchema = new mongoose.Schema({
     enum: ['pending', 'approved', 'declined'],
     default: 'pending'
   },
-  // Personal Information (pre-filled from user profile)
+  // Personal Information
   firstName: {
     type: String,
     required: true
@@ -24,7 +24,6 @@ const hostApplicationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  // Additional Personal Information
   phoneNumber: {
     type: String,
     required: true
@@ -53,28 +52,114 @@ const hostApplicationSchema = new mongoose.Schema({
     },
     idFrontImage: {
       type: String, // Cloudinary URL
-      required: true
+      required: false
     },
     idBackImage: {
       type: String, // Cloudinary URL
-      required: true
+      required: false
     },
     selfieImage: {
       type: String, // Cloudinary URL
-      required: true
+      required: false
     }
   },
-  // Payment Information
+  // Business Information
+  businessName: {
+    type: String,
+    required: false
+  },
+  businessTaxId: {
+    type: String,
+    required: false
+  },
+  businessAddress: {
+    street: { type: String, required: false },
+    city: { type: String, required: false },
+    state: { type: String, required: false },
+    postalCode: { type: String, required: false },
+    country: { type: String, required: false }
+  },
+  businessPhone: {
+    type: String,
+    required: false
+  },
+  businessStructure: {
+    type: String,
+    required: false,
+    enum: [
+      'individual',
+      'single_member_llc',
+      'multi_member_llc', 
+      'private_partnership',
+      'private_corporation',
+      'public_corporation',
+      'incorporated_non_profit',
+      'unincorporated_non_profit'
+    ]
+  },
+  // Financial Information
+  ssn: {
+    type: String,
+    required: false,
+    minlength: 9,
+    maxlength: 11
+  },
+  ssnLast4: {
+    type: String,
+    required: false,
+    minlength: 4,
+    maxlength: 4,
+    validate: {
+      validator: function(v) {
+        return /^\d{4}$/.test(v);
+      },
+      message: 'SSN last 4 digits must be exactly 4 digits'
+    }
+  },
+  supportPhone: {
+    type: String,
+    required: false,
+    minlength: 10
+  },
+  bankAccount: {
+    accountNumber: { type: String, required: false },
+    routingNumber: { type: String, required: false },
+    accountType: { type: String, enum: ['checking', 'savings'], required: false }
+  },
+  // Payment Methods
   paymentMethods: {
     stripeAccountId: {
       type: String,
       required: false
     },
     creditCard: {
-      last4: { type: String, required: false }
+      last4: {
+        type: String,
+        required: false
+      }
     }
   },
-  // Additional Information
+  // Stripe Connect Express Account
+  stripeConnect: {
+    accountId: {
+      type: String,
+      required: false
+    },
+    accountStatus: {
+      type: String,
+      enum: ['pending', 'active', 'restricted', 'disabled'],
+      default: 'pending'
+    },
+    onboardingCompleted: {
+      type: Boolean,
+      default: false
+    },
+    pendingRequirements: {
+      type: mongoose.Schema.Types.Mixed,
+      required: false
+    }
+  },
+  // Property Information
   propertyType: {
     type: String,
     enum: ['apartment', 'house', 'car', 'other'],
@@ -91,12 +176,19 @@ const hostApplicationSchema = new mongoose.Schema({
   adminNote: {
     type: String
   },
+  stripeRemediationLink: {
+    type: String
+  },
   reviewedAt: {
     type: Date
   },
   reviewedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
+  },
+  submittedAt: {
+    type: Date,
+    default: Date.now
   },
   createdAt: {
     type: Date,
@@ -111,16 +203,6 @@ const hostApplicationSchema = new mongoose.Schema({
 // Update the updatedAt field before saving
 hostApplicationSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
-  next();
-});
-
-// Custom validation: at least one of stripeAccountId or creditCard.last4 must be present
-hostApplicationSchema.pre('validate', function(next) {
-  const hasStripe = this.paymentMethods && this.paymentMethods.stripeAccountId;
-  const hasCard = this.paymentMethods && this.paymentMethods.creditCard && this.paymentMethods.creditCard.last4;
-  if (!hasStripe && !hasCard) {
-    this.invalidate('paymentMethods', 'At least one payment method (Stripe Account or Credit/Debit Card) is required.');
-  }
   next();
 });
 

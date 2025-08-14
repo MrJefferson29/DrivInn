@@ -19,19 +19,19 @@ import {
   FaSearch,
   FaIdCard,
   FaCreditCard,
-  FaPaypal,
   FaHome,
   FaMapMarkerAlt,
   FaPhone,
   FaImage,
   FaExpand,
-  FaTimes as FaClose
+  FaTimes as FaClose,
+  FaPaypal
 } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { Spinner, Alert, Badge } from 'react-bootstrap';
 
 const Container = styled.div`
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 40px 20px;
   
@@ -103,11 +103,6 @@ const StatsContainer = styled.div`
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   margin-bottom: 32px;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-  }
 `;
 
 const StatCard = styled.div`
@@ -117,15 +112,9 @@ const StatCard = styled.div`
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid #DDDDDD;
   text-align: center;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  }
 `;
 
-const StatValue = styled.div`
+const StatNumber = styled.div`
   font-size: 2rem;
   font-weight: 700;
   color: #FF385C;
@@ -133,214 +122,210 @@ const StatValue = styled.div`
 `;
 
 const StatLabel = styled.div`
+  color: #6c757d;
   font-size: 0.9rem;
-  color: #717171;
-  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 `;
 
 const ControlsContainer = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #DDDDDD;
+  margin-bottom: 24px;
+`;
+
+const ControlsTitle = styled.h3`
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222222;
+  margin: 0 0 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ControlsRow = styled.div`
   display: flex;
   gap: 16px;
-  margin-bottom: 24px;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 12px;
-  }
+  align-items: center;
+  flex-wrap: wrap;
 `;
 
 const FilterSelect = styled.select`
-  padding: 12px 16px;
+  padding: 8px 12px;
   border: 1px solid #DDDDDD;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
   background: white;
   cursor: pointer;
+  
+  &:focus {
+    outline: none;
+    border-color: #FF385C;
+  }
+`;
+
+const SearchInput = styled.input`
+  padding: 8px 12px;
+  border: 1px solid #DDDDDD;
+  border-radius: 6px;
+  font-size: 0.9rem;
   min-width: 200px;
   
   &:focus {
     outline: none;
     border-color: #FF385C;
-    box-shadow: 0 0 0 3px rgba(255, 56, 92, 0.1);
   }
 `;
 
-const SearchInput = styled.input`
-  padding: 12px 16px;
+const TableHeader = styled.div`
+  background: white;
+  border-radius: 12px 12px 0 0;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid #DDDDDD;
-  border-radius: 8px;
-  font-size: 1rem;
-  flex: 1;
-  min-width: 250px;
-  
-  &:focus {
-    outline: none;
-    border-color: #FF385C;
-    box-shadow: 0 0 0 3px rgba(255, 56, 92, 0.1);
-  }
+  border-bottom: none;
+`;
+
+const TableTitle = styled.h3`
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222222;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 const ApplicationsTable = styled.div`
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid #DDDDDD;
+  border-top: none;
   overflow: hidden;
 `;
 
-const TableHeader = styled.div`
+const TableRow = styled.div`
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 20px;
-  padding: 20px 24px;
-  background: #f9f9f9;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+  gap: 16px;
+  padding: 16px 20px;
+  align-items: center;
   border-bottom: 1px solid #DDDDDD;
-  font-weight: 600;
-  color: #222222;
-  
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
-
-const ApplicationCard = styled.div`
-  padding: 20px 24px;
-  border-bottom: 1px solid #DDDDDD;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s ease;
   
   &:hover {
-    background: #f9f9f9;
+    background-color: #f8f9fa;
   }
   
   &:last-child {
     border-bottom: none;
   }
-`;
-
-const ApplicationHeader = styled.div`
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  gap: 20px;
-  align-items: center;
+  
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+  }
   
   @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    padding: 12px 16px;
   }
 `;
 
-const UserInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const UserAvatar = styled.div`
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #FF385C;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+const TableHeaderRow = styled(TableRow)`
+  background: #f8f9fa;
   font-weight: 600;
-  font-size: 1.1rem;
-`;
-
-const UserDetails = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const UserName = styled.div`
-  font-weight: 600;
-  color: #222222;
-  font-size: 1rem;
-`;
-
-const UserEmail = styled.div`
-  color: #717171;
+  color: #6c757d;
   font-size: 0.9rem;
-`;
-
-const StatusBadge = styled(Badge)`
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   
-  &.pending {
-    background: #fff3cd !important;
-    color: #856404 !important;
-  }
-  
-  &.approved {
-    background: #d4edda !important;
-    color: #155724 !important;
-  }
-  
-  &.declined {
-    background: #f8d7da !important;
-    color: #721c24 !important;
+  &:hover {
+    background-color: #f8f9fa;
   }
 `;
 
-const DateInfo = styled.div`
+const TableCell = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #717171;
   font-size: 0.9rem;
+  
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+  }
+`;
+
+const StatusBadge = styled(Badge)`
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  
+  &.pending {
+    background: #ffc107 !important;
+    color: #212529 !important;
+  }
+  
+  &.approved {
+    background: #28a745 !important;
+    color: white !important;
+  }
+  
+  &.declined {
+    background: #dc3545 !important;
+    color: white !important;
+  }
 `;
 
 const ActionButton = styled.button`
-  padding: 8px 16px;
+  padding: 6px 12px;
   border: none;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   
-  &.primary {
-    background: #FF385C;
-    color: white;
-    
-    &:hover {
-      background: #e31c5f;
-    }
-  }
-  
-  &.success {
+  &.approve {
     background: #28a745;
     color: white;
     
-    &:hover {
+    &:hover:not(:disabled) {
       background: #218838;
     }
   }
   
-  &.danger {
+  &.decline {
     background: #dc3545;
     color: white;
     
-    &:hover {
+    &:hover:not(:disabled) {
       background: #c82333;
     }
   }
   
-  &.secondary {
+  &.view {
     background: #6c757d;
     color: white;
     
-    &:hover {
+    &:hover:not(:disabled) {
       background: #5a6268;
     }
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;
 
@@ -356,261 +341,165 @@ const Modal = styled.div`
   justify-content: center;
   z-index: 1000;
   padding: 20px;
-  
-  @media (max-width: 768px) {
-    padding: 10px;
-  }
 `;
 
 const ModalContent = styled.div`
   background: white;
-  border-radius: 16px;
-  max-width: 900px;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 600px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 80vh;
   overflow-y: auto;
-  position: relative;
 `;
 
 const ModalHeader = styled.div`
-  padding: 24px 32px;
-  border-bottom: 1px solid #DDDDDD;
-  background: #f9f9f9;
-  
-  @media (max-width: 768px) {
-    padding: 20px 24px;
-  }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
 `;
 
-const ModalTitle = styled.h2`
-  font-size: 1.5rem;
+const ModalTitle = styled.h3`
+  font-size: 1.25rem;
   font-weight: 600;
   color: #222222;
-  margin: 0 0 8px 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  margin: 0;
 `;
 
-const ModalSubtitle = styled.p`
-  color: #717171;
-  margin: 0;
-  font-size: 1rem;
+const ModalClose = styled.button`
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6c757d;
+  
+  &:hover {
+    color: #222222;
+  }
 `;
 
 const ModalBody = styled.div`
-  padding: 32px;
-  
-  @media (max-width: 768px) {
-    padding: 24px;
-  }
+  margin-bottom: 20px;
 `;
 
 const FormGroup = styled.div`
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 `;
 
 const Label = styled.label`
+  display: block;
   font-weight: 600;
   color: #222222;
-  margin-bottom: 12px;
-  display: block;
-  font-size: 1rem;
+  margin-bottom: 6px;
 `;
 
 const TextArea = styled.textarea`
   width: 100%;
-  padding: 12px 16px;
+  padding: 12px;
   border: 1px solid #DDDDDD;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
   resize: vertical;
   min-height: 100px;
   
   &:focus {
     outline: none;
     border-color: #FF385C;
-    box-shadow: 0 0 0 3px rgba(255, 56, 92, 0.1);
   }
 `;
 
 const ModalActions = styled.div`
-  padding: 24px 32px;
-  border-top: 1px solid #DDDDDD;
-  background: #f9f9f9;
   display: flex;
   gap: 12px;
   justify-content: flex-end;
+`;
+
+const Button = styled.button`
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
   
-  @media (max-width: 768px) {
-    padding: 20px 24px;
-    flex-direction: column;
+  &.primary {
+    background: #FF385C;
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background: #e31c5f;
+    }
+  }
+  
+  &.secondary {
+    background: #6c757d;
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background: #5a6268;
+    }
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;
 
 const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  text-align: center;
   padding: 60px 20px;
 `;
 
 const EmptyState = styled.div`
   text-align: center;
   padding: 60px 20px;
-  color: #717171;
+  color: #6c757d;
 `;
 
 const EmptyIcon = styled(FaFileAlt)`
-  font-size: 4rem;
-  color: #DDDDDD;
-  margin-bottom: 24px;
+  font-size: 3rem;
+  margin-bottom: 16px;
+  opacity: 0.5;
 `;
 
 const EmptyTitle = styled.h3`
   font-size: 1.5rem;
   font-weight: 600;
-  color: #222222;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
+  color: #6c757d;
 `;
 
 const EmptyText = styled.p`
-  color: #717171;
-  margin-bottom: 24px;
-`;
-
-// New styled components for image display
-const ImageSection = styled.div`
-  margin-bottom: 24px;
-`;
-
-const ImageGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-top: 12px;
-`;
-
-const ImageCard = styled.div`
-  border: 1px solid #DDDDDD;
-  border-radius: 8px;
-  overflow: hidden;
-  background: white;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    transform: translateY(-2px);
-  }
-`;
-
-const ImageHeader = styled.div`
-  padding: 12px 16px;
-  background: #f9f9f9;
-  border-bottom: 1px solid #DDDDDD;
-  font-weight: 600;
-  color: #222222;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const ImageContainer = styled.div`
-  position: relative;
-  aspect-ratio: 4/3;
-  overflow: hidden;
-  cursor: pointer;
-`;
-
-const Image = styled.img`
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-  
-  &:hover {
-    transform: scale(1.05);
-  }
-`;
-
-const ImageOverlay = styled.div`
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: rgba(0, 0, 0, 0.9);
-  }
-`;
-
-const InfoSection = styled.div`
-  background: #f9f9f9;
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-`;
-
-const InfoGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
-`;
-
-const InfoItem = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const InfoLabel = styled.span`
-  font-weight: 600;
-  color: #222222;
-  font-size: 0.9rem;
-  margin-bottom: 4px;
-`;
-
-const InfoValue = styled.span`
-  color: #717171;
   font-size: 1rem;
-`;
-
-const InfoLink = styled.a`
-  color: #FF385C;
-  text-decoration: none;
-  font-weight: 500;
-  
-  &:hover {
-    text-decoration: underline;
-  }
+  color: #6c757d;
 `;
 
 const AdminHostApplicationsPanel = () => {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selected, setSelected] = useState(null);
-  const [status, setStatus] = useState('pending');
+  const [statusFilter, setStatusFilter] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState('');
   const [adminNote, setAdminNote] = useState('');
+  const [stripeRemediationLink, setStripeRemediationLink] = useState('');
+  const [processing, setProcessing] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchApps();
+    fetchApplications();
   }, []);
 
-  const fetchApps = async () => {
+  const fetchApplications = async () => {
     try {
-    setLoading(true);
+      setLoading(true);
       const response = await hostApplicationsAPI.list();
-      console.log('Fetched applications:', response.data);
-      setApplications(response.data);
+      setApplications(response.data || []);
     } catch (err) {
       console.error('Error fetching applications:', err);
       setError('Failed to load applications');
@@ -619,62 +508,135 @@ const AdminHostApplicationsPanel = () => {
     }
   };
 
-  const handleApprove = async (id) => {
-    try {
-    await hostApplicationsAPI.approve(id);
-      setSelected(null);
-    fetchApps();
-    } catch (err) {
-      setError('Failed to approve application');
+  const handleApprove = async (applicationId) => {
+    if (!adminNote.trim()) {
+      alert('Please provide an admin note for approval');
+      return;
     }
-  };
+    
+    if (!stripeRemediationLink.trim()) {
+      alert('Please provide the Stripe remediation link');
+      return;
+    }
 
-  const handleDecline = async (id) => {
     try {
-      await hostApplicationsAPI.decline(id, adminNote);
-      setSelected(null);
+      setProcessing(true);
+      await hostApplicationsAPI.approve(applicationId, { adminNote, stripeRemediationLink });
+      await fetchApplications();
+      setShowModal(false);
+      setSelectedApplication(null);
       setAdminNote('');
-      fetchApps();
+      setStripeRemediationLink('');
     } catch (err) {
-      console.error('Decline error:', err);
-      const errorMessage = err.response?.data?.message || 'Failed to decline application';
-      setError(errorMessage);
+      console.error('Error approving application:', err);
+      alert('Failed to approve application');
+    } finally {
+      setProcessing(false);
     }
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'pending': return <FaClock />;
-      case 'approved': return <FaCheckCircle />;
-      case 'declined': return <FaTimesCircle />;
-      default: return <FaClock />;
+  const handleDecline = async (applicationId) => {
+    if (!adminNote.trim()) {
+      alert('Please provide a reason for declining the application');
+      return;
+    }
+
+    try {
+      setProcessing(true);
+      await hostApplicationsAPI.decline(applicationId, adminNote);
+      await fetchApplications();
+      setShowModal(false);
+      setSelectedApplication(null);
+      setAdminNote('');
+    } catch (err) {
+      console.error('Error declining application:', err);
+      alert('Failed to decline application');
+    } finally {
+      setProcessing(false);
     }
   };
 
-  const getStatusType = (status) => {
-    switch (status) {
-      case 'pending': return 'pending';
-      case 'approved': return 'approved';
-      case 'declined': return 'declined';
-      default: return 'pending';
+  const openModal = (type, application) => {
+    setModalType(type);
+    setSelectedApplication(application);
+    setShowModal(true);
+    if (type === 'decline') {
+      setAdminNote('');
+    } else if (type === 'approve') {
+      setAdminNote('');
+      setStripeRemediationLink('');
     }
   };
 
-  const filteredApps = applications.filter(app => {
-    const matchesStatus = !status || app.status === status;
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedApplication(null);
+    setModalType('');
+    setAdminNote('');
+    setStripeRemediationLink('');
+  };
+
+  const filteredApplications = applications.filter(app => {
+    const matchesStatus = !statusFilter || app.status === statusFilter;
     const matchesSearch = !searchTerm || 
       app.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       app.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
     return matchesStatus && matchesSearch;
   });
 
   const stats = {
+    total: applications.length,
     pending: applications.filter(app => app.status === 'pending').length,
     approved: applications.filter(app => app.status === 'approved').length,
-    declined: applications.filter(app => app.status === 'declined').length,
-    total: applications.length
+    declined: applications.filter(app => app.status === 'declined').length
   };
+
+  if (loading) {
+    return (
+      <Container>
+        <LoadingContainer>
+          <FaSpinner className="fa-spin" style={{ fontSize: '2rem', color: '#FF385C' }} />
+          <p style={{ marginTop: '16px', color: '#6c757d' }}>Loading applications...</p>
+        </LoadingContainer>
+      </Container>
+    );
+  }
+
+  if (filteredApplications.length === 0 && !loading) {
+    return (
+      <Container>
+        <Header>
+          <HeaderLeft>
+            <BackButton onClick={() => navigate(-1)}>
+              <FaArrowLeft /> Back
+            </BackButton>
+            <Title>
+              <FaFileAlt /> Host Applications
+            </Title>
+          </HeaderLeft>
+        </Header>
+
+        {error && (
+          <Alert variant="danger" style={{ marginBottom: '24px' }}>
+            {error}
+          </Alert>
+        )}
+
+        <EmptyState>
+          <EmptyIcon />
+          <EmptyTitle>No Applications Found</EmptyTitle>
+          <EmptyText>
+            {statusFilter || searchTerm 
+              ? 'No applications match your current filters. Try adjusting your search criteria.'
+              : 'There are no host applications to review at this time.'
+            }
+          </EmptyText>
+        </EmptyState>
+      </Container>
+    );
+  }
 
   return (
     <Container>
@@ -689,388 +651,296 @@ const AdminHostApplicationsPanel = () => {
         </HeaderLeft>
       </Header>
 
-      {/* Statistics */}
-      <StatsContainer>
-        <StatCard>
-          <StatValue>{stats.pending}</StatValue>
-          <StatLabel>Pending</StatLabel>
-        </StatCard>
-        <StatCard>
-          <StatValue>{stats.approved}</StatValue>
-          <StatLabel>Approved</StatLabel>
-        </StatCard>
-        <StatCard>
-          <StatValue>{stats.declined}</StatValue>
-          <StatLabel>Declined</StatLabel>
-        </StatCard>
-        <StatCard>
-          <StatValue>{stats.total}</StatValue>
-          <StatLabel>Total</StatLabel>
-        </StatCard>
-      </StatsContainer>
-
-      {/* Controls */}
-      <ControlsContainer>
-        <FilterSelect value={status} onChange={e => setStatus(e.target.value)}>
-          <option value="pending">Pending Applications</option>
-          <option value="approved">Approved Applications</option>
-          <option value="declined">Declined Applications</option>
-          <option value="">All Applications</option>
-        </FilterSelect>
-        <SearchInput
-          type="text"
-          placeholder="Search by name or email..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-        />
-      </ControlsContainer>
-
-      {/* Error Alert */}
       {error && (
         <Alert variant="danger" style={{ marginBottom: '24px' }}>
           {error}
         </Alert>
       )}
 
-      {/* Applications Table */}
-      <ApplicationsTable>
-        <TableHeader>
-          <div>Applicant</div>
-          <div>Status</div>
-          <div>Submitted</div>
-          <div>Actions</div>
-        </TableHeader>
+      <StatsContainer>
+        <StatCard>
+          <StatNumber>{stats.total}</StatNumber>
+          <StatLabel>Total Applications</StatLabel>
+        </StatCard>
+        <StatCard>
+          <StatNumber>{stats.pending}</StatNumber>
+          <StatLabel>Pending Review</StatLabel>
+        </StatCard>
+        <StatCard>
+          <StatNumber>{stats.approved}</StatNumber>
+          <StatLabel>Approved</StatLabel>
+        </StatCard>
+        <StatCard>
+          <StatNumber>{stats.declined}</StatNumber>
+          <StatLabel>Declined</StatLabel>
+        </StatCard>
+      </StatsContainer>
 
-        {loading ? (
-          <LoadingContainer>
-            <Spinner animation="border" variant="primary" />
-          </LoadingContainer>
-        ) : filteredApps.length === 0 ? (
-          <EmptyState>
-            <EmptyIcon />
-            <EmptyTitle>No applications found</EmptyTitle>
-            <EmptyText>
-              {searchTerm ? 'Try adjusting your search terms' : 'No applications match the current filter'}
-            </EmptyText>
-          </EmptyState>
-        ) : (
-          filteredApps.map(app => (
-            <ApplicationCard key={app._id} onClick={() => setSelected(app)}>
-              <ApplicationHeader>
-                <UserInfo>
-                  <UserAvatar>
-                    {app.firstName?.charAt(0) || 'U'}
-                  </UserAvatar>
-                  <UserDetails>
-                    <UserName>
-                      {app.firstName} {app.lastName}
-                    </UserName>
-                    <UserEmail>
-                      {app.email}
-                    </UserEmail>
-                  </UserDetails>
-                </UserInfo>
-                <StatusBadge className={getStatusType(app.status)}>
-                  {getStatusIcon(app.status)} {app.status}
-                </StatusBadge>
-                <DateInfo>
-                  <FaCalendar />
-                  {new Date(app.createdAt).toLocaleDateString()}
-                </DateInfo>
-                <ActionButton className="primary">
-                  <FaEye /> View Details
+      <ControlsContainer>
+        <ControlsTitle>
+          <FaFilter /> Filters
+        </ControlsTitle>
+        <ControlsRow>
+          <FilterSelect 
+            value={statusFilter} 
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="declined">Declined</option>
+          </FilterSelect>
+          
+          <SearchInput
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </ControlsRow>
+      </ControlsContainer>
+
+      <TableHeader>
+        <TableTitle>
+          <FaFileAlt /> Applications Overview
+        </TableTitle>
+      </TableHeader>
+
+      <ApplicationsTable>
+        <TableHeaderRow>
+          <TableCell>Applicant</TableCell>
+          <TableCell>Contact</TableCell>
+          <TableCell>Property</TableCell>
+          <TableCell>Business Info</TableCell>
+          <TableCell>Payment Method</TableCell>
+          <TableCell>Documents</TableCell>
+          <TableCell>Status</TableCell>
+          <TableCell>Actions</TableCell>
+        </TableHeaderRow>
+        
+        {filteredApplications.map((application) => (
+          <TableRow key={application._id}>
+            <TableCell>
+              <FaUser />
+              {application.firstName} {application.lastName}
+            </TableCell>
+            
+            <TableCell>
+              <div>
+                <div><FaEnvelope /> {application.email}</div>
+                <div><FaPhone /> {application.phoneNumber}</div>
+                <div><FaCalendar /> {new Date(application.dateOfBirth).toLocaleDateString()}</div>
+              </div>
+            </TableCell>
+            
+            <TableCell>
+              <div>
+                <div><FaHome /> {application.propertyType}</div>
+                <div><FaMapMarkerAlt /> {application.postalAddress?.city}, {application.postalAddress?.state}</div>
+              </div>
+            </TableCell>
+            
+            <TableCell>
+              <div>
+                <div><strong>Business:</strong> {application.businessName || 'Individual'}</div>
+                <div><strong>Structure:</strong> {application.businessStructure || 'N/A'}</div>
+                <div><strong>Tax ID:</strong> {application.businessTaxId || 'N/A'}</div>
+              </div>
+            </TableCell>
+            
+            <TableCell>
+              <div>
+                {application.stripeConnect?.accountId ? (
+                  <div><FaPaypal /> Stripe Account: {application.stripeConnect.accountId.substring(0, 8)}...</div>
+                ) : application.paymentMethods?.stripeAccountId ? (
+                  <div><FaPaypal /> Stripe: {application.paymentMethods.stripeAccountId.substring(0, 8)}...</div>
+                ) : application.paymentMethods?.creditCard?.last4 ? (
+                  <div><FaCreditCard /> Card: ****{application.paymentMethods.creditCard.last4}</div>
+                ) : (
+                  <div>No payment method</div>
+                )}
+              </div>
+            </TableCell>
+            
+            <TableCell>
+              <div>
+                <div><FaIdCard /> Front: {application.identityDocuments?.idFrontImage ? '✓' : '✗'}</div>
+                <div><FaIdCard /> Back: {application.identityDocuments?.idBackImage ? '✓' : '✗'}</div>
+                <div><FaImage /> Selfie: {application.identityDocuments?.selfieImage ? '✓' : '✗'}</div>
+              </div>
+            </TableCell>
+            
+            <TableCell>
+              <StatusBadge className={application.status}>
+                {application.status}
+              </StatusBadge>
+            </TableCell>
+            
+            <TableCell>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                <ActionButton
+                  className="view"
+                  onClick={() => openModal('view', application)}
+                >
+                  <FaEye /> View
                 </ActionButton>
-              </ApplicationHeader>
-            </ApplicationCard>
-          ))
-        )}
+                
+                {application.status === 'pending' && (
+                  <>
+                    <ActionButton
+                      className="approve"
+                      onClick={() => openModal('approve', application)}
+                    >
+                      <FaCheck /> Approve
+                    </ActionButton>
+                    
+                    <ActionButton
+                      className="decline"
+                      onClick={() => openModal('decline', application)}
+                    >
+                      <FaTimes /> Decline
+                    </ActionButton>
+                  </>
+                )}
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
       </ApplicationsTable>
 
-      {/* Application Details Modal */}
-      {selected && (
-        <Modal onClick={() => setSelected(null)}>
-          <ModalContent onClick={e => e.stopPropagation()}>
+      {showModal && (
+        <Modal>
+          <ModalContent>
             <ModalHeader>
               <ModalTitle>
-                <FaFileAlt /> Application Details
+                {modalType === 'approve' && 'Approve Application'}
+                {modalType === 'decline' && 'Decline Application'}
+                {modalType === 'view' && 'Application Details'}
               </ModalTitle>
-              <ModalSubtitle>
-                Review application from {selected.firstName} {selected.lastName}
-              </ModalSubtitle>
+              <ModalClose onClick={closeModal}>
+                <FaClose />
+              </ModalClose>
             </ModalHeader>
             
             <ModalBody>
-              {/* Applicant Information */}
-              <FormGroup>
-                <Label>
-                  <FaUser /> Applicant Information
-                </Label>
-                <InfoSection>
-                  <InfoGrid>
-                    <InfoItem>
-                      <InfoLabel>Name</InfoLabel>
-                      <InfoValue>{selected.firstName} {selected.lastName}</InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>Email</InfoLabel>
-                      <InfoValue>{selected.email}</InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>Phone</InfoLabel>
-                      <InfoValue>{selected.phoneNumber}</InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>Date of Birth</InfoLabel>
-                      <InfoValue>{new Date(selected.dateOfBirth).toLocaleDateString()}</InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>Status</InfoLabel>
-                      <InfoValue>
-                        <StatusBadge className={getStatusType(selected.status)}>
-                          {selected.status}
-                        </StatusBadge>
-                      </InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>Submitted</InfoLabel>
-                      <InfoValue>{new Date(selected.createdAt).toLocaleString()}</InfoValue>
-                    </InfoItem>
-                  </InfoGrid>
-                </InfoSection>
-              </FormGroup>
-
-              {/* Address Information */}
-              <FormGroup>
-                <Label>
-                  <FaMapMarkerAlt /> Address Information
-                </Label>
-                <InfoSection>
-                  <InfoGrid>
-                    <InfoItem>
-                      <InfoLabel>Street</InfoLabel>
-                      <InfoValue>{selected.postalAddress?.street}</InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>City</InfoLabel>
-                      <InfoValue>{selected.postalAddress?.city}</InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>State</InfoLabel>
-                      <InfoValue>{selected.postalAddress?.state}</InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>Postal Code</InfoLabel>
-                      <InfoValue>{selected.postalAddress?.postalCode}</InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>Country</InfoLabel>
-                      <InfoValue>{selected.postalAddress?.country}</InfoValue>
-                    </InfoItem>
-                  </InfoGrid>
-                </InfoSection>
-              </FormGroup>
-
-              {/* Identity Verification Images */}
-              <FormGroup>
-                <Label>
-                  <FaIdCard /> Identity Verification Documents
-                </Label>
-                <ImageSection>
-                  <ImageGrid>
-                    <ImageCard>
-                      <ImageHeader>
-                        <FaImage /> ID Front
-                      </ImageHeader>
-                      <ImageContainer>
-                        <Image 
-                          src={selected.identityDocuments?.idFrontImage} 
-                          alt="ID Front"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                        <div style={{ 
-                          display: 'none', 
-                          position: 'absolute', 
-                          top: '50%', 
-                          left: '50%', 
-                          transform: 'translate(-50%, -50%)',
-                          color: '#717171',
-                          fontSize: '0.9rem'
-                        }}>
-                          Image not available
-          </div>
-                        <ImageOverlay onClick={() => window.open(selected.identityDocuments?.idFrontImage, '_blank')}>
-                          <FaExpand />
-                        </ImageOverlay>
-                      </ImageContainer>
-                    </ImageCard>
-
-                    <ImageCard>
-                      <ImageHeader>
-                        <FaImage /> ID Back
-                      </ImageHeader>
-                      <ImageContainer>
-                        <Image 
-                          src={selected.identityDocuments?.idBackImage} 
-                          alt="ID Back"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                        <div style={{ 
-                          display: 'none', 
-                          position: 'absolute', 
-                          top: '50%', 
-                          left: '50%', 
-                          transform: 'translate(-50%, -50%)',
-                          color: '#717171',
-                          fontSize: '0.9rem'
-                        }}>
-                          Image not available
-          </div>
-                        <ImageOverlay onClick={() => window.open(selected.identityDocuments?.idBackImage, '_blank')}>
-                          <FaExpand />
-                        </ImageOverlay>
-                      </ImageContainer>
-                    </ImageCard>
-
-                    <ImageCard>
-                      <ImageHeader>
-                        <FaImage /> Selfie
-                      </ImageHeader>
-                      <ImageContainer>
-                        <Image 
-                          src={selected.identityDocuments?.selfieImage} 
-                          alt="Selfie"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                        <div style={{ 
-                          display: 'none', 
-                          position: 'absolute', 
-                          top: '50%', 
-                          left: '50%', 
-                          transform: 'translate(-50%, -50%)',
-                          color: '#717171',
-                          fontSize: '0.9rem'
-                        }}>
-                          Image not available
-          </div>
-                        <ImageOverlay onClick={() => window.open(selected.identityDocuments?.selfieImage, '_blank')}>
-                          <FaExpand />
-                        </ImageOverlay>
-                      </ImageContainer>
-                    </ImageCard>
-                  </ImageGrid>
-                </ImageSection>
-              </FormGroup>
-
-              {/* Identity Verification Details */}
-              <FormGroup>
-                <Label>
-                  <FaIdCard /> Identity Verification Details
-                </Label>
-                <InfoSection>
-                  <InfoGrid>
-                    <InfoItem>
-                      <InfoLabel>ID Type</InfoLabel>
-                      <InfoValue>{selected.identityDocuments?.idType}</InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>ID Number</InfoLabel>
-                      <InfoValue>{selected.identityDocuments?.idNumber}</InfoValue>
-                    </InfoItem>
-                  </InfoGrid>
-                </InfoSection>
-              </FormGroup>
-
-              {/* Payment Information */}
-              <FormGroup>
-                <Label>
-                  <FaCreditCard /> Payment Information
-                </Label>
-                <InfoSection>
-                  <InfoGrid>
-                    <InfoItem>
-                      <InfoLabel>Stripe Account ID</InfoLabel>
-                      <InfoValue>{selected.paymentMethods?.stripeAccountId}</InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>Credit Card</InfoLabel>
-                      <InfoValue>
-                        {selected.paymentMethods?.creditCard?.brand} ending in {selected.paymentMethods?.creditCard?.last4}
-                      </InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>Card Expiry</InfoLabel>
-                      <InfoValue>
-                        {selected.paymentMethods?.creditCard?.expiryMonth}/{selected.paymentMethods?.creditCard?.expiryYear}
-                      </InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>PayPal Email</InfoLabel>
-                      <InfoValue>{selected.paymentMethods?.paypalEmail}</InfoValue>
-                    </InfoItem>
-                  </InfoGrid>
-                </InfoSection>
-              </FormGroup>
-
-              {/* Property Information */}
-              <FormGroup>
-                <Label>
-                  <FaHome /> Property Information
-                </Label>
-                <InfoSection>
-                  <InfoGrid>
-                    <InfoItem>
-                      <InfoLabel>Property Type</InfoLabel>
-                      <InfoValue>{selected.propertyType}</InfoValue>
-                    </InfoItem>
-                    <InfoItem>
-                      <InfoLabel>Description</InfoLabel>
-                      <InfoValue>{selected.propertyDescription}</InfoValue>
-                    </InfoItem>
-                    {selected.hostingExperience && (
-                      <InfoItem>
-                        <InfoLabel>Hosting Experience</InfoLabel>
-                        <InfoValue>{selected.hostingExperience}</InfoValue>
-                      </InfoItem>
-                    )}
-                  </InfoGrid>
-                </InfoSection>
-              </FormGroup>
-
-              {selected.status === 'pending' && (
-                <FormGroup>
-                  <Label>Admin Note (optional)</Label>
-                  <TextArea
-                    value={adminNote}
-                    onChange={e => setAdminNote(e.target.value)}
-                    placeholder="Add a note about your decision..."
-                  />
-                </FormGroup>
+              {modalType === 'view' && selectedApplication && (
+                <div>
+                  <h4>Personal Information</h4>
+                  <p><strong>Name:</strong> {selectedApplication.firstName} {selectedApplication.lastName}</p>
+                  <p><strong>Email:</strong> {selectedApplication.email}</p>
+                  <p><strong>Phone:</strong> {selectedApplication.phoneNumber}</p>
+                  <p><strong>Date of Birth:</strong> {new Date(selectedApplication.dateOfBirth).toLocaleDateString()}</p>
+                  
+                  <h4>Address</h4>
+                  <p>{selectedApplication.postalAddress?.street}, {selectedApplication.postalAddress?.city}, {selectedApplication.postalAddress?.state} {selectedApplication.postalAddress?.postalCode}, {selectedApplication.postalAddress?.country}</p>
+                  
+                  <h4>Business Information</h4>
+                  <p><strong>Business Name:</strong> {selectedApplication.businessName || 'Individual (no business name)'}</p>
+                  <p><strong>Business Tax ID:</strong> {selectedApplication.businessTaxId || 'Not provided'}</p>
+                  <p><strong>Business Structure:</strong> {selectedApplication.businessStructure || 'Individual'}</p>
+                  <p><strong>Business Address:</strong> {selectedApplication.businessAddress?.street ? `${selectedApplication.businessAddress.street}, ${selectedApplication.businessAddress.city}, ${selectedApplication.businessAddress.state} ${selectedApplication.businessAddress.postalCode}, ${selectedApplication.businessAddress.country}` : 'Same as personal address'}</p>
+                  <p><strong>Business Phone:</strong> {selectedApplication.businessPhone || 'Same as personal phone'}</p>
+                  
+                  <h4>Financial Information</h4>
+                  <p><strong>SSN Last 4:</strong> {selectedApplication.ssnLast4 ? '****' : 'Not provided'}</p>
+                  <p><strong>Support Phone:</strong> {selectedApplication.supportPhone || 'Not provided'}</p>
+                  <p><strong>Bank Account Type:</strong> {selectedApplication.bankAccount?.accountType || 'Not selected'}</p>
+                  <p><strong>Bank Routing Number:</strong> {selectedApplication.bankAccount?.routingNumber ? '****' : 'Not provided'}</p>
+                  <p><strong>Bank Account Number:</strong> {selectedApplication.bankAccount?.accountNumber ? '****' : 'Not provided'}</p>
+                  
+                  <h4>Property Information</h4>
+                  <p><strong>Type:</strong> {selectedApplication.propertyType}</p>
+                  <p><strong>Description:</strong> {selectedApplication.propertyDescription}</p>
+                  <p><strong>Experience:</strong> {selectedApplication.hostingExperience || 'Not provided'}</p>
+                  
+                  <h4>Payment Methods</h4>
+                  <p><strong>Stripe Account:</strong> {selectedApplication.stripeConnect?.accountId || selectedApplication.paymentMethods?.stripeAccountId || 'Not provided'}</p>
+                  <p><strong>Credit Card:</strong> {selectedApplication.paymentMethods?.creditCard?.last4 ? `****${selectedApplication.paymentMethods.creditCard.last4}` : 'Not provided'}</p>
+                  
+                  {selectedApplication.stripeConnect && (
+                    <>
+                      <h4>Stripe Connect Status</h4>
+                      <p><strong>Account Status:</strong> {selectedApplication.stripeConnect.accountStatus}</p>
+                      <p><strong>Onboarding Completed:</strong> {selectedApplication.stripeConnect.onboardingCompleted ? 'Yes' : 'No'}</p>
+                    </>
+                  )}
+                </div>
+              )}
+              
+              {modalType === 'approve' && (
+                <div>
+                  <p>Are you sure you want to approve this application?</p>
+                  <p><strong>Applicant:</strong> {selectedApplication?.firstName} {selectedApplication?.lastName}</p>
+                  <p>This will grant the user host privileges and allow them to create listings.</p>
+                  <p><strong>Note:</strong> A Stripe Connect account will be created automatically for this host.</p>
+                  
+                  <FormGroup>
+                    <Label>Admin Note (Required)</Label>
+                    <TextArea
+                      value={adminNote}
+                      onChange={(e) => setAdminNote(e.target.value)}
+                      placeholder="Provide a note about the approval..."
+                      required
+                    />
+                  </FormGroup>
+                  
+                  <FormGroup>
+                    <Label>Stripe Remediation Link (Required)</Label>
+                    <TextArea
+                      value={stripeRemediationLink}
+                      onChange={(e) => setStripeRemediationLink(e.target.value)}
+                      placeholder="Paste the remediation link from Stripe dashboard..."
+                      required
+                    />
+                    <small style={{ color: '#6c757d', fontSize: '0.85rem' }}>
+                      This link will be provided to the user to complete their Stripe verification.
+                    </small>
+                  </FormGroup>
+                </div>
+              )}
+              
+              {modalType === 'decline' && (
+                <div>
+                  <p>Please provide a reason for declining this application:</p>
+                  <FormGroup>
+                    <Label>Admin Note (Required)</Label>
+                    <TextArea
+                      value={adminNote}
+                      onChange={(e) => setAdminNote(e.target.value)}
+                      placeholder="Provide a reason for declining the application..."
+                      required
+                    />
+                  </FormGroup>
+                </div>
               )}
             </ModalBody>
-
+            
             <ModalActions>
-              {selected.status === 'pending' && (
-                <>
-                  <ActionButton className="success" onClick={() => handleApprove(selected._id)}>
-                    <FaCheck /> Approve
-                  </ActionButton>
-                  <ActionButton className="danger" onClick={() => handleDecline(selected._id)}>
-                    <FaTimes /> Decline
-                  </ActionButton>
-                </>
+              {modalType === 'approve' && (
+                <Button
+                  className="primary"
+                  onClick={() => handleApprove(selectedApplication._id)}
+                  disabled={processing || !adminNote.trim() || !stripeRemediationLink.trim()}
+                >
+                  {processing ? <FaSpinner className="fa-spin" /> : <FaCheck />}
+                  {processing ? 'Approving...' : 'Approve'}
+                </Button>
               )}
-              <ActionButton className="secondary" onClick={() => setSelected(null)}>
-                <FaClose /> Close
-              </ActionButton>
+              
+              {modalType === 'decline' && (
+                <Button
+                  className="primary"
+                  onClick={() => handleDecline(selectedApplication._id)}
+                  disabled={processing || !adminNote.trim()}
+                >
+                  {processing ? <FaSpinner className="fa-spin" /> : <FaTimes />}
+                  {processing ? 'Declining...' : 'Decline'}
+                </Button>
+              )}
+              
+              <Button className="secondary" onClick={closeModal}>
+                Cancel
+              </Button>
             </ModalActions>
           </ModalContent>
         </Modal>

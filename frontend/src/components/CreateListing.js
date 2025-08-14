@@ -256,6 +256,11 @@ const Label = styled.label`
   font-weight: 600;
   color: ${airbnbDark};
   margin-bottom: 8px;
+  
+  .required {
+    color: ${airbnbRed};
+    margin-left: 4px;
+  }
 `;
 
 const StyledInput = styled.input`
@@ -911,14 +916,11 @@ const initialState = {
     rules: [],
     cancellationPolicy: ''
   },
-  // Payout preference inputs
-  payoutMethod: '', // '', 'stripe', 'card'
-  stripeAccountId: '',
-  cardLast4: ''
+
 };
 
 const steps = [
-  'Type', 'Location', 'Details', 'Amenities', 'Photos', 'Description', 'Pricing', 'Payout', 'Rules', 'Review'
+  'Type', 'Location', 'Details', 'Amenities', 'Photos', 'Description', 'Pricing', 'Rules', 'Review'
 ];
 
 const CreateListing = () => {
@@ -1057,13 +1059,54 @@ const CreateListing = () => {
     return <Alert variant="danger">You do not have permission to create listings.</Alert>;
   }
 
+  // Step validation
+  const validateCurrentStep = () => {
+    switch (step) {
+      case 0: // Type
+        return form.type && form.transactionType && 
+               (form.type === 'apartment' ? (form.propertyType && form.roomType) : 
+                form.type === 'car' ? (form.carDetails.make && form.carDetails.model && form.carDetails.year) : true);
+      case 1: // Location
+        return form.address && form.location;
+      case 2: // Details
+        if (form.type === 'apartment') {
+          return form.guests && form.bedrooms && form.beds && form.bathrooms;
+        } else {
+          return form.carDetails.seats;
+        }
+      case 3: // Amenities
+        return true; // Optional
+      case 4: // Photos
+        return form.images.length > 0;
+      case 5: // Description
+        return form.title && form.description;
+      case 6: // Pricing
+        return form.price;
+      case 7: // Rules
+        return true; // Optional
+      default:
+        return true;
+    }
+  };
+
   // Step navigation
-  const nextStep = () => setStep(s => Math.min(s + 1, steps.length - 1));
+  const nextStep = () => {
+    if (validateCurrentStep()) {
+      setStep(s => Math.min(s + 1, steps.length - 1));
+    } else {
+      setError('Please fill in all required fields before proceeding.');
+    }
+  };
   const prevStep = () => setStep(s => Math.max(s - 1, 0));
 
   // Field handlers
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    
+    // Clear error message when user starts typing
+    if (error) {
+      setError('');
+    }
     if (name.startsWith('carDetails.')) {
       setForm({
         ...form,
@@ -1141,14 +1184,14 @@ const CreateListing = () => {
           <>
             <StepTitle>What are you listing?</StepTitle>
             <FormField>
-              <Label>Listing Type</Label>
+              <Label>Listing Type<span className="required">*</span></Label>
               <StyledSelect name="type" value={form.type} onChange={handleChange} required>
                 <option value="apartment">Apartment/Room</option>
                 <option value="car">Car</option>
               </StyledSelect>
             </FormField>
             <FormField>
-              <Label>Transaction Type</Label>
+              <Label>Transaction Type<span className="required">*</span></Label>
               <StyledSelect name="transactionType" value={form.transactionType} onChange={handleChange} required>
                 <option value="rent">Rent</option>
                 <option value="sale">Sale</option>
@@ -1157,14 +1200,14 @@ const CreateListing = () => {
             {form.type === 'apartment' && (
               <>
                 <FormField>
-                  <Label>Property Type</Label>
+                  <Label>Property Type<span className="required">*</span></Label>
                   <StyledSelect name="propertyType" value={form.propertyType} onChange={handleChange} required>
                     <option value="">Select property type...</option>
                     {PROPERTY_TYPES.map(pt => <option key={pt} value={pt}>{pt}</option>)}
                   </StyledSelect>
                 </FormField>
                 <FormField>
-                  <Label>Room Type</Label>
+                  <Label>Room Type<span className="required">*</span></Label>
                   <StyledSelect name="roomType" value={form.roomType} onChange={handleChange} required>
                     <option value="">Select room type...</option>
                     {ROOM_TYPES.map(rt => <option key={rt} value={rt}>{rt}</option>)}
@@ -1604,32 +1647,29 @@ const CreateListing = () => {
       case 7:
         return (
           <>
-            <StepTitle>Choose how to receive your funds</StepTitle>
-            <FormField>
-              <Label>Payout Method</Label>
-              <StyledSelect name="payoutMethod" value={form.payoutMethod} onChange={handleChange}>
-                <option value="">Select payout method...</option>
-                <option value="stripe">Stripe Account</option>
-                <option value="card">Credit/Debit Card (last 4)</option>
-              </StyledSelect>
-            </FormField>
-            <FormField>
-              <Label>Stripe Account ID</Label>
-              <StyledInput name="stripeAccountId" value={form.stripeAccountId} onChange={handleChange} placeholder="acct_1234567890" />
-            </FormField>
-            <FormField>
-              <Label>Card Number (Last 4)</Label>
-              <StyledInput name="cardLast4" value={form.cardLast4} maxLength={4} onChange={handleChange} placeholder="1234" />
-            </FormField>
-            <Alert variant="info">
-              Provide either Stripe Account ID, Card last 4, or both. If both are provided, select your preferred payout method above.
-            </Alert>
-          </>
-        );
-      case 7:
-        return (
-          <>
             <StepTitle>Set your rules and policies</StepTitle>
+            
+            {/* Payout Information */}
+            <Alert variant="info" style={{ marginBottom: '24px' }}>
+              <strong>Automatic Payouts:</strong> Since you're an approved host, all payments will be automatically 
+              transferred to your Stripe Connect Express account after guest check-ins. The platform fee (10%) is automatically deducted.
+            </Alert>
+            
+            <div style={{ 
+              background: '#f8f9fa', 
+              padding: '20px', 
+              borderRadius: '12px', 
+              border: '1px solid #dee2e6',
+              textAlign: 'center',
+              marginBottom: '32px'
+            }}>
+              <div style={{ fontSize: '3rem', marginBottom: '16px' }}>💳</div>
+              <h4 style={{ color: '#28a745', marginBottom: '12px' }}>Your payout account is ready!</h4>
+              <p style={{ color: '#6c757d', margin: 0 }}>
+                No additional setup required. All payouts are handled automatically through your approved host account.
+              </p>
+            </div>
+            
             <FormField>
               <Label>{form.type === 'car' ? 'Car Rules' : 'House Rules'}</Label>
               <CheckboxGrid>
@@ -1670,7 +1710,7 @@ const CreateListing = () => {
             )}
           </>
         );
-      case 9:
+      case 8:
         return (
           <>
             <StepTitle>Review your listing</StepTitle>
@@ -1729,15 +1769,11 @@ const CreateListing = () => {
               </ReviewItem>
               <ReviewItem>
                 <span className="label">Payout Method:</span>
-                <span className="value">{form.payoutMethod || 'Not selected'}</span>
+                <span className="value">Stripe Connect (Automatic)</span>
               </ReviewItem>
               <ReviewItem>
-                <span className="label">Stripe Account ID:</span>
-                <span className="value">{form.stripeAccountId || 'N/A'}</span>
-              </ReviewItem>
-              <ReviewItem>
-                <span className="label">Card Last 4:</span>
-                <span className="value">{form.cardLast4 || 'N/A'}</span>
+                <span className="label">Payout Status:</span>
+                <span className="value" style={{ color: '#28a745' }}>✓ Ready - No setup required</span>
               </ReviewItem>
               <ReviewItem>
                 <span className="label">Images:</span>
@@ -1853,10 +1889,11 @@ const CreateListing = () => {
       
       form.images.forEach(img => data.append('images', img));
 
-      // Append payout preference
-      if (form.payoutMethod) data.append('payoutMethod', form.payoutMethod);
-      if (form.stripeAccountId) data.append('stripeAccountId', form.stripeAccountId);
-      if (form.cardLast4) data.append('cardLast4', form.cardLast4);
+      // Enforce Stripe Connect-only payouts
+      data.append('payoutMethod', 'stripe_connect');
+      if (form.stripeAccountId) {
+        data.append('stripeAccountId', form.stripeAccountId);
+      }
       
       // Log what's being sent for debugging
       console.log('Submitting listing data:', {
@@ -1923,6 +1960,7 @@ const CreateListing = () => {
                  idx === 5 ? <FaEdit /> :
                  idx === 6 ? <FaDollarSign /> :
                  idx === 7 ? <FaShieldAlt /> :
+                 idx === 8 ? <FaEye /> :
                  <FaEye />}
               </div>
               <span>{label}</span>

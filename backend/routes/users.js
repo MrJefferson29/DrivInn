@@ -25,4 +25,8 @@ router.put('/:id/permissions', verifyToken, requireAdmin, userController.updateU
 router.put('/:id/profile-image', verifyToken, isSelfOrAdmin, upload.single('image'), userController.uploadProfileImage);
 router.get('/:id/notifications', verifyToken, isSelfOrAdmin, userController.getUserNotifications);
 
+// Host profile routes
+router.get('/host/profile', verifyToken, userController.getHostProfile);
+router.put('/host/profile', verifyToken, userController.updateHostProfile);
+
 module.exports = router; 

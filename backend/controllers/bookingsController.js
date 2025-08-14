@@ -2,7 +2,69 @@ const Booking = require('../models/booking');
 const Payment = require('../models/payment');
 const NotificationService = require('../services/notificationService');
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const Listing = require('../models/listing');
+const HostApplication = require('../models/HostApplication');
 
+
+// Helper function to check for date overlaps
+const checkDateOverlap = async (listingId, startDate, endDate, excludeBookingId = null) => {
+  // Ensure dates are valid
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+    console.log('❌ Invalid dates provided:', { startDate, endDate });
+    return false;
+  }
+
+  console.log('📋 Checking date overlap for listing:', listingId, 'from', start, 'to', end);
+
+  const query = {
+    home: listingId,
+    status: { $in: ['pending', 'reserved'] }, // Only check pending and reserved bookings
+    $or: [
+      // Case 1: New booking starts during an existing booking
+      {
+        checkIn: { $lte: start },
+        checkOut: { $gt: start }
+      },
+      // Case 2: New booking ends during an existing booking
+      {
+        checkIn: { $lt: end },
+        checkOut: { $gte: end }
+      },
+      // Case 3: New booking completely contains an existing booking
+      {
+        checkIn: { $gte: start },
+        checkOut: { $lte: end }
+      },
+      // Case 4: New booking is completely contained within an existing booking
+      {
+        checkIn: { $lte: start },
+        checkOut: { $gte: end }
+      }
+    ]
+  };
+
+  // Exclude the current booking if we're updating
+  if (excludeBookingId) {
+    query._id = { $ne: excludeBookingId };
+  }
+
+  const overlappingBookings = await Booking.find(query);
+  console.log('📋 Found overlapping bookings:', overlappingBookings.length);
+  
+  if (overlappingBookings.length > 0) {
+    console.log('📋 Overlapping booking details:', overlappingBookings.map(b => ({
+      id: b._id,
+      checkIn: b.checkIn,
+      checkOut: b.checkOut,
+      status: b.status
+    })));
+  }
+  
+  return overlappingBookings.length > 0;
+};
 
 exports.createBooking = async (req, res) => {
   try {
@@ -18,6 +80,33 @@ exports.createBooking = async (req, res) => {
       paymentMethod,
       userId
     });
+
+    // Check if listing is active
+    const listingDoc = await Listing.findById(listing).populate('owner'); // Populated owner
+    
+    if (!listingDoc) {
+      return res.status(404).json({ 
+        message: 'Listing not found',
+        error: 'LISTING_NOT_FOUND'
+      });
+    }
+    
+    if (!listingDoc.isActive || listingDoc.deactivationInfo.isDeactivated) {
+      return res.status(400).json({ 
+        message: 'This listing is currently not available for bookings.',
+        error: 'LISTING_INACTIVE'
+      });
+    }
+
+    // Check for date overlaps before creating the booking
+    const hasOverlap = await checkDateOverlap(listing, startDate, endDate);
+    if (hasOverlap) {
+      console.log('❌ Date overlap detected for listing:', listing);
+      return res.status(400).json({ 
+        message: 'The selected dates are not available. Please choose different dates.',
+        error: 'DATE_OVERLAP'
+      });
+    }
 
     // 1️⃣ Create booking in DB with "pending" status
     const booking = await Booking.create({
@@ -40,26 +129,65 @@ exports.createBooking = async (req, res) => {
       currency: 'usd',
       status: 'pending',
       paymentMethod: paymentMethod, // Use selected payment method
-      stripeSessionId: null // Will be updated after Stripe session creation
+      stripeSessionId: null, // Will be updated after Stripe session creation
+      metadata: {
+        paymentMethod: paymentMethod, // Store payment method in metadata for payout processing
+        hasTransferData: false // Will be updated based on session configuration
+      }
     });
 
     // 3️⃣ Create Stripe Checkout session with selected payment method
     let paymentMethodTypes;
+    
+    // MVP: Only support credit cards for now (most reliable)
     switch (paymentMethod) {
+      case 'card':
+        paymentMethodTypes = ['card'];
+        break;
       case 'cashapp':
         paymentMethodTypes = ['cashapp'];
-        break;
-      case 'bank_transfer':
-        paymentMethodTypes = ['card', 'us_bank_account'];
         break;
       case 'samsung_pay':
         paymentMethodTypes = ['card', 'samsung_pay'];
         break;
+      case 'bank_transfer':
+        // MVP: Disable ACH payments for now
+        return res.status(400).json({ 
+          message: 'Bank transfers are not currently supported. Please use a credit card.',
+          error: 'BANK_TRANSFER_NOT_SUPPORTED',
+          details: 'For MVP, we only support credit card payments to ensure reliable escrow and payouts.'
+        });
       default:
         paymentMethodTypes = ['card'];
     }
     
-    const session = await stripe.checkout.sessions.create({
+    console.log(`💳 Payment method: ${paymentMethod}, Payment types: ${paymentMethodTypes.join(', ')}`);
+    
+    // Host must have approved Stripe Connect account
+    const hostApplication = await HostApplication.findOne({ 
+      user: listingDoc.owner._id, 
+      status: 'approved' 
+    });
+    
+    const hasStripeConnect = hostApplication?.stripeConnect?.accountId && 
+                            (hostApplication.stripeConnect.accountStatus === 'active' || 
+                             hostApplication.stripeConnect.accountStatus === 'pending');
+    
+    if (!hasStripeConnect) {
+      return res.status(400).json({ 
+        message: 'Host is not enabled for payouts. Please contact support.',
+        error: 'HOST_STRIPE_NOT_ENABLED'
+      });
+    }
+    
+    // If account is pending, provide more specific guidance
+    if (hostApplication.stripeConnect.accountStatus === 'pending') {
+      console.log('⚠️ Host Stripe account is pending activation:', hostApplication.stripeConnect.accountId);
+      // Still allow the payment to proceed, but log the warning
+    }
+
+    // Create Stripe Checkout session
+    const sessionConfig = {
       payment_method_types: paymentMethodTypes,
       mode: 'payment',
       success_url: `${process.env.FRONTEND_URL}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
@@ -69,7 +197,7 @@ exports.createBooking = async (req, res) => {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: `Booking for ${listing}`,
+              name: `Booking for ${listingDoc.title}`,
             },
             unit_amount: Math.round(totalPrice * 100),
           },
@@ -79,15 +207,83 @@ exports.createBooking = async (req, res) => {
       metadata: {
         bookingId: booking._id.toString(),
         paymentId: payment._id.toString(),
-        paymentMethod: paymentMethod, // Store payment method in metadata
+        paymentMethod: paymentMethod,
+        listingId: listing,
+        hostId: listingDoc.owner._id.toString(),
+        checkInDate: startDate,
+        payoutMethod: 'stripe_connect'
       },
-    });
+    };
+    
+    // Check if host account has transfers enabled
+    try {
+      const hostAccount = await stripe.accounts.retrieve(hostApplication.stripeConnect.accountId);
+      const hasTransfersEnabled = hostAccount.capabilities?.transfers === 'active';
+      
+      if (!hasTransfersEnabled) {
+        // Reject booking if host account doesn't support automatic payouts
+        return res.status(400).json({ 
+          message: 'Host account is not fully configured for automatic payouts. Please contact support.',
+          error: 'HOST_ACCOUNT_INSUFFICIENT_CAPABILITIES',
+          details: 'The host needs to complete their Stripe account setup to enable automatic payouts. Manual payouts are not supported.',
+          nextSteps: [
+            'Complete identity verification in your Stripe dashboard',
+            'Add bank account information for payouts',
+            'Enable transfers capability',
+            'Contact support if issues persist'
+          ],
+          hostGuidance: {
+            message: 'Your Stripe account needs additional verification to enable automatic payouts',
+            action: 'Visit your Stripe dashboard to complete verification',
+            dashboardUrl: `https://dashboard.stripe.com/express/${hostApplication.stripeConnect.accountId}`,
+            commonIssues: [
+              'Identity documents not yet verified',
+              'Bank account information not provided',
+              'Business verification incomplete (for business accounts)',
+              'Address verification pending'
+            ]
+          }
+        });
+      }
+      
+      // All payments MUST use transfer_data for automatic payouts
+      sessionConfig.payment_intent_data = {
+        capture_method: 'manual',
+        transfer_data: {
+          destination: hostApplication.stripeConnect.accountId,
+          amount: Math.round(totalPrice * 100),
+        },
+        application_fee_amount: Math.round(totalPrice * 0.10 * 100),
+      };
+      
+      console.log('💳 Using automatic payout via transfer_data (host account supports transfers)');
+      
+    } catch (accountError) {
+      console.error('❌ Error checking host Stripe account capabilities:', accountError);
+      
+      // Reject booking if we can't verify host account capabilities
+      return res.status(400).json({
+        message: 'Unable to verify host payment account capabilities. Please try again or contact support.',
+        error: 'HOST_ACCOUNT_VERIFICATION_FAILED',
+        details: 'We could not verify that the host account supports automatic payouts. This is required for all bookings.',
+        nextSteps: [
+          'Try again in a few minutes',
+          'Contact support if the issue persists',
+          'Ensure host has completed their Stripe account setup'
+        ]
+      });
+    }
+    
+    const session = await stripe.checkout.sessions.create(sessionConfig);
 
     // 4️⃣ Update booking and payment with Stripe session ID
     booking.paymentSessionId = session.id;
     await booking.save();
-
     payment.stripeSessionId = session.id;
+    
+    // Update payment metadata to indicate whether automatic payout is available
+    const hasTransferData = !!sessionConfig.payment_intent_data?.transfer_data;
+    payment.metadata.hasTransferData = hasTransferData;
     await payment.save();
 
     res.status(201).json({
@@ -102,10 +298,67 @@ exports.createBooking = async (req, res) => {
 
   } catch (error) {
     console.error('Error creating booking:', error);
-    res.status(500).json({ message: 'Failed to create booking' });
+    
+    // Handle specific Stripe errors
+    if (error.type === 'StripeInvalidRequestError') {
+      if (error.code === 'insufficient_capabilities_for_transfer') {
+        return res.status(400).json({ 
+          message: 'Host account is not fully configured for automatic payouts. Please contact support.',
+          error: 'HOST_ACCOUNT_INSUFFICIENT_CAPABILITIES',
+          details: 'The host needs to complete their Stripe account setup to enable automatic payouts.'
+        });
+      }
+      
+      return res.status(400).json({ 
+        message: 'Payment configuration error. Please try a different payment method.',
+        error: 'STRIPE_CONFIGURATION_ERROR',
+        details: error.message
+      });
+    }
+    
+    // Handle other specific errors
+    if (error.message.includes('Stripe')) {
+      return res.status(400).json({ 
+        message: 'Payment service error. Please try again or contact support.',
+        error: 'PAYMENT_SERVICE_ERROR',
+        details: error.message
+      });
+    }
+    
+    res.status(500).json({ 
+      message: 'Failed to create booking. Please try again.',
+      error: 'INTERNAL_SERVER_ERROR'
+    });
   }
 };
 
+// Check date availability for a listing
+exports.checkDateAvailability = async (req, res) => {
+  try {
+    const { listingId, startDate, endDate } = req.params;
+    
+    console.log('📋 Checking date availability for listing:', listingId, 'from', startDate, 'to', endDate);
+    
+    if (!listingId || !startDate || !endDate) {
+      return res.status(400).json({ 
+        message: 'Listing ID, start date, and end date are required',
+        error: 'MISSING_PARAMETERS'
+      });
+    }
+
+    const hasOverlap = await checkDateOverlap(listingId, startDate, endDate);
+    
+    console.log('✅ Date availability check result:', { available: !hasOverlap });
+    
+    res.json({ 
+      available: !hasOverlap,
+      message: hasOverlap ? 'Dates are not available' : 'Dates are available'
+    });
+  } catch (err) {
+    console.error('Check date availability error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
 
 exports.getUserBookings = async (req, res) => {
   try {
@@ -305,6 +558,8 @@ exports.verifyPayment = async (req, res) => {
         if (payment) {
           payment.status = 'completed';
           payment.transactionId = session.payment_intent || session.id;
+          payment.stripePaymentIntentId = session.payment_intent;
+          payment.payoutMethod = 'stripe_connect';
           payment.metadata = {
             ...(payment.metadata || {}),
             stripeSessionId: session.id,
@@ -325,5 +580,191 @@ exports.verifyPayment = async (req, res) => {
   } catch (err) {
     console.error('Verify payment error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
+  }
+}; 
+
+// Function to process automatic payouts when check-in date is reached
+exports.processAutomaticPayout = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    
+    console.log('🔄 Processing automatic payout for booking:', bookingId);
+    
+    const booking = await Booking.findById(bookingId)
+      .populate('home')
+      .populate('user');
+    
+    if (!booking) {
+      return res.status(404).json({ 
+        message: 'Booking not found',
+        error: 'BOOKING_NOT_FOUND'
+      });
+    }
+    
+    // Check if it's time for payout (check-in date has arrived)
+    const now = new Date();
+    const checkInDate = new Date(booking.checkIn);
+    const timeUntilCheckIn = checkInDate.getTime() - now.getTime();
+    
+    if (timeUntilCheckIn > 0) {
+      return res.status(400).json({
+        message: 'Check-in date has not been reached yet',
+        error: 'CHECKIN_NOT_REACHED',
+        timeUntilCheckIn: Math.ceil(timeUntilCheckIn / (1000 * 60 * 60 * 24))
+      });
+    }
+    
+    // Get the payment record
+    const payment = await Payment.findOne({ booking: bookingId });
+    if (!payment) {
+      return res.status(404).json({
+        message: 'Payment record not found',
+        error: 'PAYMENT_NOT_FOUND'
+      });
+    }
+    
+    if (payment.status !== 'completed') {
+      return res.status(400).json({
+        message: 'Payment is not completed yet',
+        error: 'PAYMENT_NOT_COMPLETED'
+      });
+    }
+    
+    // Check if payout has already been processed
+    if (payment.payoutStatus === 'completed') {
+      return res.status(400).json({
+        message: 'Payout has already been processed',
+        error: 'PAYOUT_ALREADY_PROCESSED'
+      });
+    }
+    
+    // Get the listing and host application to check Stripe Connect status
+    const listing = await Listing.findById(booking.home);
+    if (!listing) {
+      return res.status(404).json({
+        message: 'Listing not found',
+        error: 'LISTING_NOT_FOUND'
+      });
+    }
+    
+    const hostApplication = await HostApplication.findOne({ 
+      user: listing.owner, 
+      status: 'approved' 
+    });
+    
+    // Process payout based on host's Stripe Connect status
+    let payoutResult;
+    
+    if (hostApplication?.stripeConnect?.accountId && 
+        hostApplication.stripeConnect.accountStatus === 'active') {
+      
+      // Automatic payout via Stripe Connect
+      console.log('💳 Processing Stripe Connect payout for host:', listing.owner);
+      
+      try {
+        // Capture the payment intent (this releases the funds to the host)
+        const paymentIntent = await stripe.paymentIntents.capture(
+          payment.stripePaymentIntentId,
+          {
+            transfer_data: {
+              destination: hostApplication.stripeConnect.accountId,
+            },
+            application_fee_amount: Math.round(booking.totalPrice * 0.10 * 100), // 10% platform fee
+          }
+        );
+        
+        console.log('✅ Stripe Connect payout successful:', paymentIntent.id);
+        
+        // Update payment record
+        payment.payoutStatus = 'completed';
+        payment.payoutDate = new Date();
+        payment.payoutMethod = 'stripe_connect';
+        payment.payoutTransactionId = paymentIntent.id;
+        payment.platformFee = Math.round(booking.totalPrice * 0.10 * 100) / 100;
+        await payment.save();
+        
+        // Update booking status
+        booking.payoutStatus = 'completed';
+        await booking.save();
+        
+        payoutResult = {
+          method: 'stripe_connect',
+          status: 'completed',
+          transactionId: paymentIntent.id,
+          amount: booking.totalPrice,
+          platformFee: Math.round(booking.totalPrice * 0.10 * 100) / 100
+        };
+        
+      } catch (stripeError) {
+        console.error('❌ Stripe Connect payout failed:', stripeError);
+        
+        // Fallback to manual payout
+        payment.payoutStatus = 'failed';
+        payment.payoutFailureReason = stripeError.message;
+        await payment.save();
+        booking.payoutStatus = 'failed';
+        await booking.save();
+        
+        return res.status(500).json({
+          message: 'Automatic payout failed, will process manually',
+          error: 'STRIPE_PAYOUT_FAILED',
+          fallback: 'manual'
+        });
+      }
+      
+    } else {
+      // With new policy, hosts must have Stripe Connect; treat as error
+      return res.status(400).json({
+        message: 'Host is not enabled for Stripe Connect payouts',
+        error: 'HOST_STRIPE_NOT_ENABLED'
+      });
+    }
+    
+    console.log('✅ Payout processing completed for booking:', bookingId);
+    
+    res.json({
+      message: 'Payout processed successfully',
+      payout: payoutResult,
+      booking: {
+        id: booking._id,
+        status: booking.status,
+        payoutStatus: booking.payoutStatus
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Error processing automatic payout:', error);
+    res.status(500).json({
+      message: 'Error processing payout',
+      error: error.message
+    });
+  }
+};
+
+// Function to get all pending payouts for admin review
+exports.getPendingPayouts = async (req, res) => {
+  try {
+    const pendingPayouts = await Payment.find({
+      status: 'completed',
+      payoutStatus: { $in: ['failed'] }
+    })
+    .populate('booking')
+    .populate('user')
+    .populate({
+      path: 'booking',
+      populate: {
+        path: 'home',
+        populate: 'owner'
+      }
+    })
+    .sort({ createdAt: -1 });
+    
+    res.json(pendingPayouts);
+  } catch (error) {
+    console.error('Error fetching pending payouts:', error);
+    res.status(500).json({
+      message: 'Error fetching pending payouts',
+      error: error.message
+    });
   }
 }; 

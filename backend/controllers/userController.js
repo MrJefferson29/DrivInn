@@ -67,7 +67,14 @@ exports.getMyProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
-    res.json(user);
+    
+    // If user is a host and has host profile, include it in the response
+    const response = user.toObject();
+    if (user.role === 'host' && user.hostProfile) {
+      response.hostProfile = user.hostProfile;
+    }
+    
+    res.json(response);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -137,5 +144,87 @@ exports.getUserNotifications = async (req, res) => {
     res.json(notifications);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Get host profile information (for hosts only)
+exports.getHostProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    if (user.role !== 'host') {
+      return res.status(403).json({ message: 'Only hosts can access host profile information' });
+    }
+    
+    if (!user.hostProfile) {
+      return res.status(404).json({ message: 'Host profile not found. Please ensure your application has been approved.' });
+    }
+    
+    res.json({
+      user: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        role: user.role,
+        profileImage: user.profileImage
+      },
+      hostProfile: user.hostProfile
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Update host profile information (for hosts only)
+exports.updateHostProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    if (user.role !== 'host') {
+      return res.status(403).json({ message: 'Only hosts can update host profile information' });
+    }
+    
+    // Only allow updating certain fields (not sensitive ones like Stripe account info)
+    const allowedUpdates = {
+      'hostProfile.businessName': req.body.businessName,
+      'hostProfile.businessPhone': req.body.businessPhone,
+      'hostProfile.propertyDescription': req.body.propertyDescription,
+      'hostProfile.hostingExperience': req.body.hostingExperience
+    };
+    
+    // Remove undefined values
+    Object.keys(allowedUpdates).forEach(key => {
+      if (allowedUpdates[key] === undefined) {
+        delete allowedUpdates[key];
+      }
+    });
+    
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: allowedUpdates },
+      { new: true, runValidators: true }
+    ).select('-password');
+    
+    res.json({
+      message: 'Host profile updated successfully',
+      user: {
+        _id: updatedUser._id,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        profileImage: updatedUser.profileImage
+      },
+      hostProfile: updatedUser.hostProfile
+    });
+  } catch (err) {
+    res.status(400).json({ message: 'Error updating host profile', error: err.message });
   }
 }; 

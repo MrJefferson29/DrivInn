@@ -408,11 +408,47 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
 
   const totalPrice = calculatePrice();
 
+  const [availabilityStatus, setAvailabilityStatus] = useState(null);
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
+
+  const checkAvailability = async (startDate, endDate) => {
+    if (!startDate || !endDate || new Date(startDate) >= new Date(endDate)) {
+      setAvailabilityStatus(null);
+      return;
+    }
+
+    setCheckingAvailability(true);
+    try {
+      const response = await bookingsAPI.checkDateAvailability(
+        listing._id,
+        startDate,
+        endDate
+      );
+      setAvailabilityStatus(response.data.available);
+    } catch (err) {
+      console.error('Error checking availability:', err);
+      setAvailabilityStatus(null);
+    } finally {
+      setCheckingAvailability(false);
+    }
+  };
+
   const handleDateChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
+
+    // Check availability when both dates are selected
+    if (field === 'startDate') {
+      if (formData.endDate) {
+        checkAvailability(value, formData.endDate);
+      }
+    } else if (field === 'endDate') {
+      if (formData.startDate) {
+        checkAvailability(formData.startDate, value);
+      }
+    }
   };
 
   const handleGuestChange = (increment) => {
@@ -456,10 +492,18 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
       onClose();
     } catch (err) {
       console.error('Booking error:', err);
-      const errorMessage = err.response?.data?.message || 
-                          err.response?.data?.error || 
-                          'Error creating booking. Please try again.';
-      setError(errorMessage);
+      
+      // Handle specific errors
+      if (err.response?.data?.error === 'DATE_OVERLAP') {
+        setError('The selected dates are not available. Please choose different dates.');
+      } else if (err.response?.data?.error === 'LISTING_INACTIVE') {
+        setError('This listing is currently not available for bookings.');
+      } else {
+        const errorMessage = err.response?.data?.message || 
+                            err.response?.data?.error || 
+                            'Error creating booking. Please try again.';
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -511,6 +555,38 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
                   />
                 </div>
               </div>
+              
+              {/* Availability Status */}
+              {formData.startDate && formData.endDate && (
+                <div style={{ marginTop: '12px' }}>
+                  {checkingAvailability ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: airbnbGray }}>
+                      <Spinner animation="border" size="sm" />
+                      <span style={{ fontSize: '0.9rem' }}>Checking availability...</span>
+                    </div>
+                  ) : availabilityStatus !== null && (
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '8px',
+                      color: availabilityStatus ? '#00A699' : airbnbRed,
+                      fontSize: '0.9rem',
+                      fontWeight: '500'
+                    }}>
+                      {availabilityStatus ? (
+                        <>
+                          <FaCheck /> Available
+                        </>
+                      ) : (
+                        <>
+                          <FaTimes /> Not available
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <InfoText>
                 {listing.type === 'car' ? 
                   `Minimum rental: ${listing.carDetails?.minRentalDays || 1} day(s)` :
@@ -572,14 +648,6 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
                 </PaymentMethodOption>
                 <PaymentMethodOption
                   type="button"
-                  selected={paymentMethod === 'bank_transfer'}
-                  onClick={() => setPaymentMethod('bank_transfer')}
-                >
-                  <FaUniversity />
-                  Bank Transfer
-                </PaymentMethodOption>
-                <PaymentMethodOption
-                  type="button"
                   selected={paymentMethod === 'samsung_pay'}
                   onClick={() => setPaymentMethod('samsung_pay')}
                 >
@@ -588,14 +656,7 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
                 </PaymentMethodOption>
               </PaymentMethodGrid>
               <InfoText>
-                {paymentMethod === 'cashapp' 
-                  ? 'You will be redirected to Cash App to complete your payment securely.'
-                  : paymentMethod === 'bank_transfer'
-                  ? 'You will be redirected to complete your bank transfer securely.'
-                  : paymentMethod === 'samsung_pay'
-                  ? 'You will be redirected to Samsung Pay to complete your payment securely.'
-                  : 'Your payment will be processed securely through Stripe.'
-                }
+                Your payment will be processed securely through Stripe Connect. Host payouts are only via Stripe Connect.
               </InfoText>
             </PaymentMethodSection>
 
@@ -644,16 +705,25 @@ const BookingForm = ({ listing, isOpen, onClose, onSuccess }) => {
             )}
 
             {/* Submit Button */}
-            <SubmitButton type="submit" disabled={loading || totalPrice === 0}>
+            <SubmitButton 
+              type="submit" 
+              disabled={loading || totalPrice === 0 || availabilityStatus === false || checkingAvailability}
+            >
               {loading ? (
                 <>
                   <Spinner animation="border" size="sm" style={{ marginRight: '8px' }} />
                   Creating booking...
                 </>
+              ) : availabilityStatus === false ? (
+                'Dates not available'
+              ) : checkingAvailability ? (
+                <>
+                  <Spinner animation="border" size="sm" style={{ marginRight: '8px' }} />
+                  Checking availability...
+                </>
               ) : (
                 `Book now with ${
                   paymentMethod === 'cashapp' ? 'Cash App Pay' 
-                  : paymentMethod === 'bank_transfer' ? 'Bank Transfer'
                   : paymentMethod === 'samsung_pay' ? 'Samsung Pay'
                   : 'Credit Card'
                 } • $${totalPrice}`

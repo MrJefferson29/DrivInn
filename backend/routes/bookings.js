@@ -9,6 +9,9 @@ router.get('/host', verifyToken, bookingsController.getHostBookings);
 router.post('/', verifyToken, bookingsController.createBooking);
 router.delete('/:id', verifyToken, bookingsController.cancelBooking);
 
+// Date availability check route
+router.get('/check-availability/:listingId/:startDate/:endDate', verifyToken, bookingsController.checkDateAvailability);
+
 // Payment verification route
 router.get('/verify-payment/:sessionId', verifyToken, bookingsController.verifyPayment);
 
@@ -17,5 +20,9 @@ router.put('/update-statuses', verifyToken, authorizeRole('admin'), bookingsCont
 
 // Temporary route to update booking status (for testing)
 router.put('/update-status', verifyToken, bookingsController.updateBookingStatus);
+
+// Payout routes
+router.post('/:bookingId/process-payout', verifyToken, authorizeRole('admin'), bookingsController.processAutomaticPayout);
+router.get('/pending-payouts', verifyToken, authorizeRole('admin'), bookingsController.getPendingPayouts);
 
 module.exports = router;

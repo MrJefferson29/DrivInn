@@ -86,13 +86,18 @@ import {
   FaTimes,
   FaCog,
   FaChartBar,
-  FaHistory
+  FaHistory,
+  FaChevronDown,
+  FaChevronUp,
+  FaComment,
+  FaPowerOff
 } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useMediaQuery } from 'react-responsive';
 import BookingForm from './BookingForm';
 import LikeButton from './LikeButton';
 import ChatScreen from './ChatScreen';
+import ListingDeactivationModal from './ListingDeactivationModal';
 
 // Airbnb color palette
 const airbnbRed = '#FF385C';
@@ -1272,6 +1277,145 @@ const BookingPrice = styled.div`
   }
 `;
 
+const BookingActions = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  
+  @media (max-width: 768px) {
+    margin-top: 6px;
+  }
+`;
+
+const MessageButton = styled.button`
+  background: ${airbnbRed};
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  
+  &:hover {
+    background: #e31c5f;
+    transform: translateY(-1px);
+  }
+  
+  @media (max-width: 768px) {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+`;
+
+const DropdownToggle = styled.button`
+  background: none;
+  border: none;
+  color: ${airbnbRed};
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    color: #e31c5f;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.85rem;
+    padding: 6px 0;
+  }
+`;
+
+// Listing Deactivation Components
+const DeactivationSection = styled.section`
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid ${airbnbBorder};
+  margin-bottom: 32px;
+  
+  @media (max-width: 768px) {
+    padding: 24px;
+    margin-bottom: 24px;
+  }
+`;
+
+const DeactivationTitle = styled.h2`
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: ${airbnbDark};
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  @media (max-width: 768px) {
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+  }
+`;
+
+const StatusDisplay = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: ${airbnbLightGray};
+  border-radius: 12px;
+  border: 1px solid ${airbnbBorder};
+`;
+
+const StatusBadge = styled.span`
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+  background: ${props => props.color};
+`;
+
+const DeactivationButton = styled.button`
+  background: ${props => props.variant === 'activate' ? '#00A699' : airbnbRed};
+  color: white;
+  border: none;
+  padding: 16px 24px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  &:hover:not(:disabled) {
+    background: ${props => props.variant === 'activate' ? '#008f85' : '#e31c5f'};
+    transform: translateY(-1px);
+  }
+  
+  &:disabled {
+    background: ${airbnbGray};
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  @media (max-width: 768px) {
+    padding: 14px 20px;
+    font-size: 1rem;
+  }
+`;
+
 const EmptyState = styled.div`
   text-align: center;
   padding: 40px 20px;
@@ -1432,6 +1576,10 @@ const ListingDetails = () => {
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatRoomId, setChatRoomId] = useState(null);
+  const [showAllUpcomingBookings, setShowAllUpcomingBookings] = useState(false);
+  const [showAllPastBookings, setShowAllPastBookings] = useState(false);
+  const [listingStatus, setListingStatus] = useState(null);
+  const [showDeactivationModal, setShowDeactivationModal] = useState(false);
   const isMobile = useMediaQuery({ maxWidth: 768 });
 
   // Fetch listing data
@@ -1477,6 +1625,21 @@ const ListingDetails = () => {
           .catch(err => {
             console.error('Error fetching host bookings:', err);
             setBookingsLoading(false);
+          });
+      });
+    }
+  }, [listing, user]);
+
+  // Fetch listing status if user is the host
+  useEffect(() => {
+    if (listing && user && listing.owner && (user.id === listing.owner._id || user._id === listing.owner._id)) {
+      import('../services/api').then(({ listingsAPI }) => {
+        listingsAPI.getListingStatus(listing._id)
+          .then(response => {
+            setListingStatus(response.data);
+          })
+          .catch(err => {
+            console.error('Error fetching listing status:', err);
           });
       });
     }
@@ -1539,6 +1702,21 @@ const ListingDetails = () => {
     }
   };
 
+  const handleDeactivationSuccess = (data) => {
+    // Update the listing status
+    setListingStatus(data.listing.deactivationInfo);
+    setListing(prev => ({
+      ...prev,
+      isActive: data.listing.isActive,
+      deactivationInfo: data.listing.deactivationInfo
+    }));
+    setShowDeactivationModal(false);
+  };
+
+  const handleDeactivationClick = () => {
+    setShowDeactivationModal(true);
+  };
+
   const handleChat = async () => {
     if (!isAuthenticated) {
       navigate('/login');
@@ -1585,8 +1763,8 @@ const ListingDetails = () => {
     
     const now = new Date();
     const total = bookings.length;
-    const upcoming = bookings.filter(b => new Date(b.startDate) > now && b.status !== 'cancelled').length;
-    const past = bookings.filter(b => new Date(b.endDate) < now && b.status !== 'cancelled').length;
+    const upcoming = bookings.filter(b => new Date(b.checkIn) > now && b.status !== 'cancelled').length;
+    const past = bookings.filter(b => new Date(b.checkOut) < now && b.status !== 'cancelled').length;
     const revenue = bookings
       .filter(b => b.status !== 'cancelled')
       .reduce((sum, b) => sum + (b.totalPrice || 0), 0);
@@ -1599,8 +1777,7 @@ const ListingDetails = () => {
     const now = new Date();
     return bookings
       .filter(b => new Date(b.checkIn) > now && b.status !== 'cancelled')
-      .sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn))
-      .slice(0, 5);
+      .sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn));
   };
 
   const getPastBookings = () => {
@@ -1608,8 +1785,70 @@ const ListingDetails = () => {
     const now = new Date();
     return bookings
       .filter(b => new Date(b.checkOut) < now && b.status !== 'cancelled')
-      .sort((a, b) => new Date(b.checkOut) - new Date(a.checkOut))
-      .slice(0, 5);
+      .sort((a, b) => new Date(b.checkOut) - new Date(a.checkOut));
+  };
+
+  const getDisplayUpcomingBookings = () => {
+    const upcoming = getUpcomingBookings();
+    return showAllUpcomingBookings ? upcoming : upcoming.slice(0, 1);
+  };
+
+  const getDisplayPastBookings = () => {
+    const past = getPastBookings();
+    return showAllPastBookings ? past : past.slice(0, 5);
+  };
+
+  // Helper function to get listing status display
+  const getListingStatusDisplay = () => {
+    if (!listingStatus) return { text: 'Loading...', color: airbnbGray };
+    
+    if (listingStatus.isActive && !listingStatus.deactivationInfo?.isDeactivated) {
+      return { text: 'Active', color: '#00A699' };
+    } else if (listingStatus.deactivationInfo?.isDeactivated) {
+      if (listingStatus.deactivationInfo.deactivatedUntil) {
+        const untilDate = new Date(listingStatus.deactivationInfo.deactivatedUntil);
+        const now = new Date();
+        if (untilDate > now) {
+          return { 
+            text: `Deactivated until ${untilDate.toLocaleDateString()}`, 
+            color: airbnbRed 
+          };
+        } else {
+          return { text: 'Active', color: '#00A699' };
+        }
+      } else {
+        return { text: 'Deactivated', color: airbnbRed };
+      }
+    } else {
+      return { text: 'Inactive', color: airbnbGray };
+    }
+  };
+
+  const createChatRoom = async (booking) => {
+    try {
+      const response = await fetch('http://localhost:5000/chat/room', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          listingId: listing._id,
+          otherUserId: booking.user._id
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create chat room');
+      }
+      
+      const chatRoom = await response.json();
+      setChatRoomId(chatRoom._id);
+      setShowChatModal(true);
+    } catch (error) {
+      console.error('Error creating chat room:', error);
+      alert('Failed to start chat. Please try again.');
+    }
   };
 
   // Handle keyboard navigation
@@ -2189,6 +2428,8 @@ const highlightIcons = {
             </section>
           )}
 
+
+
           {/* Host Dashboard */}
           {isHost && (
             <DashboardSection>
@@ -2225,17 +2466,37 @@ const highlightIcons = {
                   {bookingsLoading ? (
                     <EmptyState>Loading bookings...</EmptyState>
                   ) : getUpcomingBookings().length > 0 ? (
-                    getUpcomingBookings().map((booking, index) => (
-                      <BookingItem key={booking._id || index}>
-                        <BookingGuest>
-                          {booking.user?.firstName} {booking.user?.lastName}
-                        </BookingGuest>
-                        <BookingDates>
-                          {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
-                        </BookingDates>
-                        <BookingPrice>${booking.totalPrice}</BookingPrice>
-                      </BookingItem>
-                    ))
+                    <>
+                      {getDisplayUpcomingBookings().map((booking, index) => (
+                        <BookingItem key={booking._id || index}>
+                          <BookingGuest>
+                            {booking.user?.firstName} {booking.user?.lastName}
+                          </BookingGuest>
+                          <BookingDates>
+                            {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
+                          </BookingDates>
+                          <BookingPrice>${booking.totalPrice}</BookingPrice>
+                          <BookingActions>
+                            <MessageButton onClick={() => createChatRoom(booking)}>
+                              <FaComment /> Message
+                            </MessageButton>
+                          </BookingActions>
+                        </BookingItem>
+                      ))}
+                      {getUpcomingBookings().length > 1 && (
+                        <DropdownToggle onClick={() => setShowAllUpcomingBookings(!showAllUpcomingBookings)}>
+                          {showAllUpcomingBookings ? (
+                            <>
+                              <FaChevronUp /> Show Less
+                            </>
+                          ) : (
+                            <>
+                              <FaChevronDown /> Show All ({getUpcomingBookings().length - 1} more)
+                            </>
+                          )}
+                        </DropdownToggle>
+                      )}
+                    </>
                   ) : (
                     <EmptyState>No upcoming bookings</EmptyState>
                   )}
@@ -2248,17 +2509,32 @@ const highlightIcons = {
                   {bookingsLoading ? (
                     <EmptyState>Loading bookings...</EmptyState>
                   ) : getPastBookings().length > 0 ? (
-                    getPastBookings().map((booking, index) => (
-                      <BookingItem key={booking._id || index}>
-                        <BookingGuest>
-                          {booking.user?.firstName} {booking.user?.lastName}
-                        </BookingGuest>
-                        <BookingDates>
-                          {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
-                        </BookingDates>
-                        <BookingPrice>${booking.totalPrice}</BookingPrice>
-                      </BookingItem>
-                    ))
+                    <>
+                      {getDisplayPastBookings().map((booking, index) => (
+                        <BookingItem key={booking._id || index}>
+                          <BookingGuest>
+                            {booking.user?.firstName} {booking.user?.lastName}
+                          </BookingGuest>
+                          <BookingDates>
+                            {new Date(booking.checkIn).toLocaleDateString()} - {new Date(booking.checkOut).toLocaleDateString()}
+                          </BookingDates>
+                          <BookingPrice>${booking.totalPrice}</BookingPrice>
+                        </BookingItem>
+                      ))}
+                      {getPastBookings().length > 5 && (
+                        <DropdownToggle onClick={() => setShowAllPastBookings(!showAllPastBookings)}>
+                          {showAllPastBookings ? (
+                            <>
+                              <FaChevronUp /> Show Less
+                            </>
+                          ) : (
+                            <>
+                              <FaChevronDown /> Show All ({getPastBookings().length - 5} more)
+                            </>
+                          )}
+                        </DropdownToggle>
+                      )}
+                    </>
                   ) : (
                     <EmptyState>No past bookings</EmptyState>
                   )}
@@ -2273,8 +2549,8 @@ const highlightIcons = {
                 <HostActionButton className="secondary" onClick={() => window.open(`/listing/${listing._id}`, '_blank')}>
                   <FaEye /> View Public Page
                 </HostActionButton>
-                <HostActionButton className="secondary" onClick={() => navigate('/dashboard')}>
-                  <FaChartBar /> Full Dashboard
+                <HostActionButton className="secondary" onClick={handleDeactivationClick}>
+                  <FaPowerOff /> {listingStatus?.deactivationInfo?.isDeactivated ? 'Activate Listing' : 'Deactivate Listing'}
                 </HostActionButton>
               </DashboardActions>
             </DashboardSection>
@@ -2325,8 +2601,8 @@ const highlightIcons = {
                 color: airbnbDark 
               }}>
                 <span>Status</span>
-                <span style={{ color: listing.isActive ? '#28a745' : airbnbGray }}>
-                  {listing.isActive ? 'Active' : 'Inactive'}
+                <span style={{ color: getListingStatusDisplay().color }}>
+                  {getListingStatusDisplay().text}
                 </span>
               </div>
               
@@ -2372,8 +2648,18 @@ const highlightIcons = {
                 <span>${listing.cleaningFee ? parseInt(listing.price) + parseInt(listing.cleaningFee) : listing.price}</span>
               </div>
               
-              <BookingButton onClick={handleBooking}>
-                {listing.transactionType === 'rent' ? 'Book now' : 'Buy now'}
+              <BookingButton 
+                onClick={handleBooking}
+                disabled={!listing.isActive || listingStatus?.deactivationInfo?.isDeactivated}
+                style={{
+                  background: (!listing.isActive || listingStatus?.deactivationInfo?.isDeactivated) ? airbnbGray : airbnbRed,
+                  cursor: (!listing.isActive || listingStatus?.deactivationInfo?.isDeactivated) ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {(!listing.isActive || listingStatus?.deactivationInfo?.isDeactivated) 
+                  ? 'Not Available' 
+                  : (listing.transactionType === 'rent' ? 'Book now' : 'Buy now')
+                }
               </BookingButton>
             </BookingCard>
           )}
@@ -2433,6 +2719,17 @@ const highlightIcons = {
           isOpen={showBookingForm}
           onClose={() => setShowBookingForm(false)}
           onSuccess={handleBookingSuccess}
+        />
+      )}
+
+      {/* Listing Deactivation Modal */}
+      {listing && (
+        <ListingDeactivationModal
+          listing={listing}
+          isOpen={showDeactivationModal}
+          onClose={() => setShowDeactivationModal(false)}
+          onSuccess={handleDeactivationSuccess}
+          isDeactivated={listingStatus?.deactivationInfo?.isDeactivated}
         />
       )}
 

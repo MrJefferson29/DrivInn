@@ -49,6 +49,32 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Listing'
     }],
+    // Host profile information (populated when application is approved)
+    hostProfile: {
+        businessName: { type: String },
+        businessTaxId: { type: String },
+        businessAddress: {
+            street: { type: String },
+            city: { type: String },
+            state: { type: String },
+            postalCode: { type: String },
+            country: { type: String }
+        },
+        businessPhone: { type: String },
+        ssnLast4: { type: String },
+        bankAccount: {
+            accountNumber: { type: String },
+            routingNumber: { type: String },
+            accountType: { type: String, enum: ['checking', 'savings'] }
+        },
+        stripeConnectAccountId: { type: String },
+        stripeConnectStatus: { type: String, enum: ['pending', 'active', 'restricted', 'disabled'] },
+        propertyType: { type: String, enum: ['apartment', 'house', 'car', 'other'] },
+        propertyDescription: { type: String },
+        hostingExperience: { type: String },
+        applicationApprovedAt: { type: Date },
+        applicationApprovedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+    },
     permissions: [{
         type: String,
         enum: [

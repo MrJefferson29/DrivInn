@@ -10,10 +10,22 @@ const http = require('http');
 const socketio = require('socket.io');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+// Import payout scheduler
+const { startPayoutScheduler, runInitialPayoutCheck } = require('./services/payoutScheduler');
+
 dotenv.config({ path: './.env' });
 
 const app = express();
 connectDB();
+
+// Start payout scheduler after database connection
+connectDB().then(() => {
+  console.log('🚀 Starting payout scheduler...');
+  startPayoutScheduler();
+  runInitialPayoutCheck();
+}).catch(err => {
+  console.error('❌ Failed to start payout scheduler:', err);
+});
 
 // Passport configuration
 require('./config/passport');
@@ -40,6 +52,7 @@ app.post(
         // Mark booking as reserved
         const Booking = require('./models/booking');
         const Payment = require('./models/payment');
+        const HostApplication = require('./models/HostApplication');
 
         try {
           const updatedBooking = await Booking.findByIdAndUpdate(session.metadata.bookingId, {
@@ -53,6 +66,8 @@ app.post(
             const updatedPayment = await Payment.findByIdAndUpdate(session.metadata.paymentId, {
               status: 'completed',
               transactionId: session.payment_intent || session.id,
+              stripePaymentIntentId: session.payment_intent,
+              payoutMethod: 'stripe_connect',
               metadata: {
                 stripeSessionId: session.id,
                 paymentIntentId: session.payment_intent

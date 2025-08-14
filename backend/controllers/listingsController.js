@@ -137,7 +137,7 @@ exports.createListing = async (req, res) => {
       calendar: calendar,
       // Map payout preference if provided
       payoutPreference: (() => {
-        const method = req.body.payoutMethod; // 'stripe' | 'card'
+      const method = req.body.payoutMethod; // Deprecated; payouts are Stripe Connect-only
         const stripeAccountId = req.body.stripeAccountId;
         const cardLast4 = req.body.cardLast4;
         if (!method && !stripeAccountId && !cardLast4) return undefined;
@@ -377,5 +377,149 @@ exports.getMostBookedCars = async (req, res) => {
   } catch (err) {
     console.error('Error fetching most booked cars:', err);
     res.status(500).json({ message: 'Error fetching most booked cars', error: err.message });
+  }
+};
+
+// Deactivate a listing
+exports.deactivateListing = async (req, res) => {
+  try {
+    const { listingId } = req.params;
+    const { deactivatedUntil, deactivationReason } = req.body;
+    
+    const listing = await Listing.findById(listingId);
+    if (!listing) {
+      return res.status(404).json({ message: 'Listing not found' });
+    }
+    
+    // Check if user is the owner of the listing
+    if (listing.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to deactivate this listing' });
+    }
+    
+    // Check if listing has any active bookings
+    const activeBookings = await Booking.find({
+      home: listingId,
+      status: { $in: ['pending', 'reserved'] },
+      checkOut: { $gt: new Date() }
+    });
+    
+    if (activeBookings.length > 0) {
+      return res.status(400).json({ 
+        message: 'Cannot deactivate listing with active bookings',
+        activeBookings: activeBookings.length
+      });
+    }
+    
+    // Update listing deactivation info
+    listing.deactivationInfo = {
+      isDeactivated: true,
+      deactivatedAt: new Date(),
+      deactivatedUntil: deactivatedUntil ? new Date(deactivatedUntil) : null, // null for indefinite
+      deactivationReason: deactivationReason || 'Host deactivated listing'
+    };
+    
+    // Set isActive to false
+    listing.isActive = false;
+    
+    await listing.save();
+    
+    console.log(`✅ Listing ${listingId} deactivated by user ${req.user._id}`);
+    
+    res.json({ 
+      message: 'Listing deactivated successfully',
+      listing: {
+        _id: listing._id,
+        title: listing.title,
+        deactivationInfo: listing.deactivationInfo,
+        isActive: listing.isActive
+      }
+    });
+  } catch (err) {
+    console.error('Deactivate listing error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Activate a listing
+exports.activateListing = async (req, res) => {
+  try {
+    const { listingId } = req.params;
+    
+    const listing = await Listing.findById(listingId);
+    if (!listing) {
+      return res.status(404).json({ message: 'Listing not found' });
+    }
+    
+    // Check if user is the owner of the listing
+    if (listing.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to activate this listing' });
+    }
+    
+    // Reset deactivation info
+    listing.deactivationInfo = {
+      isDeactivated: false,
+      deactivatedAt: null,
+      deactivatedUntil: null,
+      deactivationReason: null
+    };
+    
+    // Set isActive to true
+    listing.isActive = true;
+    
+    await listing.save();
+    
+    console.log(`✅ Listing ${listingId} activated by user ${req.user._id}`);
+    
+    res.json({ 
+      message: 'Listing activated successfully',
+      listing: {
+        _id: listing._id,
+        title: listing.title,
+        deactivationInfo: listing.deactivationInfo,
+        isActive: listing.isActive
+      }
+    });
+  } catch (err) {
+    console.error('Activate listing error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// Get listing status (for checking if listing is active/deactivated)
+exports.getListingStatus = async (req, res) => {
+  try {
+    const { listingId } = req.params;
+    
+    const listing = await Listing.findById(listingId).select('isActive deactivationInfo owner');
+    if (!listing) {
+      return res.status(404).json({ message: 'Listing not found' });
+    }
+    
+    // Check if listing should be automatically reactivated
+    if (listing.deactivationInfo.isDeactivated && 
+        listing.deactivationInfo.deactivatedUntil && 
+        new Date() > listing.deactivationInfo.deactivatedUntil) {
+      
+      // Auto-reactivate the listing
+      listing.deactivationInfo = {
+        isDeactivated: false,
+        deactivatedAt: null,
+        deactivatedUntil: null,
+        deactivationReason: null
+      };
+      listing.isActive = true;
+      await listing.save();
+      
+      console.log(`✅ Listing ${listingId} auto-reactivated after deactivation period`);
+    }
+    
+    res.json({
+      isActive: listing.isActive,
+      deactivationInfo: listing.deactivationInfo,
+      isOwner: listing.owner.toString() === req.user._id.toString()
+    });
+  } catch (err) {
+    console.error('Get listing status error:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 }; 

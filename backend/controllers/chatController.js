@@ -5,16 +5,18 @@ const cloudinary = require('cloudinary').v2;
 
 exports.createOrGetRoom = async (req, res) => {
   const { listingId, otherUserId } = req.body;
-  let room = await ChatRoom.findOne({ listing: listingId, users: { $all: [req.user.id, otherUserId] } });
+  const userId = req.user._id || req.user.id;
+  let room = await ChatRoom.findOne({ listing: listingId, users: { $all: [userId, otherUserId] } });
   if (!room) {
-    room = await ChatRoom.create({ listing: listingId, users: [req.user.id, otherUserId] });
+    room = await ChatRoom.create({ listing: listingId, users: [userId, otherUserId] });
   }
   res.json(room);
 };
 
 exports.getRoomByListing = async (req, res) => {
   const { listingId } = req.params;
-  const room = await ChatRoom.findOne({ listing: listingId, users: req.user.id });
+  const userId = req.user._id || req.user.id;
+  const room = await ChatRoom.findOne({ listing: listingId, users: userId });
   res.json(room);
 };
 
@@ -37,7 +39,7 @@ exports.sendMessage = async (req, res) => {
     
     const messageData = {
       chatRoom: chatRoomId,
-      sender: req.user.id,
+      sender: req.user._id || req.user.id,
       type,
       text,
       imageUrl
@@ -58,7 +60,8 @@ exports.sendMessage = async (req, res) => {
 
 exports.getUserChatRooms = async (req, res) => {
   try {
-    const rooms = await ChatRoom.find({ users: req.user.id })
+    const userId = req.user._id || req.user.id;
+    const rooms = await ChatRoom.find({ users: userId })
       .populate('listing', 'title images')
       .populate({
         path: 'users',

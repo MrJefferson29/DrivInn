@@ -15,7 +15,6 @@ import {
   FaCalendarAlt,
   FaIdCard,
   FaCreditCard,
-  FaPaypal,
   FaHome,
   FaSpinner,
   FaInfoCircle,
@@ -101,9 +100,9 @@ const StatusTitle = styled.h2`
 `;
 
 const StatusSubtitle = styled.p`
-  color: #717171;
+  color: #6c757d;
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.1rem;
 `;
 
 const StatusBadge = styled(Badge)`
@@ -111,30 +110,26 @@ const StatusBadge = styled(Badge)`
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 600;
-  margin-left: 12px;
+  text-transform: uppercase;
   
   &.pending {
-    background: #fff3cd !important;
-    color: #856404 !important;
+    background: #ffc107 !important;
+    color: #212529 !important;
   }
   
   &.approved {
-    background: #d4edda !important;
-    color: #155724 !important;
+    background: #28a745 !important;
+    color: white !important;
   }
   
   &.declined {
-    background: #f8d7da !important;
-    color: #721c24 !important;
+    background: #dc3545 !important;
+    color: white !important;
   }
 `;
 
 const StatusContent = styled.div`
   padding: 32px;
-`;
-
-const InfoSection = styled.div`
-  margin-bottom: 32px;
 `;
 
 const SectionTitle = styled.h3`
@@ -150,51 +145,44 @@ const SectionTitle = styled.h3`
 const InfoGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 20px;
+  margin-bottom: 24px;
 `;
 
 const InfoItem = styled.div`
-  background: #f9f9f9;
-  padding: 16px;
-  border-radius: 8px;
-  border: 1px solid #DDDDDD;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 `;
 
 const InfoLabel = styled.div`
   font-weight: 600;
-  color: #222222;
-  margin-bottom: 4px;
+  color: #6c757d;
   font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 `;
 
 const InfoValue = styled.div`
-  color: #717171;
+  color: #222222;
   font-size: 1rem;
 `;
 
-const DocumentLink = styled.a`
-  color: #FF385C;
-  text-decoration: none;
-  font-weight: 500;
-  
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
-const AdminNote = styled.div`
+const AdminNoteSection = styled.div`
   background: #fff3cd;
   border: 1px solid #ffeaa7;
-  border-radius: 8px;
-  padding: 16px;
-  margin-top: 16px;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
 `;
 
-const AdminNoteTitle = styled.div`
+const AdminNoteHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
   font-weight: 600;
   color: #856404;
-  margin-bottom: 8px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -246,149 +234,139 @@ const Button = styled.button`
       background: #e9e9e9;
     }
   }
-  
-  &.success {
-    background: #28a745;
-    color: white;
-    
-    &:hover:not(:disabled) {
-      background: #218838;
-      transform: translateY(-1px);
-    }
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
 `;
 
-const LoadingContainer = styled.div`
+const InfoBox = styled.div`
+  background: #e3f2fd;
+  border: 1px solid #2196f3;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 60px 20px;
+  align-items: flex-start;
+  gap: 12px;
 `;
 
-const EmptyState = styled.div`
-  text-align: center;
-  padding: 60px 20px;
-  color: #717171;
+const InfoIcon = styled(FaInfoCircle)`
+  color: #2196f3;
+  font-size: 1.2rem;
+  margin-top: 2px;
 `;
 
-const EmptyIcon = styled(FaFileAlt)`
-  font-size: 4rem;
-  color: #DDDDDD;
-  margin-bottom: 24px;
+const InfoText = styled.div`
+  color: #1976d2;
+  font-size: 0.9rem;
+  line-height: 1.5;
 `;
-
-const EmptyTitle = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #222222;
-  margin-bottom: 12px;
-`;
-
-const EmptyText = styled.p`
-  color: #717171;
-  margin-bottom: 24px;
-`;
-
-const getStatusIcon = (status) => {
-  switch (status) {
-    case 'pending': return <FaClock />;
-    case 'approved': return <FaCheckCircle />;
-    case 'declined': return <FaTimesCircle />;
-    default: return <FaClock />;
-  }
-};
-
-const getStatusType = (status) => {
-  switch (status) {
-    case 'pending': return 'pending';
-    case 'approved': return 'approved';
-    case 'declined': return 'declined';
-    default: return 'pending';
-  }
-};
-
-const getStatusMessage = (status) => {
-  switch (status) {
-    case 'pending':
-      return 'Your application is currently under review. We will notify you once a decision has been made.';
-    case 'approved':
-      return 'Congratulations! Your application has been approved. You can now create listings and start hosting.';
-    case 'declined':
-      return 'Your application was not approved. You can review the admin note below and reapply if needed.';
-    default:
-      return 'Your application status is being processed.';
-  }
-};
 
 const HostApplicationStatus = () => {
-  const [app, setApp] = useState(null);
+  const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
-    hostApplicationsAPI.getMy()
-      .then(res => {
-        console.log('Application data:', res.data);
-        setApp(res.data);
-      })
-      .catch((err) => {
+    const fetchApplication = async () => {
+      try {
+        const response = await hostApplicationsAPI.getMy();
+        if (response.data) {
+          setApplication(response.data);
+        } else {
+          setError('No application found');
+        }
+      } catch (err) {
         console.error('Error fetching application:', err);
-        setApp(null);
-      })
-      .finally(() => setLoading(false));
+        setError('Failed to load application');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchApplication();
   }, []);
 
-  const handleEditApplication = () => {
-    // Navigate to edit form with application data
-    navigate('/become-a-host/apply', { 
-      state: { 
-        editMode: true, 
-        applicationData: app 
-      } 
-    });
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'approved':
+        return <FaCheckCircle />;
+      case 'declined':
+        return <FaTimesCircle />;
+      default:
+        return <FaClock />;
+    }
   };
 
-  const handleNewApplication = () => {
-    navigate('/become-a-host/apply');
+  const getStatusMessage = (status) => {
+    switch (status) {
+      case 'approved':
+        return 'Your application has been approved! You can now start hosting.';
+      case 'declined':
+        return 'Your application has been declined. Please review the feedback and consider applying again.';
+      default:
+        return 'Your application is currently under review. We\'ll notify you once a decision has been made.';
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'approved':
+        return 'success';
+      case 'declined':
+        return 'danger';
+      default:
+        return 'warning';
+    }
   };
 
   if (loading) {
     return (
       <Container>
-        <LoadingContainer>
-          <Spinner animation="border" variant="primary" />
-        </LoadingContainer>
+        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <FaSpinner className="fa-spin" style={{ fontSize: '2rem', color: '#FF385C' }} />
+          <p style={{ marginTop: '16px', color: '#6c757d' }}>Loading application status...</p>
+        </div>
       </Container>
     );
   }
 
-  if (!app) {
+  if (error) {
     return (
       <Container>
         <Header>
           <BackButton onClick={() => navigate(-1)}>
             <FaArrowLeft /> Back
           </BackButton>
-          <Title>Host Application Status</Title>
+          <Title>Application Status</Title>
         </Header>
+        
+        <Alert variant="danger">
+          {error}
+        </Alert>
+        
+        <Button className="secondary" onClick={() => navigate('/become-a-host')}>
+          Apply Now
+        </Button>
+      </Container>
+    );
+  }
 
-        <EmptyState>
-          <EmptyIcon />
-          <EmptyTitle>No Application Found</EmptyTitle>
-          <EmptyText>
-            You haven't submitted a host application yet. Start your hosting journey today!
-          </EmptyText>
-          <Button className="primary" onClick={handleNewApplication}>
-            <FaFileAlt /> Apply to Become a Host
-          </Button>
-        </EmptyState>
+  if (!application) {
+    return (
+      <Container>
+        <Header>
+          <BackButton onClick={() => navigate(-1)}>
+            <FaArrowLeft /> Back
+          </BackButton>
+          <Title>Application Status</Title>
+        </Header>
+        
+        <Alert variant="info">
+          No application found. Please submit an application to get started.
+        </Alert>
+        
+        <Button className="primary" onClick={() => navigate('/become-a-host')}>
+          Apply Now
+        </Button>
       </Container>
     );
   }
@@ -402,226 +380,233 @@ const HostApplicationStatus = () => {
         <Title>Application Status</Title>
       </Header>
 
-      {error && (
-        <Alert variant="danger" style={{ marginBottom: '24px' }}>
-          {error}
-        </Alert>
-      )}
-
       <StatusCard>
-        <StatusHeader status={app.status}>
+        <StatusHeader status={application.status}>
           <StatusTitle>
-            {getStatusIcon(app.status)} Application Status
-            <StatusBadge className={getStatusType(app.status)}>
-              {app.status}
-            </StatusBadge>
+            {getStatusIcon(application.status)}
+            Host Application Status
           </StatusTitle>
-          <StatusSubtitle>
-            {getStatusMessage(app.status)}
-          </StatusSubtitle>
+          <StatusSubtitle>{getStatusMessage(application.status)}</StatusSubtitle>
+          <StatusBadge className={application.status}>
+            {application.status}
+          </StatusBadge>
         </StatusHeader>
 
         <StatusContent>
-          {/* Personal Information */}
-          <InfoSection>
-            <SectionTitle>
-              <FaUser /> Personal Information
-            </SectionTitle>
-            <InfoGrid>
-              <InfoItem>
-                <InfoLabel>Name</InfoLabel>
-                <InfoValue>{app.firstName} {app.lastName}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>Email</InfoLabel>
-                <InfoValue>{app.email}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>Phone</InfoLabel>
-                <InfoValue>{app.phoneNumber}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>Date of Birth</InfoLabel>
-                <InfoValue>{new Date(app.dateOfBirth).toLocaleDateString()}</InfoValue>
-              </InfoItem>
-            </InfoGrid>
-          </InfoSection>
+          <SectionTitle>
+            <FaUser /> Personal Information
+          </SectionTitle>
+          <InfoGrid>
+            <InfoItem>
+              <InfoLabel>Name</InfoLabel>
+              <InfoValue>{application.firstName} {application.lastName}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>Email</InfoLabel>
+              <InfoValue>{application.email}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>Phone</InfoLabel>
+              <InfoValue>{application.phoneNumber}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>Date of Birth</InfoLabel>
+              <InfoValue>{new Date(application.dateOfBirth).toLocaleDateString()}</InfoValue>
+            </InfoItem>
+          </InfoGrid>
 
-          {/* Address Information */}
-          <InfoSection>
-            <SectionTitle>
-              <FaMapMarkerAlt /> Address Information
-            </SectionTitle>
-            <InfoGrid>
-              <InfoItem>
-                <InfoLabel>Street</InfoLabel>
-                <InfoValue>{app.postalAddress?.street}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>City</InfoLabel>
-                <InfoValue>{app.postalAddress?.city}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>State</InfoLabel>
-                <InfoValue>{app.postalAddress?.state}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>Postal Code</InfoLabel>
-                <InfoValue>{app.postalAddress?.postalCode}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>Country</InfoLabel>
-                <InfoValue>{app.postalAddress?.country}</InfoValue>
-              </InfoItem>
-            </InfoGrid>
-          </InfoSection>
+          <SectionTitle>
+            <FaMapMarkerAlt /> Address
+          </SectionTitle>
+          <InfoGrid>
+            <InfoItem>
+              <InfoLabel>Street</InfoLabel>
+              <InfoValue>{application.postalAddress.street}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>City</InfoLabel>
+              <InfoValue>{application.postalAddress.city}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>State</InfoLabel>
+              <InfoValue>{application.postalAddress.state}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>Postal Code</InfoLabel>
+              <InfoValue>{application.postalAddress.postalCode}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>Country</InfoLabel>
+              <InfoValue>{application.postalAddress.country}</InfoValue>
+            </InfoItem>
+          </InfoGrid>
 
-          {/* Identity Verification */}
-          <InfoSection>
-            <SectionTitle>
-              <FaIdCard /> Identity Verification
-            </SectionTitle>
-            <InfoGrid>
-              <InfoItem>
-                <InfoLabel>ID Type</InfoLabel>
-                <InfoValue>{app.identityDocuments?.idType}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>ID Number</InfoLabel>
-                <InfoValue>{app.identityDocuments?.idNumber}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>ID Front</InfoLabel>
-                <InfoValue>
-                  <DocumentLink href={app.identityDocuments?.idFrontImage} target="_blank" rel="noopener noreferrer">
-                    View Image
-                  </DocumentLink>
-                </InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>ID Back</InfoLabel>
-                <InfoValue>
-                  <DocumentLink href={app.identityDocuments?.idBackImage} target="_blank" rel="noopener noreferrer">
-                    View Image
-                  </DocumentLink>
-                </InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>Selfie</InfoLabel>
-                <InfoValue>
-                  <DocumentLink href={app.identityDocuments?.selfieImage} target="_blank" rel="noopener noreferrer">
-                    View Image
-                  </DocumentLink>
-                </InfoValue>
-              </InfoItem>
-            </InfoGrid>
-          </InfoSection>
+          <SectionTitle>
+            <FaIdCard /> Identity Verification
+          </SectionTitle>
+          <InfoGrid>
+            <InfoItem>
+              <InfoLabel>ID Type</InfoLabel>
+              <InfoValue>{application.identityDocuments.idType}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>ID Number</InfoLabel>
+              <InfoValue>{application.identityDocuments.idNumber}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>Documents Uploaded</InfoLabel>
+              <InfoValue>
+                {application.identityDocuments.idFrontImage ? '✓' : '✗'} Front, 
+                {application.identityDocuments.idBackImage ? ' ✓' : ' ✗'} Back, 
+                {application.identityDocuments.selfieImage ? ' ✓' : ' ✗'} Selfie
+              </InfoValue>
+            </InfoItem>
+          </InfoGrid>
 
-          {/* Payment Information */}
-          <InfoSection>
-            <SectionTitle>
-              <FaCreditCard /> Payment Information
-            </SectionTitle>
-            <InfoGrid>
-              <InfoItem>
-                <InfoLabel>Stripe Account ID</InfoLabel>
-                <InfoValue>{app.paymentMethods?.stripeAccountId}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>Credit Card</InfoLabel>
-                <InfoValue>
-                  {app.paymentMethods?.creditCard?.brand} ending in {app.paymentMethods?.creditCard?.last4}
-                </InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>Card Expiry</InfoLabel>
-                <InfoValue>
-                  {app.paymentMethods?.creditCard?.expiryMonth}/{app.paymentMethods?.creditCard?.expiryYear}
-                </InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>PayPal Email</InfoLabel>
-                <InfoValue>{app.paymentMethods?.paypalEmail}</InfoValue>
-              </InfoItem>
-            </InfoGrid>
-          </InfoSection>
+          <SectionTitle>
+            <FaCreditCard /> Payment Methods
+          </SectionTitle>
+          <InfoGrid>
+            <InfoItem>
+              <InfoLabel>Stripe Account</InfoLabel>
+              <InfoValue>{application.paymentMethods?.stripeAccountId || 'Not provided'}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>Credit Card</InfoLabel>
+              <InfoValue>
+                {application.paymentMethods?.creditCard?.last4 ? `****${application.paymentMethods.creditCard.last4}` : 'Not provided'}
+              </InfoValue>
+            </InfoItem>
+          </InfoGrid>
 
-          {/* Property Information */}
-          <InfoSection>
-            <SectionTitle>
-              <FaHome /> Property Information
-            </SectionTitle>
-            <InfoGrid>
-              <InfoItem>
-                <InfoLabel>Property Type</InfoLabel>
-                <InfoValue>{app.propertyType}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>Description</InfoLabel>
-                <InfoValue>{app.propertyDescription}</InfoValue>
-              </InfoItem>
-              {app.hostingExperience && (
-                <InfoItem>
-                  <InfoLabel>Hosting Experience</InfoLabel>
-                  <InfoValue>{app.hostingExperience}</InfoValue>
-                </InfoItem>
-              )}
-            </InfoGrid>
-          </InfoSection>
+          <SectionTitle>
+            <FaHome /> Property Information
+          </SectionTitle>
+          <InfoGrid>
+            <InfoItem>
+              <InfoLabel>Property Type</InfoLabel>
+              <InfoValue>{application.propertyType}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>Description</InfoLabel>
+              <InfoValue>{application.propertyDescription}</InfoValue>
+            </InfoItem>
+            <InfoItem>
+              <InfoLabel>Hosting Experience</InfoLabel>
+              <InfoValue>{application.hostingExperience || 'Not provided'}</InfoValue>
+            </InfoItem>
+          </InfoGrid>
 
-          {/* Application Details */}
-          <InfoSection>
-            <SectionTitle>
-              <FaFileAlt /> Application Details
-            </SectionTitle>
-            <InfoGrid>
+          <SectionTitle>
+            <FaFileAlt /> Application Details
+          </SectionTitle>
+          <InfoGrid>
+            <InfoItem>
+              <InfoLabel>Submitted</InfoLabel>
+              <InfoValue>{new Date(application.submittedAt).toLocaleDateString()}</InfoValue>
+            </InfoItem>
+            {application.reviewedAt && (
               <InfoItem>
-                <InfoLabel>Submitted</InfoLabel>
-                <InfoValue>{new Date(app.createdAt).toLocaleString()}</InfoValue>
+                <InfoLabel>Reviewed</InfoLabel>
+                <InfoValue>{new Date(application.reviewedAt).toLocaleDateString()}</InfoValue>
               </InfoItem>
-              {app.updatedAt && (
-                <InfoItem>
-                  <InfoLabel>Last Updated</InfoLabel>
-                  <InfoValue>{new Date(app.updatedAt).toLocaleString()}</InfoValue>
-                </InfoItem>
-              )}
-            </InfoGrid>
-          </InfoSection>
+            )}
+          </InfoGrid>
 
-          {/* Admin Note */}
-          {app.adminNote && (
-            <AdminNote>
-              <AdminNoteTitle>
-                <FaExclamationTriangle /> Admin Note
-              </AdminNoteTitle>
-              <AdminNoteText>{app.adminNote}</AdminNoteText>
-            </AdminNote>
+          {application.adminNote && (
+            <AdminNoteSection>
+              <AdminNoteHeader>
+                {application.status === 'approved' ? <FaCheckCircle /> : <FaExclamationTriangle />}
+                {application.status === 'approved' ? 'Approval Note' : 'Admin Note'}
+              </AdminNoteHeader>
+              <AdminNoteText>{application.adminNote}</AdminNoteText>
+            </AdminNoteSection>
           )}
 
-          {/* Action Buttons */}
+          {application.status === 'pending' && (
+            <InfoBox>
+              <InfoIcon />
+              <InfoText>
+                <strong>What happens next?</strong> Your application is currently under review by our team. 
+                We typically review applications within 2-3 business days. You'll receive a notification 
+                once a decision has been made.
+              </InfoText>
+            </InfoBox>
+          )}
+
+          {application.status === 'approved' && (
+            <>
+              <InfoBox>
+                <InfoIcon />
+                <InfoText>
+                  <strong>Congratulations!</strong> Your application has been approved. You can now start 
+                  creating listings and hosting guests. We'll help you set up your payment methods for 
+                  receiving payouts.
+                </InfoText>
+              </InfoBox>
+              
+              {application.stripeRemediationLink && (
+                <InfoBox style={{ background: '#e3f2fd', borderColor: '#2196f3' }}>
+                  <InfoIcon style={{ color: '#2196f3' }} />
+                  <InfoText style={{ color: '#1976d2' }}>
+                    <strong>Complete Your Stripe Verification:</strong> To start receiving payments, you need to 
+                    complete your Stripe account verification. Click the link below to continue:
+                    <br /><br />
+                    <a 
+                      href={application.stripeRemediationLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ 
+                        color: '#1976d2', 
+                        textDecoration: 'underline',
+                        fontWeight: '600'
+                      }}
+                    >
+                      Complete Stripe Verification →
+                    </a>
+                  </InfoText>
+                </InfoBox>
+              )}
+              
+
+            </>
+          )}
+
+          {application.status === 'declined' && (
+            <InfoBox>
+              <InfoIcon />
+              <InfoText>
+                <strong>Next steps:</strong> Please review the feedback provided and consider applying again 
+                with updated information. If you have questions about the decision, please contact our support team.
+              </InfoText>
+            </InfoBox>
+          )}
+
           <ActionButtons>
-            {app.status === 'declined' && (
-              <>
-                <Button className="primary" onClick={handleEditApplication}>
-                  <FaEdit /> Edit & Resubmit
-                </Button>
-                <Button className="secondary" onClick={handleNewApplication}>
-                  <FaFileAlt /> Submit New Application
-                </Button>
-              </>
-            )}
-            {app.status === 'pending' && (
-              <Button className="primary" onClick={handleEditApplication}>
+            {application.status === 'pending' && (
+              <Button 
+                className="primary" 
+                onClick={() => navigate('/become-a-host/edit', { 
+                  state: { editMode: true, applicationData: application } 
+                })}
+              >
                 <FaEdit /> Edit Application
               </Button>
             )}
-            {app.status === 'approved' && (
-              <Button className="success" onClick={() => navigate('/create-listing')}>
-                <FaHome /> Create Your First Listing
+            
+            {application.status === 'declined' && (
+              <Button 
+                className="primary" 
+                onClick={() => navigate('/become-a-host', { 
+                  state: { editMode: true, applicationData: application } 
+                })}
+              >
+                <FaEdit /> Apply Again
               </Button>
             )}
-            <Button className="secondary" onClick={() => navigate('/')}>
-              Back to Home
+            
+            <Button className="secondary" onClick={() => navigate(-1)}>
+              Back
             </Button>
           </ActionButtons>
         </StatusContent>

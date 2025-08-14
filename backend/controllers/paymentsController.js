@@ -1,6 +1,69 @@
 const Stripe = require('stripe');
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY); // Set this in your .env
 
+// Admin: get all payments with related parties (guest, host, booking, listing)
+exports.getAllPaymentsAdmin = async (req, res) => {
+  try {
+    const Payment = require('../models/payment');
+
+    const payments = await Payment.find({})
+      .populate('user', 'firstName lastName email role')
+      .populate({
+        path: 'booking',
+        select: 'checkIn checkOut totalPrice status user home',
+        populate: [
+          { path: 'user', select: 'firstName lastName email' },
+          {
+            path: 'home',
+            select: 'title owner type',
+            populate: { path: 'owner', select: 'firstName lastName email role' }
+          }
+        ]
+      })
+      .sort({ createdAt: -1 });
+
+    // Normalize shape to include explicit host and listing fields
+    const result = payments.map((p) => {
+      const listing = p.booking && p.booking.home ? p.booking.home : null;
+      const host = listing && listing.owner ? listing.owner : null;
+      const guest = p.user || (p.booking && p.booking.user) || null;
+
+      return {
+        _id: p._id,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+        amount: p.amount,
+        currency: p.currency,
+        status: p.status,
+        paymentMethod: p.paymentMethod,
+        transactionId: p.transactionId,
+        stripePaymentIntentId: p.stripePaymentIntentId,
+        stripeSessionId: p.stripeSessionId,
+        payoutStatus: p.payoutStatus,
+        payoutMethod: p.payoutMethod,
+        payoutDate: p.payoutDate,
+        platformFee: p.platformFee,
+        guest: guest
+          ? { _id: guest._id, firstName: guest.firstName, lastName: guest.lastName, email: guest.email }
+          : null,
+        host: host
+          ? { _id: host._id, firstName: host.firstName, lastName: host.lastName, email: host.email }
+          : null,
+        listing: listing
+          ? { _id: listing._id, title: listing.title, type: listing.type }
+          : null,
+        booking: p.booking
+          ? { _id: p.booking._id, checkIn: p.booking.checkIn, checkOut: p.booking.checkOut, status: p.booking.status }
+          : null,
+      };
+    });
+
+    res.json({ payments: result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 exports.createPaymentIntent = async (req, res) => {
   const { amount, currency = 'usd' } = req.body;
   try {

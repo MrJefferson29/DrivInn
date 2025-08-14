@@ -36,15 +36,13 @@ const listingSchema = new mongoose.Schema({
     likeCount: { type: Number, default: 0 },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
     isActive: { type: Boolean, default: true },
-
-    // Payout preference for this listing
-    payoutPreference: {
-        method: { type: String, enum: ['stripe', 'card'], default: undefined },
-        details: {
-            stripeAccountId: { type: String, default: undefined },
-            cardLast4: { type: String, default: undefined }
-        }
+    deactivationInfo: {
+        isDeactivated: { type: Boolean, default: false },
+        deactivatedAt: { type: Date },
+        deactivatedUntil: { type: Date }, // null for indefinite deactivation
+        deactivationReason: { type: String }
     },
 
     // Apartment/Room fields
