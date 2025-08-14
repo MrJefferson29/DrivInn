@@ -123,7 +123,7 @@ exports.submitApplication = async (req, res) => {
         message: 'You must be at least 18 years old to become a host'
       });
     }
-
+    
     if (age > 120) {
       return res.status(400).json({
         message: 'Invalid date of birth: age seems unrealistic'
@@ -241,12 +241,12 @@ exports.submitApplication = async (req, res) => {
 
     console.log('All validations passed successfully');
     console.log('Form data summary:', {
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      email: req.body.email,
-      phoneNumber: req.body.phoneNumber,
-      businessStructure: req.body.businessStructure,
-      propertyType: req.body.propertyType,
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        phoneNumber: req.body.phoneNumber,
+        businessStructure: req.body.businessStructure,
+        propertyType: req.body.propertyType,
       hasBusinessInfo: !!(req.body.businessName || req.body.businessTaxId),
       hasFinancialInfo: !!(req.body.ssn || req.body.bankAccountNumber)
     });
@@ -457,10 +457,10 @@ exports.submitApplication = async (req, res) => {
       if (!regex.test(req.body.businessPhone)) {
         return res.status(400).json({
           message: `Invalid business phone number format for ${req.body.businessCountry}. Please include country code.`
-        });
-      }
-    }
-
+            });
+          }
+        }
+        
     console.log('Phone number validation passed');
 
     // Validate postal code length
@@ -931,37 +931,37 @@ exports.submitApplication = async (req, res) => {
     console.log('Phone number length validation passed');
 
     // Prepare application data
-    const applicationData = {
-      user: req.user._id,
+      const applicationData = {
+        user: req.user._id,
       // Personal Information
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      email: req.body.email,
-      phoneNumber: req.body.phoneNumber,
-      postalAddress: {
-        street: req.body.street,
-        city: req.body.city,
-        state: req.body.state,
-        postalCode: req.body.postalCode,
-        country: req.body.country
-      },
-      dateOfBirth: req.body.dateOfBirth,
-      identityDocuments: {
-        idType: req.body.idType,
-        idNumber: req.body.idNumber,
-        idFrontImage: null,
-        idBackImage: null,
-        selfieImage: null
-      },
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        phoneNumber: req.body.phoneNumber,
+        postalAddress: {
+          street: req.body.street,
+          city: req.body.city,
+          state: req.body.state,
+          postalCode: req.body.postalCode,
+          country: req.body.country
+        },
+        dateOfBirth: req.body.dateOfBirth,
+        identityDocuments: {
+          idType: req.body.idType,
+          idNumber: req.body.idNumber,
+          idFrontImage: null,
+          idBackImage: null,
+          selfieImage: null
+        },
       // Business Information
       businessName: req.body.businessName || null,
       businessTaxId: req.body.businessTaxId || null,
       businessAddress: req.body.businessStreet ? {
-        street: req.body.businessStreet,
-        city: req.body.businessCity,
-        state: req.body.businessState,
-        postalCode: req.body.businessPostalCode,
-        country: req.body.businessCountry
+          street: req.body.businessStreet,
+          city: req.body.businessCity,
+          state: req.body.businessState,
+          postalCode: req.body.businessPostalCode,
+          country: req.body.businessCountry
       } : null,
       businessPhone: req.body.businessPhone || null,
       businessStructure: req.body.businessStructure || 'individual',
@@ -970,35 +970,35 @@ exports.submitApplication = async (req, res) => {
       ssnLast4: req.body.ssnLast4 || null,
       supportPhone: req.body.supportPhone || null,
       bankAccount: req.body.bankAccountNumber ? {
-        accountNumber: req.body.bankAccountNumber,
-        routingNumber: req.body.bankRoutingNumber,
-        accountType: req.body.bankAccountType
+          accountNumber: req.body.bankAccountNumber,
+          routingNumber: req.body.bankRoutingNumber,
+          accountType: req.body.bankAccountType
       } : null,
       // Payment Methods
       paymentMethods: {
         stripeAccountId: req.body.stripeAccountId || undefined,
         creditCard: req.body.creditCardLast4 ? { last4: req.body.creditCardLast4 } : undefined
-      },
-      propertyType: req.body.propertyType,
-      propertyDescription: req.body.propertyDescription,
-      hostingExperience: req.body.hostingExperience,
-      status: 'pending',
-      submittedAt: new Date()
-    };
+        },
+        propertyType: req.body.propertyType,
+        propertyDescription: req.body.propertyDescription,
+        hostingExperience: req.body.hostingExperience,
+        status: 'pending',
+        submittedAt: new Date()
+      };
 
     console.log('Prepared application data:', JSON.stringify(applicationData, null, 2));
 
-    // Handle file uploads
-    if (req.files && Object.keys(req.files).length > 0) {
-      console.log('Files received:', Object.keys(req.files));
+      // Handle file uploads
+      if (req.files && Object.keys(req.files).length > 0) {
+        console.log('Files received:', Object.keys(req.files));
       
       // Validate file types
       const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-      
-      // Handle idFrontImage
-      if (req.files.idFrontImage && req.files.idFrontImage[0]) {
-        try {
-          const file = req.files.idFrontImage[0];
+        
+        // Handle idFrontImage
+        if (req.files.idFrontImage && req.files.idFrontImage[0]) {
+          try {
+            const file = req.files.idFrontImage[0];
           
           // Validate file type
           if (!allowedTypes.includes(file.mimetype)) {
@@ -1014,27 +1014,27 @@ exports.submitApplication = async (req, res) => {
             });
           }
           
-          const base64String = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-          
-          const result = await cloudinary.uploader.upload(base64String, {
-            folder: 'host-applications',
-            resource_type: 'auto',
-            public_id: `${req.user._id}_idFront_${Date.now()}`
-          });
-          applicationData.identityDocuments.idFrontImage = result.secure_url;
+            const base64String = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+            
+            const result = await cloudinary.uploader.upload(base64String, {
+              folder: 'host-applications',
+              resource_type: 'auto',
+              public_id: `${req.user._id}_idFront_${Date.now()}`
+            });
+            applicationData.identityDocuments.idFrontImage = result.secure_url;
           console.log('ID front image uploaded successfully:', result.secure_url);
-        } catch (uploadError) {
-          console.error('Cloudinary upload error for idFrontImage:', uploadError);
-          return res.status(500).json({ 
-            message: `Failed to upload ID front image: ${uploadError.message}` 
-          });
+          } catch (uploadError) {
+            console.error('Cloudinary upload error for idFrontImage:', uploadError);
+            return res.status(500).json({ 
+              message: `Failed to upload ID front image: ${uploadError.message}` 
+            });
+          }
         }
-      }
-      
-      // Handle idBackImage
-      if (req.files.idBackImage && req.files.idBackImage[0]) {
-        try {
-          const file = req.files.idBackImage[0];
+        
+        // Handle idBackImage
+        if (req.files.idBackImage && req.files.idBackImage[0]) {
+          try {
+            const file = req.files.idBackImage[0];
           
           // Validate file type
           if (!allowedTypes.includes(file.mimetype)) {
@@ -1050,27 +1050,27 @@ exports.submitApplication = async (req, res) => {
             });
           }
           
-          const base64String = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-          
-          const result = await cloudinary.uploader.upload(base64String, {
-            folder: 'host-applications',
-            resource_type: 'auto',
-            public_id: `${req.user._id}_idBack_${Date.now()}`
-          });
-          applicationData.identityDocuments.idBackImage = result.secure_url;
+            const base64String = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+            
+            const result = await cloudinary.uploader.upload(base64String, {
+              folder: 'host-applications',
+              resource_type: 'auto',
+              public_id: `${req.user._id}_idBack_${Date.now()}`
+            });
+            applicationData.identityDocuments.idBackImage = result.secure_url;
           console.log('ID back image uploaded successfully:', result.secure_url);
-        } catch (uploadError) {
-          console.error('Cloudinary upload error for idBackImage:', uploadError);
-          return res.status(500).json({ 
-            message: `Failed to upload ID back image: ${uploadError.message}` 
-          });
+          } catch (uploadError) {
+            console.error('Cloudinary upload error for idBackImage:', uploadError);
+            return res.status(500).json({ 
+              message: `Failed to upload ID back image: ${uploadError.message}` 
+            });
+          }
         }
-      }
-      
-      // Handle selfieImage
-      if (req.files.selfieImage && req.files.selfieImage[0]) {
-        try {
-          const file = req.files.selfieImage[0];
+        
+        // Handle selfieImage
+        if (req.files.selfieImage && req.files.selfieImage[0]) {
+          try {
+            const file = req.files.selfieImage[0];
           
           // Validate file type
           if (!allowedTypes.includes(file.mimetype)) {
@@ -1086,22 +1086,22 @@ exports.submitApplication = async (req, res) => {
             });
           }
           
-          const base64String = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-          
-          const result = await cloudinary.uploader.upload(base64String, {
-            folder: 'host-applications',
-            resource_type: 'auto',
-            public_id: `${req.user._id}_selfie_${Date.now()}`
-          });
-          applicationData.identityDocuments.selfieImage = result.secure_url;
+            const base64String = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+            
+            const result = await cloudinary.uploader.upload(base64String, {
+              folder: 'host-applications',
+              resource_type: 'auto',
+              public_id: `${req.user._id}_selfie_${Date.now()}`
+            });
+            applicationData.identityDocuments.selfieImage = result.secure_url;
           console.log('Selfie image uploaded successfully:', result.secure_url);
-        } catch (uploadError) {
-          console.error('Cloudinary upload error for selfieImage:', uploadError);
-          return res.status(500).json({ 
-            message: `Failed to upload selfie image: ${uploadError.message}` 
-          });
+          } catch (uploadError) {
+            console.error('Cloudinary upload error for selfieImage:', uploadError);
+            return res.status(500).json({ 
+              message: `Failed to upload selfie image: ${uploadError.message}` 
+            });
+          }
         }
-      }
     }
 
     // Verify all required files were uploaded successfully
@@ -1116,7 +1116,7 @@ exports.submitApplication = async (req, res) => {
     console.log('All files uploaded successfully');
 
     // Create the host application
-    const application = new HostApplication(applicationData);
+      const application = new HostApplication(applicationData);
     
     try {
       await application.save();

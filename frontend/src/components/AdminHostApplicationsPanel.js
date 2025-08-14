@@ -435,7 +435,7 @@ const Button = styled.button`
   
   &.secondary {
     background: #6c757d;
-    color: white;
+  color: white;
     
     &:hover:not(:disabled) {
       background: #5a6268;
@@ -497,7 +497,7 @@ const AdminHostApplicationsPanel = () => {
 
   const fetchApplications = async () => {
     try {
-      setLoading(true);
+    setLoading(true);
       const response = await hostApplicationsAPI.list();
       setApplications(response.data || []);
     } catch (err) {
@@ -605,18 +605,18 @@ const AdminHostApplicationsPanel = () => {
   }
 
   if (filteredApplications.length === 0 && !loading) {
-    return (
-      <Container>
-        <Header>
-          <HeaderLeft>
-            <BackButton onClick={() => navigate(-1)}>
-              <FaArrowLeft /> Back
-            </BackButton>
-            <Title>
-              <FaFileAlt /> Host Applications
-            </Title>
-          </HeaderLeft>
-        </Header>
+  return (
+    <Container>
+      <Header>
+        <HeaderLeft>
+          <BackButton onClick={() => navigate(-1)}>
+            <FaArrowLeft /> Back
+          </BackButton>
+          <Title>
+            <FaFileAlt /> Host Applications
+          </Title>
+        </HeaderLeft>
+      </Header>
 
         {error && (
           <Alert variant="danger" style={{ marginBottom: '24px' }}>
@@ -689,22 +689,22 @@ const AdminHostApplicationsPanel = () => {
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
             <option value="declined">Declined</option>
-          </FilterSelect>
+        </FilterSelect>
           
-          <SearchInput
-            type="text"
-            placeholder="Search by name or email..."
-            value={searchTerm}
+        <SearchInput
+          type="text"
+          placeholder="Search by name or email..."
+          value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        />
         </ControlsRow>
       </ControlsContainer>
 
-      <TableHeader>
+        <TableHeader>
         <TableTitle>
           <FaFileAlt /> Applications Overview
         </TableTitle>
-      </TableHeader>
+        </TableHeader>
 
       <ApplicationsTable>
         <TableHeaderRow>
@@ -773,7 +773,7 @@ const AdminHostApplicationsPanel = () => {
             <TableCell>
               <StatusBadge className={application.status}>
                 {application.status}
-              </StatusBadge>
+                </StatusBadge>
             </TableCell>
             
             <TableCell>
@@ -864,7 +864,7 @@ const AdminHostApplicationsPanel = () => {
                       <p><strong>Onboarding Completed:</strong> {selectedApplication.stripeConnect.onboardingCompleted ? 'Yes' : 'No'}</p>
                     </>
                   )}
-                </div>
+          </div>
               )}
               
               {modalType === 'approve' && (
@@ -872,19 +872,21 @@ const AdminHostApplicationsPanel = () => {
                   <p>Are you sure you want to approve this application?</p>
                   <p><strong>Applicant:</strong> {selectedApplication?.firstName} {selectedApplication?.lastName}</p>
                   <p>This will grant the user host privileges and allow them to create listings.</p>
-                  <p><strong>Note:</strong> A Stripe Connect account will be created automatically for this host.</p>
+                  <p><strong>Note:</strong> You must provide a Stripe remediation link for the user to complete their account setup.</p>
                   
-                  <FormGroup>
-                    <Label>Admin Note (Required)</Label>
+              <FormGroup>
+                    <Label>Admin Note (Optional)</Label>
                     <TextArea
                       value={adminNote}
                       onChange={(e) => setAdminNote(e.target.value)}
-                      placeholder="Provide a note about the approval..."
-                      required
+                      placeholder="Add any notes about this application..."
                     />
-                  </FormGroup>
-                  
-                  <FormGroup>
+                    <small style={{ color: '#6c757d', fontSize: '0.85rem' }}>
+                      Note: Stripe Connect account is created when the user submits their application. You can find the account in your Stripe dashboard.
+                    </small>
+              </FormGroup>
+
+              <FormGroup>
                     <Label>Stripe Remediation Link (Required)</Label>
                     <TextArea
                       value={stripeRemediationLink}
@@ -893,28 +895,33 @@ const AdminHostApplicationsPanel = () => {
                       required
                     />
                     <small style={{ color: '#6c757d', fontSize: '0.85rem' }}>
-                      This link will be provided to the user to complete their Stripe verification.
+                      <strong>Instructions:</strong> 
+                      <br />1. Go to the Stripe Dashboard for this host's account (created when they submitted their application)
+                      <br />2. Copy the remediation/onboarding link from the account setup section
+                      <br />3. Paste the link here - this will be provided to the user to complete their verification
+                      <br /><br />
+                      <strong>Note:</strong> The user will need this link to complete their Stripe Connect account setup and start receiving payments.
                     </small>
-                  </FormGroup>
+              </FormGroup>
                 </div>
               )}
-              
+
               {modalType === 'decline' && (
                 <div>
                   <p>Please provide a reason for declining this application:</p>
-                  <FormGroup>
+                <FormGroup>
                     <Label>Admin Note (Required)</Label>
-                    <TextArea
-                      value={adminNote}
+                  <TextArea
+                    value={adminNote}
                       onChange={(e) => setAdminNote(e.target.value)}
                       placeholder="Provide a reason for declining the application..."
                       required
-                    />
-                  </FormGroup>
+                  />
+                </FormGroup>
                 </div>
               )}
             </ModalBody>
-            
+
             <ModalActions>
               {modalType === 'approve' && (
                 <Button

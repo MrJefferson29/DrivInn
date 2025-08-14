@@ -18,7 +18,8 @@ import {
   FaHome,
   FaSpinner,
   FaInfoCircle,
-  FaExclamationTriangle
+  FaExclamationTriangle,
+  FaExternalLinkAlt
 } from 'react-icons/fa';
 import { Spinner, Alert, Badge } from 'react-bootstrap';
 
@@ -259,6 +260,104 @@ const InfoText = styled.div`
   line-height: 1.5;
 `;
 
+const StripeOnboardingButton = styled.button`
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  margin: 20px 0;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+  
+  svg {
+    font-size: 1.2rem;
+  }
+`;
+
+const StripeOnboardingSection = styled.div`
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 24px;
+  margin-bottom: 24px;
+`;
+
+const StripeOnboardingTitle = styled.h3`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #222222;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const StripeOnboardingDescription = styled.p`
+  color: #6c757d;
+  font-size: 1rem;
+  margin-bottom: 20px;
+  line-height: 1.6;
+`;
+
+const StripeOnboardingSteps = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const StepItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+`;
+
+const StepNumber = styled.div`
+  background: #FF385C;
+  color: white;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 600;
+`;
+
+const StepContent = styled.div`
+  flex-grow: 1;
+`;
+
+const StepTitle = styled.h4`
+  font-size: 1rem;
+  font-weight: 600;
+  color: #222222;
+  margin-bottom: 4px;
+`;
+
+const StepDescription = styled.p`
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 0;
+`;
+
 const HostApplicationStatus = () => {
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -274,10 +373,10 @@ const HostApplicationStatus = () => {
         } else {
           setError('No application found');
         }
-      } catch (err) {
+    } catch (err) {
         console.error('Error fetching application:', err);
         setError('Failed to load application');
-      } finally {
+    } finally {
         setLoading(false);
       }
     };
@@ -338,28 +437,28 @@ const HostApplicationStatus = () => {
           </BackButton>
           <Title>Application Status</Title>
         </Header>
-        
+
         <Alert variant="danger">
           {error}
         </Alert>
         
         <Button className="secondary" onClick={() => navigate('/become-a-host')}>
           Apply Now
-        </Button>
+          </Button>
       </Container>
     );
   }
 
   if (!application) {
-    return (
-      <Container>
-        <Header>
-          <BackButton onClick={() => navigate(-1)}>
-            <FaArrowLeft /> Back
-          </BackButton>
-          <Title>Application Status</Title>
-        </Header>
-        
+  return (
+    <Container>
+      <Header>
+        <BackButton onClick={() => navigate(-1)}>
+          <FaArrowLeft /> Back
+        </BackButton>
+        <Title>Application Status</Title>
+      </Header>
+
         <Alert variant="info">
           No application found. Please submit an application to get started.
         </Alert>
@@ -393,125 +492,125 @@ const HostApplicationStatus = () => {
         </StatusHeader>
 
         <StatusContent>
-          <SectionTitle>
-            <FaUser /> Personal Information
-          </SectionTitle>
-          <InfoGrid>
-            <InfoItem>
-              <InfoLabel>Name</InfoLabel>
+            <SectionTitle>
+              <FaUser /> Personal Information
+            </SectionTitle>
+            <InfoGrid>
+              <InfoItem>
+                <InfoLabel>Name</InfoLabel>
               <InfoValue>{application.firstName} {application.lastName}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>Email</InfoLabel>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>Email</InfoLabel>
               <InfoValue>{application.email}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>Phone</InfoLabel>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>Phone</InfoLabel>
               <InfoValue>{application.phoneNumber}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>Date of Birth</InfoLabel>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>Date of Birth</InfoLabel>
               <InfoValue>{new Date(application.dateOfBirth).toLocaleDateString()}</InfoValue>
-            </InfoItem>
-          </InfoGrid>
+              </InfoItem>
+            </InfoGrid>
 
-          <SectionTitle>
+            <SectionTitle>
             <FaMapMarkerAlt /> Address
-          </SectionTitle>
-          <InfoGrid>
-            <InfoItem>
-              <InfoLabel>Street</InfoLabel>
+            </SectionTitle>
+            <InfoGrid>
+              <InfoItem>
+                <InfoLabel>Street</InfoLabel>
               <InfoValue>{application.postalAddress.street}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>City</InfoLabel>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>City</InfoLabel>
               <InfoValue>{application.postalAddress.city}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>State</InfoLabel>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>State</InfoLabel>
               <InfoValue>{application.postalAddress.state}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>Postal Code</InfoLabel>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>Postal Code</InfoLabel>
               <InfoValue>{application.postalAddress.postalCode}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>Country</InfoLabel>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>Country</InfoLabel>
               <InfoValue>{application.postalAddress.country}</InfoValue>
-            </InfoItem>
-          </InfoGrid>
+              </InfoItem>
+            </InfoGrid>
 
-          <SectionTitle>
-            <FaIdCard /> Identity Verification
-          </SectionTitle>
-          <InfoGrid>
-            <InfoItem>
-              <InfoLabel>ID Type</InfoLabel>
+            <SectionTitle>
+              <FaIdCard /> Identity Verification
+            </SectionTitle>
+            <InfoGrid>
+              <InfoItem>
+                <InfoLabel>ID Type</InfoLabel>
               <InfoValue>{application.identityDocuments.idType}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>ID Number</InfoLabel>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>ID Number</InfoLabel>
               <InfoValue>{application.identityDocuments.idNumber}</InfoValue>
-            </InfoItem>
-            <InfoItem>
+              </InfoItem>
+              <InfoItem>
               <InfoLabel>Documents Uploaded</InfoLabel>
-              <InfoValue>
+                <InfoValue>
                 {application.identityDocuments.idFrontImage ? '✓' : '✗'} Front, 
                 {application.identityDocuments.idBackImage ? ' ✓' : ' ✗'} Back, 
                 {application.identityDocuments.selfieImage ? ' ✓' : ' ✗'} Selfie
-              </InfoValue>
-            </InfoItem>
-          </InfoGrid>
+                </InfoValue>
+              </InfoItem>
+            </InfoGrid>
 
-          <SectionTitle>
+            <SectionTitle>
             <FaCreditCard /> Payment Methods
-          </SectionTitle>
-          <InfoGrid>
-            <InfoItem>
+            </SectionTitle>
+            <InfoGrid>
+              <InfoItem>
               <InfoLabel>Stripe Account</InfoLabel>
               <InfoValue>{application.paymentMethods?.stripeAccountId || 'Not provided'}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>Credit Card</InfoLabel>
-              <InfoValue>
-                {application.paymentMethods?.creditCard?.last4 ? `****${application.paymentMethods.creditCard.last4}` : 'Not provided'}
-              </InfoValue>
-            </InfoItem>
-          </InfoGrid>
-
-          <SectionTitle>
-            <FaHome /> Property Information
-          </SectionTitle>
-          <InfoGrid>
-            <InfoItem>
-              <InfoLabel>Property Type</InfoLabel>
-              <InfoValue>{application.propertyType}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>Description</InfoLabel>
-              <InfoValue>{application.propertyDescription}</InfoValue>
-            </InfoItem>
-            <InfoItem>
-              <InfoLabel>Hosting Experience</InfoLabel>
-              <InfoValue>{application.hostingExperience || 'Not provided'}</InfoValue>
-            </InfoItem>
-          </InfoGrid>
-
-          <SectionTitle>
-            <FaFileAlt /> Application Details
-          </SectionTitle>
-          <InfoGrid>
-            <InfoItem>
-              <InfoLabel>Submitted</InfoLabel>
-              <InfoValue>{new Date(application.submittedAt).toLocaleDateString()}</InfoValue>
-            </InfoItem>
-            {application.reviewedAt && (
+              </InfoItem>
               <InfoItem>
+                <InfoLabel>Credit Card</InfoLabel>
+                <InfoValue>
+                {application.paymentMethods?.creditCard?.last4 ? `****${application.paymentMethods.creditCard.last4}` : 'Not provided'}
+                </InfoValue>
+              </InfoItem>
+            </InfoGrid>
+
+            <SectionTitle>
+              <FaHome /> Property Information
+            </SectionTitle>
+            <InfoGrid>
+              <InfoItem>
+                <InfoLabel>Property Type</InfoLabel>
+              <InfoValue>{application.propertyType}</InfoValue>
+              </InfoItem>
+              <InfoItem>
+                <InfoLabel>Description</InfoLabel>
+              <InfoValue>{application.propertyDescription}</InfoValue>
+              </InfoItem>
+                <InfoItem>
+                  <InfoLabel>Hosting Experience</InfoLabel>
+              <InfoValue>{application.hostingExperience || 'Not provided'}</InfoValue>
+                </InfoItem>
+            </InfoGrid>
+
+            <SectionTitle>
+              <FaFileAlt /> Application Details
+            </SectionTitle>
+            <InfoGrid>
+              <InfoItem>
+                <InfoLabel>Submitted</InfoLabel>
+              <InfoValue>{new Date(application.submittedAt).toLocaleDateString()}</InfoValue>
+              </InfoItem>
+            {application.reviewedAt && (
+                <InfoItem>
                 <InfoLabel>Reviewed</InfoLabel>
                 <InfoValue>{new Date(application.reviewedAt).toLocaleDateString()}</InfoValue>
-              </InfoItem>
-            )}
-          </InfoGrid>
+                </InfoItem>
+              )}
+            </InfoGrid>
 
           {application.adminNote && (
             <AdminNoteSection>
@@ -546,26 +645,64 @@ const HostApplicationStatus = () => {
               </InfoBox>
               
               {application.stripeRemediationLink && (
-                <InfoBox style={{ background: '#e3f2fd', borderColor: '#2196f3' }}>
-                  <InfoIcon style={{ color: '#2196f3' }} />
-                  <InfoText style={{ color: '#1976d2' }}>
-                    <strong>Complete Your Stripe Verification:</strong> To start receiving payments, you need to 
-                    complete your Stripe account verification. Click the link below to continue:
-                    <br /><br />
-                    <a 
-                      href={application.stripeRemediationLink} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      style={{ 
-                        color: '#1976d2', 
-                        textDecoration: 'underline',
-                        fontWeight: '600'
-                      }}
-                    >
-                      Complete Stripe Verification →
-                    </a>
-                  </InfoText>
-                </InfoBox>
+                <StripeOnboardingSection>
+                  <StripeOnboardingTitle>
+                    <FaCreditCard /> Complete Your Stripe Account Setup
+                  </StripeOnboardingTitle>
+                  <StripeOnboardingDescription>
+                    Your application has been approved! To start receiving payments from guests, you need to complete your Stripe Connect account setup.
+                    This process includes identity verification and bank account setup.
+                  </StripeOnboardingDescription>
+                  
+                  <StripeOnboardingButton 
+                    onClick={() => window.open(application.stripeRemediationLink, '_blank')}
+                  >
+                    <FaExternalLinkAlt />
+                    Complete Stripe Verification & Start Earning
+                  </StripeOnboardingButton>
+                  
+                  <StripeOnboardingSteps>
+                    <StepItem>
+                      <StepNumber>1</StepNumber>
+                      <StepContent>
+                        <StepTitle>Click the Button Above</StepTitle>
+                        <StepDescription>
+                          This will open Stripe's secure onboarding process in a new tab
+                        </StepDescription>
+                      </StepContent>
+                    </StepItem>
+                    
+                    <StepItem>
+                      <StepNumber>2</StepNumber>
+                      <StepContent>
+                        <StepTitle>Verify Your Identity</StepTitle>
+                        <StepDescription>
+                          Stripe will guide you through identity verification, including document uploads
+                        </StepDescription>
+                      </StepContent>
+                    </StepItem>
+                    
+                    <StepItem>
+                      <StepNumber>3</StepNumber>
+                      <StepContent>
+                        <StepTitle>Add Bank Account</StepTitle>
+                        <StepDescription>
+                          Connect your bank account to receive payouts from guest bookings
+                        </StepDescription>
+                      </StepContent>
+                    </StepItem>
+                    
+                    <StepItem>
+                      <StepNumber>4</StepNumber>
+                      <StepContent>
+                        <StepTitle>Start Hosting!</StepTitle>
+                        <StepDescription>
+                          Once complete, you can start listing your property and accepting bookings
+                        </StepDescription>
+                      </StepContent>
+                    </StepItem>
+                  </StripeOnboardingSteps>
+                </StripeOnboardingSection>
               )}
               
 

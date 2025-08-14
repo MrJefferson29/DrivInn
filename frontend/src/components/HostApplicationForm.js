@@ -21,7 +21,6 @@ import {
   FaCreditCard,
   FaBuilding,
   FaCheckCircle,
-  FaExternalLinkAlt,
   FaEye
 } from 'react-icons/fa';
 import { Spinner, Alert } from 'react-bootstrap';
@@ -297,147 +296,7 @@ const SuccessMessage = styled.p`
   line-height: 1.6;
 `;
 
-const StripeOnboardingSection = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #DDDDDD;
-  margin-bottom: 32px;
-  text-align: left;
-`;
 
-const StripeOnboardingTitle = styled.h2`
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: #222222;
-  margin: 0 0 16px 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #1976d2;
-`;
-
-const StripeOnboardingDescription = styled.p`
-  color: #6c757d;
-  margin: 0 0 32px 0;
-  line-height: 1.6;
-`;
-
-const StripeOnboardingSteps = styled.div`
-  margin-bottom: 32px;
-`;
-
-const StepItem = styled.div`
-  display: flex;
-  gap: 20px;
-  margin-bottom: 24px;
-  align-items: flex-start;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const StepNumber = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #1976d2;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-  flex-shrink: 0;
-`;
-
-const StepContent = styled.div`
-  flex: 1;
-`;
-
-const StepTitleText = styled.h4`
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #222222;
-  margin: 0 0 8px 0;
-`;
-
-const StepDescription = styled.p`
-  color: #6c757d;
-  margin: 0 0 16px 0;
-  line-height: 1.5;
-`;
-
-const OnboardingButton = styled.a`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #1976d2;
-  color: white;
-  padding: 12px 24px;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: #1565c0;
-    color: white;
-    text-decoration: none;
-    transform: translateY(-1px);
-  }
-`;
-
-const StripeAccountInfo = styled.div`
-  background: #f8f9fa;
-  border-radius: 8px;
-  padding: 24px;
-  border: 1px solid #e9ecef;
-`;
-
-const InfoTitle = styled.h4`
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #222222;
-  margin: 0 0 16px 0;
-`;
-
-const InfoGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-`;
-
-const InfoItem = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-`;
-
-const InfoLabel = styled.span`
-  font-size: 0.9rem;
-  color: #6c757d;
-  font-weight: 500;
-`;
-
-const InfoValue = styled.span`
-  font-size: 1rem;
-  color: #222222;
-  font-weight: 600;
-`;
-
-const StatusBadge = styled.span`
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  background: ${props => props.status === 'active' ? '#d4edda' : '#fff3cd'};
-  color: ${props => props.status === 'active' ? '#155724' : '#856404'};
-  border: 1px solid ${props => props.status === 'active' ? '#c3e6cb' : '#ffeaa7'};
-`;
 
 const ActionButtons = styled.div`
   display: flex;
@@ -527,13 +386,13 @@ const StepButton = styled.button`
   align-items: center;
   gap: 8px;
   
-  background: #FF385C;
-  color: white;
-  
-  &:hover:not(:disabled) {
-    background: #e31c5f;
-    transform: translateY(-1px);
-  }
+    background: #FF385C;
+    color: white;
+    
+    &:hover:not(:disabled) {
+      background: #e31c5f;
+      transform: translateY(-1px);
+    }
   
   &:disabled {
     opacity: 0.6;
@@ -894,7 +753,6 @@ const HostApplicationForm = () => {
   });
   const [success, setSuccess] = useState(false);
   const [applicationData, setApplicationData] = useState(null);
-  const [showStripeOnboarding, setShowStripeOnboarding] = useState(false);
 
   // Load existing application data if in edit mode
   useEffect(() => {
@@ -1029,8 +887,8 @@ const HostApplicationForm = () => {
     }
 
     try {
-      setLoading(true);
-      setError('');
+    setLoading(true);
+    setError('');
 
       const formDataToSend = new FormData();
       
@@ -1091,11 +949,6 @@ const HostApplicationForm = () => {
         setLoading(false);
         setSuccess(true);
         setApplicationData(response.data);
-        
-        // If this is a new submission (not an edit), show Stripe onboarding info
-        if (!isEditMode && response.data.stripeAccount) {
-          setShowStripeOnboarding(true);
-        }
       }
     } catch (err) {
       console.error('Error submitting application:', err);
@@ -1128,7 +981,7 @@ const HostApplicationForm = () => {
           <GuideListItem><strong>Date of Birth:</strong> You must be at least 18 years old to become a host</GuideListItem>
         </GuideList>
       </FieldGuide>
-
+      
       <InfoBox>
         <InfoIcon />
         <InfoText>
@@ -1148,7 +1001,7 @@ const HostApplicationForm = () => {
           />
           <Hint>Enter your legal first name exactly as it appears on your ID documents</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>Last Name <RequiredField>*</RequiredField></Label>
           <Input
@@ -1160,7 +1013,7 @@ const HostApplicationForm = () => {
           />
           <Hint>Enter your legal last name exactly as it appears on your ID documents</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>Email <RequiredField>*</RequiredField></Label>
           <Input
@@ -1172,7 +1025,7 @@ const HostApplicationForm = () => {
           />
           <Hint>This email will be used for all communications about your application and hosting account</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>Phone Number <RequiredField>*</RequiredField></Label>
           <Input
@@ -1184,7 +1037,7 @@ const HostApplicationForm = () => {
           />
           <Hint>Include country code if international (e.g., +1 for US). This number will be used for urgent communications.</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>Street Address <RequiredField>*</RequiredField></Label>
           <Input
@@ -1196,7 +1049,7 @@ const HostApplicationForm = () => {
           />
           <Hint>Include apartment/unit number if applicable. Use your current residential address.</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>City <RequiredField>*</RequiredField></Label>
           <Input
@@ -1208,7 +1061,7 @@ const HostApplicationForm = () => {
           />
           <Hint>Enter the full city name (e.g., "New York" not "NYC")</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>State/Province <RequiredField>*</RequiredField></Label>
           <Input
@@ -1220,7 +1073,7 @@ const HostApplicationForm = () => {
           />
           <Hint>Use full state name (e.g., "California" not "CA") or province name for international addresses</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>Postal Code <RequiredField>*</RequiredField></Label>
           <Input
@@ -1232,7 +1085,7 @@ const HostApplicationForm = () => {
           />
           <Hint>Enter your ZIP code (US) or postal code (international). Include letters and numbers as shown on mail.</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>Country <RequiredField>*</RequiredField></Label>
           <Input
@@ -1267,7 +1120,7 @@ const HostApplicationForm = () => {
       <StepSubtitle>
         Please provide your identity verification documents. These are required for security purposes.
       </StepSubtitle>
-
+      
       <FieldGuide>
         <GuideTitle>
           <FaInfoCircle /> Identity Verification Guide
@@ -1300,7 +1153,7 @@ const HostApplicationForm = () => {
           </Select>
           <Hint>Choose the most recent and valid form of identification. Passport is preferred for international hosts.</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>ID Number <RequiredField>*</RequiredField></Label>
           <Input
@@ -1317,24 +1170,24 @@ const HostApplicationForm = () => {
       <FormGrid>
         <FormGroup>
           <Label>ID Front Image <RequiredField>*</RequiredField></Label>
-          <FileUploadArea
-            className={formData.idFrontImage ? 'has-file' : ''}
-            onClick={() => document.getElementById('idFrontImage').click()}
-          >
-            <FileUploadIcon />
-            <FileUploadText>
+        <FileUploadArea
+          className={formData.idFrontImage ? 'has-file' : ''}
+          onClick={() => document.getElementById('idFrontImage').click()}
+        >
+          <FileUploadIcon />
+          <FileUploadText>
               {formData.idFrontImage ? 'File Selected' : 'Click to Upload'}
-            </FileUploadText>
-            <FileUploadHint>
+          </FileUploadText>
+          <FileUploadHint>
               Upload the front of your ID document
-            </FileUploadHint>
-          </FileUploadArea>
-          <HiddenFileInput
-            id="idFrontImage"
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleFileChange('idFrontImage', e.target.files[0])}
-          />
+          </FileUploadHint>
+        </FileUploadArea>
+        <HiddenFileInput
+          id="idFrontImage"
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleFileChange('idFrontImage', e.target.files[0])}
+        />
           {formData.idFrontImage && (
             <FilePreview>
               <FileName>{formData.idFrontImage.name}</FileName>
@@ -1346,24 +1199,24 @@ const HostApplicationForm = () => {
 
         <FormGroup>
           <Label>ID Back Image <RequiredField>*</RequiredField></Label>
-          <FileUploadArea
-            className={formData.idBackImage ? 'has-file' : ''}
-            onClick={() => document.getElementById('idBackImage').click()}
-          >
-            <FileUploadIcon />
-            <FileUploadText>
+        <FileUploadArea
+          className={formData.idBackImage ? 'has-file' : ''}
+          onClick={() => document.getElementById('idBackImage').click()}
+        >
+          <FileUploadIcon />
+          <FileUploadText>
               {formData.idBackImage ? 'File Selected' : 'Click to Upload'}
-            </FileUploadText>
-            <FileUploadHint>
+          </FileUploadText>
+          <FileUploadHint>
               Upload the back of your ID document
-            </FileUploadHint>
-          </FileUploadArea>
-          <HiddenFileInput
-            id="idBackImage"
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleFileChange('idBackImage', e.target.files[0])}
-          />
+          </FileUploadHint>
+        </FileUploadArea>
+        <HiddenFileInput
+          id="idBackImage"
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleFileChange('idBackImage', e.target.files[0])}
+        />
           {formData.idBackImage && (
             <FilePreview>
               <FileName>{formData.idBackImage.name}</FileName>
@@ -1375,24 +1228,24 @@ const HostApplicationForm = () => {
 
         <FormGroup>
           <Label>Selfie Image <RequiredField>*</RequiredField></Label>
-          <FileUploadArea
-            className={formData.selfieImage ? 'has-file' : ''}
-            onClick={() => document.getElementById('selfieImage').click()}
-          >
-            <FileUploadIcon />
-            <FileUploadText>
+        <FileUploadArea
+          className={formData.selfieImage ? 'has-file' : ''}
+          onClick={() => document.getElementById('selfieImage').click()}
+        >
+          <FileUploadIcon />
+          <FileUploadText>
               {formData.selfieImage ? 'File Selected' : 'Click to Upload'}
-            </FileUploadText>
-            <FileUploadHint>
+          </FileUploadText>
+          <FileUploadHint>
               Upload a clear selfie photo
-            </FileUploadHint>
-          </FileUploadArea>
-          <HiddenFileInput
-            id="selfieImage"
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleFileChange('selfieImage', e.target.files[0])}
-          />
+          </FileUploadHint>
+        </FileUploadArea>
+        <HiddenFileInput
+          id="selfieImage"
+          type="file"
+          accept="image/*"
+          onChange={(e) => handleFileChange('selfieImage', e.target.files[0])}
+        />
           {formData.selfieImage && (
             <FilePreview>
               <FileName>{formData.selfieImage.name}</FileName>
@@ -1442,18 +1295,18 @@ const HostApplicationForm = () => {
         Business Information
       </StepTitle>
       
-      <FormGrid>
-        <FormGroup>
+        <FormGrid>
+          <FormGroup>
           <Label>Business Name (Optional)</Label>
-          <Input
-            type="text"
+            <Input
+              type="text"
             value={formData.businessName}
             onChange={(e) => handleInputChange('businessName', e.target.value)}
             placeholder="Your business name or leave blank for individual"
           />
           <Hint>Leave blank if you're operating as an individual (sole proprietor). Use your registered business name if you have one.</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>Business Tax ID (EIN) - Optional</Label>
           <Input
@@ -1461,7 +1314,7 @@ const HostApplicationForm = () => {
             value={formData.businessTaxId}
             onChange={(e) => handleInputChange('businessTaxId', e.target.value)}
             placeholder="12-3456789 (leave blank if individual)"
-          />
+            />
           <Hint>Required for businesses, leave blank for individual hosts. Format: XX-XXXXXXX (e.g., 12-3456789)</Hint>
         </FormGroup>
 
@@ -1483,25 +1336,25 @@ const HostApplicationForm = () => {
             <option value="unincorporated_non_profit">Unincorporated Non-Profit</option>
           </Select>
           <Hint>Select the legal structure that matches your business registration. If unsure, choose "Individual (Sole Proprietor)".</Hint>
-        </FormGroup>
-      </FormGrid>
+          </FormGroup>
+        </FormGrid>
 
       <StepTitle style={{ marginTop: '32px', fontSize: '1.5rem' }}>
         Business Address (if different from personal)
       </StepTitle>
       
-      <FormGrid>
-        <FormGroup>
+        <FormGrid>
+          <FormGroup>
           <Label>Business Street Address</Label>
-          <Input
-            type="text"
+            <Input
+              type="text"
             value={formData.businessStreet}
             onChange={(e) => handleInputChange('businessStreet', e.target.value)}
             placeholder="Leave blank if same as personal address"
           />
           <Hint>Only fill this if your business address is different from your personal address. Leave blank if they're the same.</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>Business City</Label>
           <Input
@@ -1512,7 +1365,7 @@ const HostApplicationForm = () => {
           />
           <Hint>Only fill this if your business city is different from your personal address.</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>Business State</Label>
           <Input
@@ -1523,7 +1376,7 @@ const HostApplicationForm = () => {
           />
           <Hint>Only fill this if your business state is different from your personal address.</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>Business Postal Code</Label>
           <Input
@@ -1534,7 +1387,7 @@ const HostApplicationForm = () => {
           />
           <Hint>Only fill this if your business postal code is different from your personal address.</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>Business Country</Label>
           <Input
@@ -1545,7 +1398,7 @@ const HostApplicationForm = () => {
           />
           <Hint>Only fill this if your business country is different from your personal address.</Hint>
         </FormGroup>
-
+        
         <FormGroup>
           <Label>Business Phone</Label>
           <Input
@@ -1664,8 +1517,8 @@ const HostApplicationForm = () => {
             required
           />
           <Hint>Your bank account number (numbers only, no spaces or dashes). This is where your payouts will be deposited.</Hint>
-        </FormGroup>
-      </FormGrid>
+          </FormGroup>
+        </FormGrid>
     </>
   );
 
@@ -1788,26 +1641,26 @@ const HostApplicationForm = () => {
           <Hint>Select the primary type of property you plan to list. You can list multiple types later, but choose your main one.</Hint>
         </FormGroup>
 
-        <FormGroup>
+      <FormGroup>
           <Label>Property Description <RequiredField>*</RequiredField></Label>
-          <TextArea
-            value={formData.propertyDescription}
-            onChange={(e) => handleInputChange('propertyDescription', e.target.value)}
+        <TextArea
+          value={formData.propertyDescription}
+          onChange={(e) => handleInputChange('propertyDescription', e.target.value)}
             placeholder="Describe your property, amenities, and what makes it special..."
             required
-          />
+        />
           <Hint>Provide a detailed description of your property and its unique features. Include amenities, location highlights, and what makes it special.</Hint>
-        </FormGroup>
+      </FormGroup>
 
-        <FormGroup>
+      <FormGroup>
           <Label>Hosting Experience</Label>
-          <TextArea
-            value={formData.hostingExperience}
-            onChange={(e) => handleInputChange('hostingExperience', e.target.value)}
+        <TextArea
+          value={formData.hostingExperience}
+          onChange={(e) => handleInputChange('hostingExperience', e.target.value)}
             placeholder="Tell us about your experience with hosting or customer service..."
-          />
+        />
           <Hint>Share any previous hosting experience, customer service skills, or relevant background. Even if you're new to hosting, tell us about your customer service experience.</Hint>
-        </FormGroup>
+      </FormGroup>
       </FormGrid>
     </>
   );
@@ -1838,20 +1691,20 @@ const HostApplicationForm = () => {
         <div><strong>ID Number:</strong> {formData.idNumber}</div>
         <div><strong>Documents:</strong> {formData.idFrontImage ? 'Front ✓' : 'Front ✗'}, {formData.idBackImage ? 'Back ✓' : 'Back ✗'}, {formData.selfieImage ? 'Selfie ✓' : 'Selfie ✗'}</div>
         
-        <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Business Information</h3>
-        <div><strong>Business Name:</strong> {formData.businessName || 'Individual (no business name)'}</div>
-        <div><strong>Business Tax ID:</strong> {formData.businessTaxId || 'Not provided'}</div>
+         <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Business Information</h3>
+         <div><strong>Business Name:</strong> {formData.businessName || 'Individual (no business name)'}</div>
+         <div><strong>Business Tax ID:</strong> {formData.businessTaxId || 'Not provided'}</div>
         <div><strong>Business Structure:</strong> {formData.businessStructure || 'Individual'}</div>
-        <div><strong>Business Address:</strong> {formData.businessStreet ? `${formData.businessStreet}, ${formData.businessCity}, ${formData.businessState} ${formData.businessPostalCode}, ${formData.businessCountry}` : 'Same as personal address'}</div>
-        <div><strong>Business Phone:</strong> {formData.businessPhone || 'Same as personal phone'}</div>
-        
-        <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Financial Information</h3>
-        <div><strong>SSN:</strong> {formData.ssn ? '****' : 'Not provided'}</div>
-        <div><strong>SSN Last 4:</strong> {formData.ssnLast4 ? '****' : 'Not provided'}</div>
-        <div><strong>Support Phone:</strong> {formData.supportPhone || 'Not provided'}</div>
-        <div><strong>Bank Account Type:</strong> {formData.bankAccountType || 'Not selected'}</div>
-        <div><strong>Bank Routing Number:</strong> {formData.bankRoutingNumber ? '****' : 'Not provided'}</div>
-        <div><strong>Bank Account Number:</strong> {formData.bankAccountNumber ? '****' : 'Not provided'}</div>
+         <div><strong>Business Address:</strong> {formData.businessStreet ? `${formData.businessStreet}, ${formData.businessCity}, ${formData.businessState} ${formData.businessPostalCode}, ${formData.businessCountry}` : 'Same as personal address'}</div>
+         <div><strong>Business Phone:</strong> {formData.businessPhone || 'Same as personal phone'}</div>
+         
+         <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Financial Information</h3>
+         <div><strong>SSN:</strong> {formData.ssn ? '****' : 'Not provided'}</div>
+         <div><strong>SSN Last 4:</strong> {formData.ssnLast4 ? '****' : 'Not provided'}</div>
+         <div><strong>Support Phone:</strong> {formData.supportPhone || 'Not provided'}</div>
+         <div><strong>Bank Account Type:</strong> {formData.bankAccountType || 'Not selected'}</div>
+         <div><strong>Bank Routing Number:</strong> {formData.bankRoutingNumber ? '****' : 'Not provided'}</div>
+         <div><strong>Bank Account Number:</strong> {formData.bankAccountNumber ? '****' : 'Not provided'}</div>
         
         <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Payment Methods</h3>
         <div><strong>Stripe Account:</strong> {formData.stripeAccountId || 'Not provided'}</div>
@@ -1861,7 +1714,7 @@ const HostApplicationForm = () => {
         <div><strong>Type:</strong> {formData.propertyType}</div>
         <div><strong>Description:</strong> {formData.propertyDescription}</div>
         <div><strong>Experience:</strong> {formData.hostingExperience || 'Not provided'}</div>
-      </div>
+          </div>
 
       <InfoBox>
         <InfoIcon />
@@ -1901,101 +1754,24 @@ const HostApplicationForm = () => {
           </SuccessIcon>
           <SuccessTitle>Application Submitted Successfully!</SuccessTitle>
           <SuccessMessage>
-            Your host application has been submitted and is currently under review. 
+            Your host application has been submitted and is currently under review by our team. 
             We'll notify you via email once the review is complete.
           </SuccessMessage>
           
-          {showStripeOnboarding && applicationData.stripeAccount && (
-            <StripeOnboardingSection>
-              <StripeOnboardingTitle>
-                <FaCreditCard /> Complete Your Stripe Account Setup
-              </StripeOnboardingTitle>
-              <StripeOnboardingDescription>
-                To start receiving payments from guests, you need to complete your Stripe Connect account setup.
-                This process includes identity verification and bank account setup.
-              </StripeOnboardingDescription>
-              
-              <StripeOnboardingSteps>
-                <StepItem>
-                  <StepNumber>1</StepNumber>
-                  <StepContent>
-                                         <StepTitleText>Click the Onboarding Link</StepTitleText>
-                    <StepDescription>
-                      Use the link below to complete your Stripe account setup. This will open Stripe's secure onboarding process.
-                    </StepDescription>
-                    <OnboardingButton 
-                      href={applicationData.stripeAccount.onboardingUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                    >
-                      <FaExternalLinkAlt /> Complete Stripe Setup
-                    </OnboardingButton>
-                  </StepContent>
-                </StepItem>
-                
-                <StepItem>
-                  <StepNumber>2</StepNumber>
-                  <StepContent>
-                                         <StepTitleText>Verify Your Identity</StepTitleText>
-                    <StepDescription>
-                      Stripe will guide you through identity verification, including document uploads and business information.
-                    </StepDescription>
-                  </StepContent>
-                </StepItem>
-                
-                <StepItem>
-                  <StepNumber>3</StepNumber>
-                  <StepContent>
-                                         <StepTitleText>Add Bank Account</StepTitleText>
-                    <StepDescription>
-                      Connect your bank account to receive payouts from guest bookings.
-                    </StepDescription>
-                  </StepContent>
-                </StepItem>
-                
-                <StepItem>
-                  <StepNumber>4</StepNumber>
-                  <StepContent>
-                                         <StepTitleText>Wait for Approval</StepTitleText>
-                    <StepDescription>
-                      Once complete, our team will review your application and Stripe account setup.
-                    </StepDescription>
-                  </StepContent>
-                </StepItem>
-              </StripeOnboardingSteps>
-              
-              <StripeAccountInfo>
-                <InfoTitle>Your Stripe Account Details:</InfoTitle>
-                <InfoGrid>
-                  <InfoItem>
-                    <InfoLabel>Account ID:</InfoLabel>
-                    <InfoValue>{applicationData.stripeAccount.id}</InfoValue>
-                  </InfoItem>
-                  <InfoItem>
-                    <InfoLabel>Status:</InfoLabel>
-                    <InfoValue>
-                      <StatusBadge status={applicationData.stripeAccount.status}>
-                        {applicationData.stripeAccount.status}
-                      </StatusBadge>
-                    </InfoValue>
-                  </InfoItem>
-                  <InfoItem>
-                    <InfoLabel>Dashboard:</InfoLabel>
-                    <InfoValue>
-                      <a 
-                        href={applicationData.stripeAccount.dashboardUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        style={{ color: '#1976d2', textDecoration: 'underline' }}
-                      >
-                        View Stripe Dashboard
-                      </a>
-                    </InfoValue>
-                  </InfoItem>
-                </InfoGrid>
-              </StripeAccountInfo>
-            </StripeOnboardingSection>
-          )}
+          <InfoBox style={{ background: '#e3f2fd', borderColor: '#2196f3', marginBottom: '32px' }}>
+            <InfoIcon />
+            <InfoText>
+              <strong>What happens next?</strong>
+              <br /><br />
+              1. <strong>Application Review:</strong> Our team will review your application within 2-3 business days
+              <br />
+              2. <strong>Stripe Account Created:</strong> We've already created your Stripe Connect account for secure payments
+              <br />
+              3. <strong>Admin Approval:</strong> Once approved, you'll receive a link to complete your Stripe verification
+              <br />
+              4. <strong>Start Hosting:</strong> After verification, you can start listing your property and accepting bookings
+            </InfoText>
+          </InfoBox>
           
           <ActionButtons>
             <ActionButton onClick={() => navigate('/host-application-status')}>
