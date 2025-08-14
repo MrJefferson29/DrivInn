@@ -44,40 +44,145 @@ app.post(
         process.env.STRIPE_WEBHOOK_SECRET
       );
 
+      console.log('📋 Webhook received:', event.type);
+
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
-        console.log('✅ Payment successful for booking:', session.metadata.bookingId);
+        console.log('✅ Checkout session completed:', session.id);
         console.log('📋 Session metadata:', session.metadata);
 
-        // Mark booking as reserved
+        // Find booking by payment session ID
         const Booking = require('./models/booking');
         const Payment = require('./models/payment');
-        const HostApplication = require('./models/HostApplication');
 
         try {
-          const updatedBooking = await Booking.findByIdAndUpdate(session.metadata.bookingId, {
+          const booking = await Booking.findOne({ paymentSessionId: session.id });
+          
+          if (!booking) {
+            console.log('⚠️ No booking found for session:', session.id);
+            return res.json({ received: true });
+          }
+
+          console.log('✅ Found booking for session:', booking._id);
+
+          // Update booking status to reserved
+          const updatedBooking = await Booking.findByIdAndUpdate(booking._id, {
             status: 'reserved',
+            updatedAt: new Date()
           }, { new: true });
 
           console.log('✅ Booking status updated to reserved:', updatedBooking._id);
 
           // Update payment status
-          if (session.metadata.paymentId) {
-            const updatedPayment = await Payment.findByIdAndUpdate(session.metadata.paymentId, {
+          const payment = await Payment.findOne({ stripeSessionId: session.id });
+          if (payment) {
+            const updatedPayment = await Payment.findByIdAndUpdate(payment._id, {
               status: 'completed',
               transactionId: session.payment_intent || session.id,
               stripePaymentIntentId: session.payment_intent,
               payoutMethod: 'stripe_connect',
+              completedAt: new Date(),
               metadata: {
+                ...payment.metadata,
                 stripeSessionId: session.id,
-                paymentIntentId: session.payment_intent
+                paymentIntentId: session.payment_intent,
+                webhookProcessed: true
               }
             }, { new: true });
 
             console.log('✅ Payment status updated to completed:', updatedPayment._id);
           }
+
+          // Send notification to host about new booking
+          try {
+            const NotificationService = require('./services/notificationService');
+            await NotificationService.createBookingNotification(booking._id, 'new_booking');
+            console.log('✅ Host notification created for new booking');
+          } catch (notificationError) {
+            console.error('❌ Error creating host notification:', notificationError);
+          }
+
         } catch (error) {
           console.error('❌ Error updating booking/payment:', error);
+        }
+      }
+
+      // Handle payment intent events for additional payment status updates
+      if (event.type === 'payment_intent.succeeded') {
+        const paymentIntent = event.data.object;
+        console.log('✅ Payment intent succeeded:', paymentIntent.id);
+
+        // Find payment by payment intent ID
+        const Payment = require('./models/payment');
+        try {
+          const payment = await Payment.findOne({ 
+            'metadata.stripePaymentIntentId': paymentIntent.id 
+          });
+
+          if (payment) {
+            console.log('✅ Found payment for payment intent:', payment._id);
+            
+            // Update payment with additional details
+            await Payment.findByIdAndUpdate(payment._id, {
+              status: 'completed',
+              transactionId: paymentIntent.id,
+              completedAt: new Date(),
+              metadata: {
+                ...payment.metadata,
+                paymentIntentStatus: paymentIntent.status,
+                webhookProcessed: true
+              }
+            });
+
+            console.log('✅ Payment updated with payment intent details');
+          }
+        } catch (error) {
+          console.error('❌ Error updating payment with payment intent:', error);
+        }
+      }
+
+      // Handle payment intent capture (when we manually capture the payment)
+      if (event.type === 'payment_intent.payment_failed') {
+        const paymentIntent = event.data.object;
+        console.log('❌ Payment intent failed:', paymentIntent.id);
+
+        // Find payment and update status
+        const Payment = require('./models/payment');
+        try {
+          const payment = await Payment.findOne({ 
+            'metadata.stripePaymentIntentId': paymentIntent.id 
+          });
+
+          if (payment) {
+            console.log('✅ Found payment for failed payment intent:', payment._id);
+            
+            // Update payment status to failed
+            await Payment.findByIdAndUpdate(payment._id, {
+              status: 'failed',
+              failedAt: new Date(),
+              metadata: {
+                ...payment.metadata,
+                paymentIntentStatus: paymentIntent.status,
+                failureReason: paymentIntent.last_payment_error?.message || 'Payment failed',
+                webhookProcessed: true
+              }
+            });
+
+            // Update booking status to cancelled
+            const Booking = require('./models/booking');
+            const booking = await Booking.findById(payment.booking);
+            if (booking) {
+              await Booking.findByIdAndUpdate(booking._id, {
+                status: 'cancelled',
+                updatedAt: new Date()
+              });
+              console.log('✅ Booking status updated to cancelled due to payment failure');
+            }
+
+            console.log('✅ Payment updated with failure details');
+          }
+        } catch (error) {
+          console.error('❌ Error updating failed payment:', error);
         }
       }
 

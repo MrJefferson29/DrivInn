@@ -15,6 +15,12 @@ router.get('/check-availability/:listingId/:startDate/:endDate', verifyToken, bo
 // Payment verification route
 router.get('/verify-payment/:sessionId', verifyToken, bookingsController.verifyPayment);
 
+// Capture payment route (called after successful checkout)
+router.post('/capture-payment/:sessionId', verifyToken, bookingsController.capturePayment);
+
+// Cancel payment route (called when user cancels checkout)
+router.post('/cancel-payment/:sessionId', verifyToken, bookingsController.cancelPayment);
+
 // Admin route to update all booking statuses
 router.put('/update-statuses', verifyToken, authorizeRole('admin'), bookingsController.updateAllBookingStatuses);
 

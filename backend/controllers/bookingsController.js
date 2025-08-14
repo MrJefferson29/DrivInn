@@ -98,7 +98,7 @@ exports.createBooking = async (req, res) => {
       });
     }
 
-    // Check for date overlaps before creating the booking
+    // Check for date overlaps BEFORE creating any booking
     const hasOverlap = await checkDateOverlap(listing, startDate, endDate);
     if (hasOverlap) {
       console.log('❌ Date overlap detected for listing:', listing);
@@ -108,61 +108,6 @@ exports.createBooking = async (req, res) => {
       });
     }
 
-    // 1️⃣ Create booking in DB with "pending" status
-    const booking = await Booking.create({
-      user: userId,
-      home: listing, // Map listing to home
-      checkIn: startDate, // Map startDate to checkIn
-      checkOut: endDate, // Map endDate to checkOut
-      guests,
-      totalPrice,
-      status: 'pending'
-    });
-
-    console.log('✅ Booking created:', booking._id);
-
-    // 2️⃣ Create payment record
-    const payment = await Payment.create({
-      user: userId,
-      booking: booking._id,
-      amount: totalPrice,
-      currency: 'usd',
-      status: 'pending',
-      paymentMethod: paymentMethod, // Use selected payment method
-      stripeSessionId: null, // Will be updated after Stripe session creation
-      metadata: {
-        paymentMethod: paymentMethod, // Store payment method in metadata for payout processing
-        hasTransferData: false // Will be updated based on session configuration
-      }
-    });
-
-    // 3️⃣ Create Stripe Checkout session with selected payment method
-    let paymentMethodTypes;
-    
-    // MVP: Only support credit cards for now (most reliable)
-    switch (paymentMethod) {
-      case 'card':
-        paymentMethodTypes = ['card'];
-        break;
-      case 'cashapp':
-        paymentMethodTypes = ['cashapp'];
-        break;
-      case 'samsung_pay':
-        paymentMethodTypes = ['card', 'samsung_pay'];
-        break;
-      case 'bank_transfer':
-        // MVP: Disable ACH payments for now
-        return res.status(400).json({ 
-          message: 'Bank transfers are not currently supported. Please use a credit card.',
-          error: 'BANK_TRANSFER_NOT_SUPPORTED',
-          details: 'For MVP, we only support credit card payments to ensure reliable escrow and payouts.'
-        });
-      default:
-        paymentMethodTypes = ['card'];
-    }
-    
-    console.log(`💳 Payment method: ${paymentMethod}, Payment types: ${paymentMethodTypes.join(', ')}`);
-    
     // Host must have approved Stripe Connect account
     const hostApplication = await HostApplication.findOne({ 
       user: listingDoc.owner._id, 
@@ -186,38 +131,10 @@ exports.createBooking = async (req, res) => {
       // Still allow the payment to proceed, but log the warning
     }
 
-    // Create Stripe Checkout session
-    const sessionConfig = {
-      payment_method_types: paymentMethodTypes,
-      mode: 'payment',
-      success_url: `${process.env.FRONTEND_URL}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.FRONTEND_URL}/booking-cancel?session_id={CHECKOUT_SESSION_ID}`,
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: `Booking for ${listingDoc.title}`,
-            },
-            unit_amount: Math.round(totalPrice * 100),
-          },
-          quantity: 1,
-        },
-      ],
-      metadata: {
-        bookingId: booking._id.toString(),
-        paymentId: payment._id.toString(),
-        paymentMethod: paymentMethod,
-        listingId: listing,
-        hostId: listingDoc.owner._id.toString(),
-        checkInDate: startDate,
-        payoutMethod: 'stripe_connect'
-      },
-    };
-    
     // Check if host account has transfers enabled
+    let hostAccount;
     try {
-      const hostAccount = await stripe.accounts.retrieve(hostApplication.stripeConnect.accountId);
+      hostAccount = await stripe.accounts.retrieve(hostApplication.stripeConnect.accountId);
       const hasTransfersEnabled = hostAccount.capabilities?.transfers === 'active';
       
       if (!hasTransfersEnabled) {
@@ -246,16 +163,6 @@ exports.createBooking = async (req, res) => {
         });
       }
       
-      // All payments MUST use transfer_data for automatic payouts
-      sessionConfig.payment_intent_data = {
-        capture_method: 'manual',
-        transfer_data: {
-          destination: hostApplication.stripeConnect.accountId,
-          amount: Math.round(totalPrice * 100),
-        },
-        application_fee_amount: Math.round(totalPrice * 0.10 * 100),
-      };
-      
       console.log('💳 Using automatic payout via transfer_data (host account supports transfers)');
       
     } catch (accountError) {
@@ -273,27 +180,123 @@ exports.createBooking = async (req, res) => {
         ]
       });
     }
-    
-    const session = await stripe.checkout.sessions.create(sessionConfig);
 
-    // 4️⃣ Update booking and payment with Stripe session ID
-    booking.paymentSessionId = session.id;
-    await booking.save();
-    payment.stripeSessionId = session.id;
+    // 1️⃣ Create Stripe Checkout session FIRST (before creating booking)
+    let paymentMethodTypes;
     
-    // Update payment metadata to indicate whether automatic payout is available
-    const hasTransferData = !!sessionConfig.payment_intent_data?.transfer_data;
-    payment.metadata.hasTransferData = hasTransferData;
-    await payment.save();
+    // MVP: Only support credit cards for now (most reliable)
+    switch (paymentMethod) {
+      case 'card':
+        paymentMethodTypes = ['card'];
+        break;
+      case 'cashapp':
+        paymentMethodTypes = ['cashapp'];
+        break;
+      case 'samsung_pay':
+        paymentMethodTypes = ['card', 'samsung_pay'];
+        break;
+      case 'bank_transfer':
+        // MVP: Disable ACH payments for now
+        return res.status(400).json({ 
+          message: 'Bank transfers are not currently supported. Please use a credit card.',
+          error: 'BANK_TRANSFER_NOT_SUPPORTED',
+          details: 'For MVP, we only support credit card payments to ensure reliable escrow and payouts.'
+        });
+      default:
+        paymentMethodTypes = ['card'];
+    }
+    
+    console.log(`💳 Payment method: ${paymentMethod}, Payment types: ${paymentMethodTypes.join(', ')}`);
+
+    // Create Stripe Checkout session
+    const sessionConfig = {
+      payment_method_types: paymentMethodTypes,
+      mode: 'payment',
+      success_url: `${process.env.FRONTEND_URL}/booking-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/booking-cancel?session_id={CHECKOUT_SESSION_ID}`,
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `Booking for ${listingDoc.title}`,
+            },
+            unit_amount: Math.round(totalPrice * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        paymentMethod: paymentMethod,
+        listingId: listing,
+        hostId: listingDoc.owner._id.toString(),
+        checkInDate: startDate,
+        payoutMethod: 'stripe_connect'
+      },
+      // FIXED: Remove application_fee_amount when using transfer_data
+      // Use transfer_data for automatic payouts to hosts
+      payment_intent_data: {
+        capture_method: 'manual', // Capture manually after confirmation
+        transfer_data: {
+          destination: hostApplication.stripeConnect.accountId,
+          amount: Math.round(totalPrice * 100),
+        },
+        // NOTE: Platform fee is handled via transfer_data, not application_fee_amount
+        // The difference between totalPrice and transfer amount goes to the platform
+      }
+    };
+    
+    console.log('💳 Creating Stripe Checkout session with transfer_data...');
+    const session = await stripe.checkout.sessions.create(sessionConfig);
+    console.log('✅ Stripe Checkout session created:', session.id);
+
+    // 2️⃣ Create booking in DB with "pending" status AFTER payment session is created
+    const booking = await Booking.create({
+      user: userId,
+      home: listing, // Map listing to home
+      checkIn: startDate, // Map startDate to checkIn
+      checkOut: endDate, // Map endDate to checkOut
+      guests,
+      totalPrice,
+      status: 'pending', // Will be updated to 'reserved' when payment completes
+      paymentSessionId: session.id // Link to Stripe session
+    });
+
+    console.log('✅ Booking created with pending status:', booking._id);
+
+    // 3️⃣ Create payment record
+    const payment = await Payment.create({
+      user: userId,
+      booking: booking._id,
+      amount: totalPrice,
+      currency: 'usd',
+      status: 'pending',
+      paymentMethod: paymentMethod,
+      stripeSessionId: session.id,
+      metadata: {
+        paymentMethod: paymentMethod,
+        hasTransferData: true, // Using transfer_data for automatic payouts
+        stripePaymentIntentId: session.payment_intent // Store payment intent ID for webhook handling
+      }
+    });
+
+    console.log('✅ Payment record created:', payment._id);
 
     res.status(201).json({
-      booking,
+      booking: {
+        id: booking._id,
+        status: booking.status,
+        checkIn: booking.checkIn,
+        checkOut: booking.checkOut,
+        totalPrice: booking.totalPrice
+      },
       payment: {
         id: payment._id,
         status: payment.status,
         method: paymentMethod
       },
-      checkoutUrl: session.url
+      checkoutUrl: session.url,
+      message: 'Payment session created successfully. Please complete payment to confirm your booking.'
     });
 
   } catch (error) {
@@ -765,6 +768,164 @@ exports.getPendingPayouts = async (req, res) => {
     res.status(500).json({
       message: 'Error fetching pending payouts',
       error: error.message
+    });
+  }
+}; 
+
+// Capture payment after successful checkout
+exports.capturePayment = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    if (!sessionId) {
+      return res.status(400).json({
+        message: 'Session ID is required',
+        error: 'MISSING_SESSION_ID'
+      });
+    }
+
+    console.log('💳 Capturing payment for session:', sessionId);
+
+    // Retrieve the checkout session
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    
+    if (!session) {
+      return res.status(404).json({
+        message: 'Checkout session not found',
+        error: 'SESSION_NOT_FOUND'
+      });
+    }
+
+    if (session.payment_status !== 'paid') {
+      return res.status(400).json({
+        message: 'Payment has not been completed',
+        error: 'PAYMENT_NOT_COMPLETED',
+        paymentStatus: session.payment_status
+      });
+    }
+
+    // Get the payment intent
+    const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent);
+    
+    if (paymentIntent.status === 'requires_capture') {
+      // Capture the payment
+      const capturedPayment = await stripe.paymentIntents.capture(session.payment_intent);
+      console.log('✅ Payment captured successfully:', capturedPayment.id);
+      
+      // Find and update the booking
+      const booking = await Booking.findOne({ paymentSessionId: sessionId });
+      if (booking) {
+        await Booking.findByIdAndUpdate(booking._id, {
+          status: 'reserved',
+          updatedAt: new Date()
+        });
+        console.log('✅ Booking status updated to reserved:', booking._id);
+      }
+
+      // Update payment record
+      const payment = await Payment.findOne({ stripeSessionId: sessionId });
+      if (payment) {
+        await Payment.findByIdAndUpdate(payment._id, {
+          status: 'completed',
+          transactionId: capturedPayment.id,
+          stripePaymentIntentId: capturedPayment.id,
+          completedAt: new Date(),
+          metadata: {
+            ...payment.metadata,
+            paymentCaptured: true,
+            captureTimestamp: new Date()
+          }
+        });
+        console.log('✅ Payment record updated:', payment._id);
+      }
+
+      res.json({
+        message: 'Payment captured successfully',
+        paymentIntent: capturedPayment.id,
+        status: 'reserved'
+      });
+    } else {
+      console.log('⚠️ Payment intent status:', paymentIntent.status);
+      res.json({
+        message: 'Payment already processed',
+        status: paymentIntent.status
+      });
+    }
+
+  } catch (error) {
+    console.error('Error capturing payment:', error);
+    
+    if (error.type === 'StripeInvalidRequestError') {
+      return res.status(400).json({
+        message: 'Payment capture failed',
+        error: 'PAYMENT_CAPTURE_FAILED',
+        details: error.message
+      });
+    }
+    
+    res.status(500).json({
+      message: 'Failed to capture payment',
+      error: 'INTERNAL_SERVER_ERROR'
+    });
+  }
+}; 
+
+// Handle payment cancellation
+exports.cancelPayment = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    
+    if (!sessionId) {
+      return res.status(400).json({
+        message: 'Session ID is required',
+        error: 'MISSING_SESSION_ID'
+      });
+    }
+
+    console.log('❌ Cancelling payment for session:', sessionId);
+
+    // Find the booking by session ID
+    const booking = await Booking.findOne({ paymentSessionId: sessionId });
+    if (!booking) {
+      return res.status(404).json({
+        message: 'Booking not found for this session',
+        error: 'BOOKING_NOT_FOUND'
+      });
+    }
+
+    // Update booking status to cancelled
+    await Booking.findByIdAndUpdate(booking._id, {
+      status: 'cancelled',
+      updatedAt: new Date()
+    });
+
+    // Update payment status to cancelled
+    const payment = await Payment.findOne({ stripeSessionId: sessionId });
+    if (payment) {
+      await Payment.findByIdAndUpdate(payment._id, {
+        status: 'cancelled',
+        cancelledAt: new Date(),
+        metadata: {
+          ...payment.metadata,
+          cancelledBy: 'user',
+          cancellationTimestamp: new Date()
+        }
+      });
+    }
+
+    console.log('✅ Payment and booking cancelled successfully');
+
+    res.json({
+      message: 'Payment cancelled successfully',
+      bookingId: booking._id,
+      status: 'cancelled'
+    });
+
+  } catch (error) {
+    console.error('Error cancelling payment:', error);
+    res.status(500).json({
+      message: 'Failed to cancel payment',
+      error: 'INTERNAL_SERVER_ERROR'
     });
   }
 }; 
