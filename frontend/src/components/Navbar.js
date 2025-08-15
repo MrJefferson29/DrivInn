@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Navbar, Nav, Container, Button, Dropdown, Badge } from 'react-bootstrap';
+import { Navbar, Nav, Container, Button, Dropdown, Badge, Modal } from 'react-bootstrap';
 import { 
   MdTravelExplore,
   MdEmojiEvents,
@@ -24,7 +24,8 @@ import {
   MdPhone,
   MdEmail,
   MdLanguage,
-  MdMessage
+  MdMessage,
+  MdDashboard
 } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
 import { useListings } from '../context/ListingsContext';
@@ -38,6 +39,10 @@ const NavbarComponent = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
   const [pendingHostApps, setPendingHostApps] = useState(0);
+  const [stripeConnectAccount, setStripeConnectAccount] = useState(null);
+  const [isLoadingStripeAccount, setIsLoadingStripeAccount] = useState(false);
+  const [showDashboardModal, setShowDashboardModal] = useState(false);
+  const [dashboardModalUrl, setDashboardModalUrl] = useState('');
 
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
   const { favorites } = useListings();
@@ -72,8 +77,91 @@ const NavbarComponent = () => {
     }
   }, [isAdmin]);
 
+  // Fetch Stripe Connect account information for hosts
+  useEffect(() => {
+    if (user?.role === 'host' && isAuthenticated) {
+      setIsLoadingStripeAccount(true);
+      hostApplicationsAPI.getStripeSetupStatus()
+        .then(res => {
+          if (res.data && res.data.accountId && (res.data.onboardingUrl || res.data.dashboardUrl)) {
+            // Prefer onboarding URL over dashboard URL for better user experience
+            setStripeConnectAccount({
+              accountId: res.data.accountId,
+              dashboardUrl: res.data.onboardingUrl || res.data.dashboardUrl,
+              isOnboardingLink: !!res.data.onboardingUrl
+            });
+          } else {
+            console.log('Stripe Connect account not fully configured');
+            setStripeConnectAccount(null);
+          }
+        })
+        .catch(err => {
+          console.log('Could not fetch Stripe Connect account info:', err);
+          setStripeConnectAccount(null);
+        })
+        .finally(() => {
+          setIsLoadingStripeAccount(false);
+        });
+    }
+  }, [user?.role, isAuthenticated]);
+
   const handleLogout = () => {
     logout();
+  };
+
+  const handleDashboardClick = (e, dashboardUrl) => {
+    e.preventDefault();
+    
+    // Try to open the dashboard in a new tab
+    try {
+      const newWindow = window.open(dashboardUrl, '_blank', 'noopener,noreferrer');
+      
+      // Check if the window was blocked
+      if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
+        // If popup was blocked, show modal with copyable URL
+        setDashboardModalUrl(dashboardUrl);
+        setShowDashboardModal(true);
+      }
+      
+      // Set a timeout to check if the dashboard loads successfully
+      setTimeout(() => {
+        if (newWindow && !newWindow.closed) {
+          try {
+            // Try to access the window to see if it loaded
+            if (newWindow.location.href.includes('stripe.com')) {
+              console.log('Dashboard opened successfully');
+            }
+          } catch (error) {
+            // If we can't access the window due to CORS, that's normal
+            console.log('Dashboard window opened (CORS prevents status check)');
+          }
+        }
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Error opening dashboard:', error);
+      // Fallback: show modal with copyable URL
+      setDashboardModalUrl(dashboardUrl);
+      setShowDashboardModal(true);
+    }
+  };
+
+  const copyToClipboard = async (text) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      // You could add a toast notification here if you want
+      console.log('URL copied to clipboard');
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      console.log('URL copied to clipboard (fallback method)');
+    }
   };
 
   const getFavoritesCount = () => {
@@ -113,11 +201,37 @@ const NavbarComponent = () => {
     }
 
     if (user?.role === 'host') {
-      return (
-        <Nav.Link as={Link} to="/listings" className="host-link desktop-only">
-          <MdHome /> My Listings
-        </Nav.Link>
-      );
+      if (isLoadingStripeAccount) {
+        return (
+          <Nav.Link className="host-link desktop-only" style={{ opacity: 0.7 }}>
+            <MdDashboard /> Loading...
+          </Nav.Link>
+        );
+             } else if (stripeConnectAccount?.dashboardUrl) {
+         return (
+                         <Nav.Link 
+                href={stripeConnectAccount.dashboardUrl} 
+                onClick={(e) => handleDashboardClick(e, stripeConnectAccount.dashboardUrl)}
+                className="host-link desktop-only dashboard-link"
+              >
+                                 <MdDashboard /> {stripeConnectAccount.isOnboardingLink ? 'Complete Stripe Setup' : 'Dashboard'}
+              </Nav.Link>
+         );
+             } else {
+         return (
+           <div className="host-link desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+             <Nav.Link as={Link} to="/listings" style={{ margin: 0 }}>
+               <MdHome /> My Listings
+             </Nav.Link>
+                           <span 
+                className="setup-required"
+                title="Your Stripe Connect account needs to be fully verified to access the Dashboard. This includes completing identity verification, bank account setup, and business verification. Click 'Complete Stripe Setup' to continue the verification process."
+              >
+                ⚠️ Setup Required
+              </span>
+           </div>
+         );
+       }
     }
 
     // Default for guests
@@ -238,9 +352,27 @@ const NavbarComponent = () => {
                         <MdCalendarMonth /> My Bookings
                       </Dropdown.Item>
                       {user?.role === 'host' && (
-                        <Dropdown.Item as={Link} to="/listings">
-                          <MdHome /> My Listings
-                        </Dropdown.Item>
+                        isLoadingStripeAccount ? (
+                          <Dropdown.Item disabled>
+                            <MdDashboard /> Loading Dashboard...
+                          </Dropdown.Item>
+                                                 ) : stripeConnectAccount?.dashboardUrl ? (
+                                                       <Dropdown.Item 
+                              href={stripeConnectAccount.dashboardUrl} 
+                              onClick={(e) => handleDashboardClick(e, stripeConnectAccount.dashboardUrl)}
+                            >
+                              <MdDashboard /> {stripeConnectAccount.isOnboardingLink ? 'Complete Stripe Setup' : 'Dashboard'}
+                            </Dropdown.Item>
+                                                 ) : (
+                           <>
+                             <Dropdown.Item as={Link} to="/listings">
+                               <MdHome /> My Listings
+                             </Dropdown.Item>
+                             <Dropdown.Item as={Link} to="/become-a-host-info" style={{ fontSize: '0.9rem', color: '#666' }}>
+                               <MdInfo /> Complete Stripe Setup
+                             </Dropdown.Item>
+                           </>
+                         )
                       )}
                       {(user?.role === 'host' || user?.role === 'admin') && (
                         <Dropdown.Item as={Link} to="/create-listing">
@@ -310,17 +442,154 @@ const NavbarComponent = () => {
               </div>
             </div>
           </Container>
-        </Navbar>
-      </ResponsiveNavbarWrapper>
-    </>
-  );
-};
+                 </Navbar>
+       </ResponsiveNavbarWrapper>
+
+               {/* Dashboard URL Modal */}
+        <Modal show={showDashboardModal} onHide={() => setShowDashboardModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>
+              <MdDashboard style={{ marginRight: '8px' }} />
+                             {stripeConnectAccount?.isOnboardingLink ? 'Complete Stripe Setup' : 'Dashboard Access'}
+            </Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <p>
+              {stripeConnectAccount?.isOnboardingLink 
+                ? 'Your Stripe Connect setup link couldn\'t be opened automatically. This link will take you to complete your Stripe account setup and verification.'
+                : 'Your Stripe Connect dashboard couldn\'t be opened automatically. Please use one of these options:'
+              }
+            </p>
+           
+           <div style={{ marginBottom: '20px' }}>
+             <Button 
+               variant="primary" 
+               onClick={() => window.open(dashboardModalUrl, '_blank', 'noopener,noreferrer')}
+               style={{ marginRight: '10px' }}
+             >
+               <MdDashboard /> Try Opening Again
+             </Button>
+             
+             <Button 
+               variant="outline-secondary" 
+               onClick={() => copyToClipboard(dashboardModalUrl)}
+             >
+               📋 Copy URL
+             </Button>
+           </div>
+           
+           <div style={{ 
+             backgroundColor: '#f8f9fa', 
+             padding: '15px', 
+             borderRadius: '8px',
+             border: '1px solid #dee2e6'
+           }}>
+             <label style={{ fontWeight: '600', marginBottom: '8px', display: 'block' }}>
+               Dashboard URL:
+             </label>
+             <input
+               type="text"
+               value={dashboardModalUrl}
+               readOnly
+               style={{
+                 width: '100%',
+                 padding: '8px',
+                 border: '1px solid #ced4da',
+                 borderRadius: '4px',
+                 backgroundColor: 'white',
+                 fontFamily: 'monospace',
+                 fontSize: '12px'
+               }}
+               onClick={(e) => e.target.select()}
+             />
+           </div>
+           
+                       <div style={{ marginTop: '15px', fontSize: '14px', color: '#6c757d' }}>
+              <p><strong>Note:</strong> If you continue to have issues accessing your dashboard, please:</p>
+              <ul style={{ marginBottom: '0', paddingLeft: '20px' }}>
+                                 {stripeConnectAccount?.isOnboardingLink ? (
+                   <>
+                     <li>This setup link will take you to complete your Stripe Connect account verification</li>
+                     <li>You\'ll need to provide identity documents, bank account info, and business details</li>
+                     <li>If the link expires, refresh the page to get a new one</li>
+                   </>
+                 ) : (
+                  <>
+                    <li>Complete your Stripe Connect account verification</li>
+                    <li>Ensure your bank account is properly linked</li>
+                  </>
+                )}
+                <li>Contact support if the issue persists</li>
+              </ul>
+            </div>
+         </Modal.Body>
+         <Modal.Footer>
+           <Button variant="secondary" onClick={() => setShowDashboardModal(false)}>
+             Close
+           </Button>
+         </Modal.Footer>
+       </Modal>
+     </>
+   );
+ };
 
 const ResponsiveNavbarWrapper = styled.div`
   .airbnb-navbar {
     background: var(--color-surface) !important;
     color: var(--color-text) !important;
     border-bottom: 1.5px solid var(--color-border);
+  }
+
+  .dashboard-link {
+    color: var(--color-primary) !important;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      color: var(--color-primary-dark) !important;
+      transform: translateY(-1px);
+    }
+  }
+
+  .host-link {
+    .setup-required {
+      font-size: 0.8rem;
+      color: #666;
+      cursor: help;
+      border-bottom: 1px dotted #666;
+      transition: color 0.3s ease;
+      
+      &:hover {
+        color: #333;
+      }
+    }
+  }
+
+  // Modal styling
+  .modal-content {
+    border-radius: 12px;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .modal-header {
+    border-bottom: 1px solid #e9ecef;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px 12px 0 0;
+  }
+
+  .modal-title {
+    color: #333;
+    font-weight: 600;
+  }
+
+  .modal-body {
+    padding: 24px;
+  }
+
+  .modal-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 16px 24px;
   }
 `;
 

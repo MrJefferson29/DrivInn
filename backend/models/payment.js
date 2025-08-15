@@ -24,6 +24,11 @@ const paymentSchema = new mongoose.Schema({
   payoutDate: { type: Date },
   payoutTransactionId: { type: String },
   payoutFailureReason: { type: String },
+  payoutFailureDetails: { type: String }, // Detailed failure information
+  payoutCompletedAt: { type: Date }, // When payout was completed
+  stripeTransferId: { type: String }, // Stripe transfer ID for tracking
+  transferStatus: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' }, // Transfer status
+  transferCompletedAt: { type: Date }, // When transfer was completed
   platformFee: { type: Number, default: 0 }, // Platform fee amount
   
   metadata: { type: mongoose.Schema.Types.Mixed }
@@ -35,5 +40,7 @@ paymentSchema.index({ stripePaymentIntentId: 1 });
 paymentSchema.index({ stripeSessionId: 1 });
 paymentSchema.index({ payoutStatus: 1 }); // Index for payout queries
 paymentSchema.index({ payoutDate: 1 }); // Index for payout date queries
+paymentSchema.index({ stripeTransferId: 1 }); // Index for transfer queries
+paymentSchema.index({ transferStatus: 1 }); // Index for transfer status queries
 
 module.exports = mongoose.model('Payment', paymentSchema);

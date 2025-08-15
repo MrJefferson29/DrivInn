@@ -5,7 +5,6 @@ import { hostApplicationsAPI } from '../services/api';
 import styled from 'styled-components';
 import { 
   FaArrowLeft, 
-  FaArrowRight,
   FaUser, 
   FaPhone, 
   FaMapMarkerAlt, 
@@ -15,19 +14,21 @@ import {
   FaCamera,
   FaCheck,
   FaSpinner,
-  FaExclamationTriangle,
   FaInfoCircle,
   FaFileAlt,
   FaCreditCard,
   FaBuilding,
   FaCheckCircle,
-  FaEye
+  FaEye,
+  FaStar,
+  FaEnvelope
 } from 'react-icons/fa';
 import { Spinner, Alert } from 'react-bootstrap';
 
+// Modern Container with gradient background
 const Container = styled.div`
-  max-width: 800px;
-  margin: 0 auto;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   padding: 40px 20px;
   
   @media (max-width: 768px) {
@@ -35,36 +36,42 @@ const Container = styled.div`
   }
 `;
 
+// Clean Header with better spacing
 const Header = styled.div`
+  max-width: 1200px;
+  margin: 0 auto 40px;
   display: flex;
   align-items: center;
+  gap: 20px;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
   gap: 16px;
-  margin-bottom: 32px;
-`;
-
-const HeaderLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  }
 `;
 
 const BackButton = styled.button`
-  background: none;
-  border: none;
+  background: white;
+  border: 2px solid #e9ecef;
   color: #222222;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  padding: 12px 20px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   
   &:hover {
-    background: #f7f7f7;
-    color: #FF385C;
+    background: #FF385C;
+    color: white;
+    border-color: #FF385C;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(255, 56, 92, 0.3);
   }
 `;
 
@@ -73,234 +80,424 @@ const Title = styled.h1`
   font-weight: 700;
   color: #222222;
   margin: 0;
+  background: linear-gradient(135deg, #FF385C 0%, #e31c5f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   
   @media (max-width: 768px) {
     font-size: 2rem;
   }
 `;
 
+
+
+// Modern Form Card
 const FormCard = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #DDDDDD;
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
   overflow: hidden;
 `;
 
+// Enhanced Progress Bar
 const ProgressBar = styled.div`
   display: flex;
-  background: #f7f7f7;
-  padding: 20px;
-  border-bottom: 1px solid #DDDDDD;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 32px 40px;
+  border-bottom: 1px solid #e9ecef;
+  
+  @media (max-width: 768px) {
+    padding: 24px 20px;
+    overflow-x: auto;
+  }
 `;
 
 const StepIndicator = styled.div`
   flex: 1;
   text-align: center;
   position: relative;
+  min-width: 120px;
   
   &:not(:last-child)::after {
     content: '';
     position: absolute;
     top: 50%;
-    left: 50%;
-    width: 100%;
-    height: 2px;
-    background: #DDDDDD;
+    left: 60%;
+    width: 80%;
+    height: 3px;
+    background: ${props => props.active ? '#FF385C' : '#dee2e6'};
     transform: translateY(-50%);
     z-index: 1;
+    border-radius: 2px;
   }
 `;
 
 const StepCircle = styled.div`
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: ${props => props.active ? '#FF385C' : '#DDDDDD'};
-  color: ${props => props.active ? 'white' : '#717171'};
+  background: ${props => props.active ? 'linear-gradient(135deg, #FF385C 0%, #e31c5f 100%)' : '#dee2e6'};
+  color: ${props => props.active ? 'white' : '#6c757d'};
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 600;
-  margin: 0 auto 8px;
+  font-weight: 700;
+  margin: 0 auto 12px;
   position: relative;
   z-index: 2;
   transition: all 0.3s ease;
+  box-shadow: ${props => props.active ? '0 4px 16px rgba(255, 56, 92, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.1)'};
+  
+  &:hover {
+    transform: ${props => props.active ? 'scale(1.1)' : 'scale(1.05)'};
+  }
 `;
 
 const StepLabel = styled.div`
   font-size: 0.9rem;
   font-weight: 600;
-  color: ${props => props.active ? '#222222' : '#717171'};
+  color: ${props => props.active ? '#222222' : '#6c757d'};
   transition: all 0.3s ease;
 `;
 
+// Enhanced Form Content
 const FormContent = styled.div`
-  padding: 40px;
+  padding: 48px;
   
   @media (max-width: 768px) {
-    padding: 24px;
+    padding: 32px 24px;
   }
 `;
 
 const StepTitle = styled.h2`
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 700;
   color: #222222;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  
+  @media (max-width: 768px) {
+    font-size: 1.6rem;
+  }
 `;
 
 const StepSubtitle = styled.p`
   font-size: 1.1rem;
-  color: #717171;
-  margin-bottom: 32px;
+  color: #6c757d;
+  margin-bottom: 40px;
   line-height: 1.6;
 `;
 
+// Modern Form Grid
 const FormGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  margin-bottom: 40px;
 `;
 
 const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 `;
 
 const Label = styled.label`
   font-weight: 600;
   color: #222222;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
+const RequiredField = styled.span`
+  color: #FF385C;
+  font-weight: 700;
+  font-size: 1.2rem;
+`;
+
+// Enhanced Input Fields
 const Input = styled.input`
-  padding: 12px 16px;
-  border: 1px solid #DDDDDD;
-  border-radius: 8px;
+  padding: 16px 20px;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
   font-size: 1rem;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  background: white;
   
   &:focus {
     outline: none;
     border-color: #FF385C;
-    box-shadow: 0 0 0 3px rgba(255, 56, 92, 0.1);
+    box-shadow: 0 0 0 4px rgba(255, 56, 92, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  &:hover {
+    border-color: #dee2e6;
+    transform: translateY(-1px);
+  }
+  
+  &::placeholder {
+    color: #adb5bd;
   }
 `;
 
 const Select = styled.select`
-  padding: 12px 16px;
-  border: 1px solid #DDDDDD;
-  border-radius: 8px;
+  padding: 16px 20px;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
   font-size: 1rem;
   background: white;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   
   &:focus {
     outline: none;
     border-color: #FF385C;
-    box-shadow: 0 0 0 3px rgba(255, 56, 92, 0.1);
+    box-shadow: 0 0 0 4px rgba(255, 56, 92, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  &:hover {
+    border-color: #dee2e6;
+    transform: translateY(-1px);
   }
 `;
 
 const TextArea = styled.textarea`
-  padding: 12px 16px;
-  border: 1px solid #DDDDDD;
-  border-radius: 8px;
+  padding: 16px 20px;
+  border: 2px solid #e9ecef;
+  border-radius: 12px;
   font-size: 1rem;
   resize: vertical;
-  min-height: 100px;
-  transition: all 0.2s ease;
+  min-height: 120px;
+  transition: all 0.3s ease;
+  background: white;
   
   &:focus {
     outline: none;
     border-color: #FF385C;
-    box-shadow: 0 0 0 3px rgba(255, 56, 92, 0.1);
+    box-shadow: 0 0 0 4px rgba(255, 56, 92, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  &:hover {
+    border-color: #dee2e6;
+    transform: translateY(-1px);
+  }
+  
+  &::placeholder {
+    color: #adb5bd;
   }
 `;
 
+// Enhanced File Upload
 const FileUploadArea = styled.div`
-  border: 2px dashed #DDDDDD;
-  border-radius: 12px;
-  padding: 40px 20px;
+  border: 3px dashed #e9ecef;
+  border-radius: 16px;
+  padding: 48px 24px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.2s ease;
-  background: #f9f9f9;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
   
   &:hover {
     border-color: #FF385C;
     background: #fff5f5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(255, 56, 92, 0.1);
   }
   
   &.has-file {
     border-color: #28a745;
     background: #f8fff9;
+    border-style: solid;
   }
 `;
 
 const FileUploadIcon = styled(FaCamera)`
-  font-size: 2rem;
-  color: #717171;
-  margin-bottom: 16px;
+  font-size: 2.5rem;
+  color: #6c757d;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
 `;
 
 const FileUploadText = styled.div`
   font-weight: 600;
   color: #222222;
   margin-bottom: 8px;
+  font-size: 1.1rem;
 `;
 
 const FileUploadHint = styled.div`
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: #6c757d;
-  margin-top: 4px;
-  text-align: center;
+  margin-top: 8px;
 `;
 
-// Success Screen Styled Components
+const FilePreview = styled.div`
+  margin-top: 20px;
+  padding: 20px;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+`;
+
+const FileName = styled.div`
+  font-weight: 600;
+  color: #222222;
+  margin-bottom: 8px;
+`;
+
+const FileSize = styled.div`
+  font-size: 0.9rem;
+  color: #6c757d;
+`;
+
+const HiddenFileInput = styled.input`
+  display: none;
+`;
+
+// Enhanced Navigation
+const StepNavigation = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32px 48px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-top: 1px solid #e9ecef;
+  
+  @media (max-width: 768px) {
+    padding: 24px 32px;
+    flex-direction: column;
+    gap: 20px;
+  }
+`;
+
+const StepButton = styled.button`
+  padding: 16px 32px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #FF385C 0%, #e31c5f 100%);
+    color: white;
+  box-shadow: 0 4px 16px rgba(255, 56, 92, 0.3);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 56, 92, 0.4);
+  }
+`;
+
+const SubmitButton = styled.button`
+  padding: 16px 32px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+`;
+
+// Essential Info Box
+const InfoBox = styled.div`
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border: 2px solid #2196f3;
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  box-shadow: 0 4px 16px rgba(33, 150, 243, 0.1);
+`;
+
+const InfoIcon = styled(FaInfoCircle)`
+  color: #2196f3;
+  font-size: 1.4rem;
+  margin-top: 4px;
+  flex-shrink: 0;
+`;
+
+const InfoText = styled.div`
+  color: #1976d2;
+  font-size: 1rem;
+  line-height: 1.6;
+  font-weight: 500;
+`;
+
+// Enhanced Success Screen
 const SuccessContainer = styled.div`
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
   max-width: 800px;
   margin: 0 auto;
 `;
 
 const SuccessIcon = styled.div`
-  font-size: 4rem;
+  font-size: 5rem;
   color: #28a745;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+  animation: bounceIn 0.8s ease;
 `;
 
 const SuccessTitle = styled.h1`
-  font-size: 2.5rem;
+  font-size: 3rem;
   font-weight: 700;
   color: #222222;
-  margin: 0 0 16px 0;
+  margin: 0 0 24px 0;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   
   @media (max-width: 768px) {
-    font-size: 2rem;
+    font-size: 2.5rem;
   }
 `;
 
 const SuccessMessage = styled.p`
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: #6c757d;
-  margin: 0 0 40px 0;
+  margin: 0 0 48px 0;
   line-height: 1.6;
 `;
 
-
-
 const ActionButtons = styled.div`
   display: flex;
-  gap: 16px;
+  gap: 20px;
   justify-content: center;
   flex-wrap: wrap;
 `;
@@ -308,385 +505,106 @@ const ActionButtons = styled.div`
 const ActionButton = styled.button`
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
+  gap: 12px;
+  padding: 16px 32px;
   border: none;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   
   &:first-child {
-    background: #FF385C;
-    color: white;
+    background: linear-gradient(135deg, #FF385C 0%, #e31c5f 100%);
+  color: white;
+    box-shadow: 0 4px 16px rgba(255, 56, 92, 0.3);
     
     &:hover {
-      background: #e31c5f;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 56, 92, 0.4);
     }
   }
   
   &:last-child {
-    background: #6c757d;
-    color: white;
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  color: white;
+    box-shadow: 0 4px 16px rgba(108, 117, 125, 0.3);
     
     &:hover {
-      background: #5a6268;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
     }
   }
 `;
 
-const FilePreview = styled.div`
-  margin-top: 16px;
-  padding: 16px;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #DDDDDD;
-`;
-
-const FileName = styled.div`
-  font-weight: 600;
-  color: #222222;
-  margin-bottom: 4px;
-`;
-
-const FileSize = styled.div`
-  font-size: 0.9rem;
-  color: #717171;
-`;
-
-const HiddenFileInput = styled.input`
-  display: none;
-`;
-
-const StepNavigation = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 24px 40px;
-  background: #f9f9f9;
-  border-top: 1px solid #DDDDDD;
-  
-  @media (max-width: 768px) {
-    padding: 20px 24px;
-    flex-direction: column;
-    gap: 16px;
-  }
-`;
-
-const StepButton = styled.button`
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  
-    background: #FF385C;
-    color: white;
-    
-    &:hover:not(:disabled) {
-      background: #e31c5f;
-      transform: translateY(-1px);
-    }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const SubmitButton = styled.button`
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  
-  background: #28a745;
-  color: white;
-  
-  &:hover:not(:disabled) {
-    background: #218838;
-    transform: translateY(-1px);
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const InfoBox = styled.div`
-  background: #e3f2fd;
-  border: 1px solid #2196f3;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-`;
-
-const InfoIcon = styled(FaInfoCircle)`
-  color: #2196f3;
-  font-size: 1.2rem;
-  margin-top: 2px;
-`;
-
-const InfoText = styled.div`
-  color: #1976d2;
-  font-size: 0.9rem;
-  line-height: 1.5;
-`;
-
-const PaymentInfoBox = styled.div`
-  background: #fff3e0;
-  border: 1px solid #ff9800;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 24px;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-`;
-
-const PaymentIcon = styled(FaCreditCard)`
-  color: #ff9800;
-  font-size: 1.2rem;
-  margin-top: 2px;
-`;
-
-const PaymentText = styled.div`
-  color: #e65100;
-  font-size: 0.9rem;
-  line-height: 1.5;
-`;
-
-const Hint = styled.div`
-  font-size: 0.85rem;
-  color: #6c757d;
-  margin-top: 4px;
-  font-style: italic;
-  line-height: 1.4;
-`;
-
-const FieldGuide = styled.div`
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 16px;
-  margin: 16px 0;
-  border-left: 4px solid #17a2b8;
-`;
-
-const GuideTitle = styled.h4`
-  font-size: 1rem;
-  font-weight: 600;
-  color: #17a2b8;
-  margin: 0 0 8px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const GuideText = styled.p`
-  font-size: 0.9rem;
-  color: #495057;
-  margin: 0;
-  line-height: 1.5;
-`;
-
-const GuideList = styled.ul`
-  margin: 8px 0 0 0;
-  padding-left: 20px;
-  font-size: 0.9rem;
-  color: #495057;
-`;
-
-const GuideListItem = styled.li`
-  margin-bottom: 4px;
-  line-height: 1.4;
-`;
-
-const RequiredField = styled.span`
-  color: #FF385C;
-  font-weight: 600;
-`;
-
-const ProTip = styled.div`
-  background: #d1ecf1;
-  border: 1px solid #bee5eb;
-  border-radius: 8px;
-  padding: 16px;
-  margin: 16px 0;
-  border-left: 4px solid #17a2b8;
-`;
-
-const ProTipTitle = styled.h5`
-  color: #0c5460;
-  margin: 0 0 8px 0;
-  font-size: 1rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const ProTipText = styled.p`
-  color: #0c5460;
-  margin: 0;
-  line-height: 1.5;
-  font-size: 0.9rem;
-`;
-
-const ApplicationOverview = styled.div`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+// Review Section Styling
+const ReviewSection = styled.div`
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border-radius: 16px;
   padding: 32px;
   margin-bottom: 32px;
-  color: white;
-  text-align: center;
+  border: 2px solid #e9ecef;
 `;
 
-const OverviewTitle = styled.h2`
-  font-size: 1.75rem;
-  font-weight: 600;
-  margin: 0 0 16px 0;
-  color: white;
-`;
-
-const OverviewDescription = styled.p`
-  font-size: 1.1rem;
-  margin: 0 0 24px 0;
-  line-height: 1.6;
-  opacity: 0.95;
-`;
-
-const OverviewSteps = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-top: 24px;
-`;
-
-const OverviewStep = styled.div`
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 20px;
-  backdrop-filter: blur(10px);
-`;
-
-const OverviewStepNumber = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 1.1rem;
-  margin: 0 auto 12px auto;
-`;
-
-const OverviewStepTitle = styled.h4`
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-  color: white;
-`;
-
-const OverviewStepText = styled.p`
-  font-size: 0.9rem;
-  margin: 0;
-  opacity: 0.9;
-  line-height: 1.4;
-`;
-
-const SecurityNotice = styled.div`
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 24px;
-  border-left: 4px solid #f39c12;
-`;
-
-const SecurityIcon = styled(FaExclamationTriangle)`
-  color: #f39c12;
-  font-size: 1.2rem;
-  margin-right: 8px;
-`;
-
-const SecurityTitle = styled.h4`
-  color: #856404;
-  margin: 0 0 8px 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-`;
-
-const SecurityText = styled.p`
-  color: #856404;
-  margin: 0;
-  line-height: 1.5;
-  font-size: 0.95rem;
-`;
-
-const FAQSection = styled.div`
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #DDDDDD;
-  padding: 32px;
-  margin-top: 32px;
-`;
-
-const FAQTitle = styled.h3`
-  font-size: 1.5rem;
+const ReviewTitle = styled.h3`
+  font-size: 1.4rem;
   font-weight: 600;
   color: #222222;
-  margin: 0 0 24px 0;
-  text-align: center;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 `;
 
-const FAQItem = styled.div`
-  margin-bottom: 20px;
+const ReviewGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+`;
+
+const ReviewItem = styled.div`
+  background: white;
   padding: 20px;
-  background: #f8f9fa;
   border-radius: 12px;
   border: 1px solid #e9ecef;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 `;
 
-const FAQQuestion = styled.h4`
-  font-size: 1.1rem;
+const ReviewLabel = styled.div`
   font-weight: 600;
   color: #222222;
-  margin: 0 0 12px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  margin-bottom: 8px;
 `;
 
-const FAQAnswer = styled.p`
+const ReviewValue = styled.div`
   color: #6c757d;
-  margin: 0;
-  line-height: 1.6;
   font-size: 0.95rem;
+`;
+
+// Animation keyframes
+const bounceIn = `
+  @keyframes bounceIn {
+    0% {
+      opacity: 0;
+      transform: scale(0.3);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.05);
+    }
+    70% {
+      transform: scale(0.9);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+`;
+
+// Add animations to styled components
+const StyledComponents = styled.div`
+  ${bounceIn}
 `;
 
 const steps = [
@@ -833,28 +751,8 @@ const HostApplicationForm = () => {
   };
 
   const canProceedToNextStep = () => {
-    switch (currentStep) {
-      case 0: // Personal Information
-        return formData.firstName && formData.lastName && formData.email && 
-               formData.phoneNumber && formData.street && formData.city && 
-               formData.state && formData.postalCode && formData.country && 
-               formData.dateOfBirth;
-      case 1: // Identity Verification
-        return formData.idType && formData.idNumber && 
-               formData.idFrontImage && formData.idBackImage && formData.selfieImage;
-      case 2: // Business & Financial
-        return formData.businessStructure && formData.ssn && formData.ssnLast4 && 
-               formData.supportPhone && formData.bankAccountType && 
-               formData.bankRoutingNumber && formData.bankAccountNumber;
-      case 3: // Payment Methods (optional, can always proceed)
+    // Allow users to navigate freely through all steps
         return true;
-      case 4: // Property Information
-        return formData.propertyType && formData.propertyDescription;
-      case 5: // Review & Submit
-        return true;
-      default:
-        return false;
-    }
   };
 
   const nextStep = () => {
@@ -965,33 +863,10 @@ const HostApplicationForm = () => {
       <StepSubtitle>
         Please provide your contact information and address details.
       </StepSubtitle>
-      
-      <FieldGuide>
-        <GuideTitle>
-          <FaInfoCircle /> Personal Information Guide
-        </GuideTitle>
-        <GuideText>
-          This section collects your basic contact and address information. All fields marked with <RequiredField>*</RequiredField> are required.
-        </GuideText>
-        <GuideList>
-          <GuideListItem><strong>Names:</strong> Use your legal name as it appears on official documents</GuideListItem>
-          <GuideListItem><strong>Email:</strong> Must be active and accessible for important communications</GuideListItem>
-          <GuideListItem><strong>Phone:</strong> Include country code for international numbers (e.g., +1 for US)</GuideListItem>
-          <GuideListItem><strong>Address:</strong> Use your current residential address where you receive mail</GuideListItem>
-          <GuideListItem><strong>Date of Birth:</strong> You must be at least 18 years old to become a host</GuideListItem>
-        </GuideList>
-      </FieldGuide>
-      
-      <InfoBox>
-        <InfoIcon />
-        <InfoText>
-          Your name and email are pre-filled from your profile. Please verify and update if needed.
-        </InfoText>
-      </InfoBox>
 
       <FormGrid>
         <FormGroup>
-          <Label>First Name <RequiredField>*</RequiredField></Label>
+          <Label><FaUser /> First Name <RequiredField>*</RequiredField></Label>
           <Input
             type="text"
             value={formData.firstName}
@@ -999,11 +874,10 @@ const HostApplicationForm = () => {
             placeholder="First Name"
             required
           />
-          <Hint>Enter your legal first name exactly as it appears on your ID documents</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>Last Name <RequiredField>*</RequiredField></Label>
+          <Label><FaUser /> Last Name <RequiredField>*</RequiredField></Label>
           <Input
             type="text"
             value={formData.lastName}
@@ -1011,11 +885,10 @@ const HostApplicationForm = () => {
             placeholder="Last Name"
             required
           />
-          <Hint>Enter your legal last name exactly as it appears on your ID documents</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>Email <RequiredField>*</RequiredField></Label>
+          <Label><FaEnvelope /> Email <RequiredField>*</RequiredField></Label>
           <Input
             type="email"
             value={formData.email}
@@ -1023,11 +896,10 @@ const HostApplicationForm = () => {
             placeholder="Email"
             required
           />
-          <Hint>This email will be used for all communications about your application and hosting account</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>Phone Number <RequiredField>*</RequiredField></Label>
+          <Label><FaPhone /> Phone Number <RequiredField>*</RequiredField></Label>
           <Input
             type="tel"
             value={formData.phoneNumber}
@@ -1035,11 +907,10 @@ const HostApplicationForm = () => {
             placeholder="+1 (555) 123-4567"
             required
           />
-          <Hint>Include country code if international (e.g., +1 for US). This number will be used for urgent communications.</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>Street Address <RequiredField>*</RequiredField></Label>
+          <Label><FaMapMarkerAlt /> Street Address <RequiredField>*</RequiredField></Label>
           <Input
             type="text"
             value={formData.street}
@@ -1047,11 +918,10 @@ const HostApplicationForm = () => {
             placeholder="123 Main Street, Apt 4B"
             required
           />
-          <Hint>Include apartment/unit number if applicable. Use your current residential address.</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>City <RequiredField>*</RequiredField></Label>
+          <Label><FaMapMarkerAlt /> City <RequiredField>*</RequiredField></Label>
           <Input
             type="text"
             value={formData.city}
@@ -1059,11 +929,10 @@ const HostApplicationForm = () => {
             placeholder="City"
             required
           />
-          <Hint>Enter the full city name (e.g., "New York" not "NYC")</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>State/Province <RequiredField>*</RequiredField></Label>
+          <Label><FaMapMarkerAlt /> State/Province <RequiredField>*</RequiredField></Label>
           <Input
             type="text"
             value={formData.state}
@@ -1071,11 +940,10 @@ const HostApplicationForm = () => {
             placeholder="State or Province"
             required
           />
-          <Hint>Use full state name (e.g., "California" not "CA") or province name for international addresses</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>Postal Code <RequiredField>*</RequiredField></Label>
+          <Label><FaMapMarkerAlt /> Postal Code <RequiredField>*</RequiredField></Label>
           <Input
             type="text"
             value={formData.postalCode}
@@ -1083,11 +951,10 @@ const HostApplicationForm = () => {
             placeholder="12345 or A1B 2C3"
             required
           />
-          <Hint>Enter your ZIP code (US) or postal code (international). Include letters and numbers as shown on mail.</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>Country <RequiredField>*</RequiredField></Label>
+          <Label><FaMapMarkerAlt /> Country <RequiredField>*</RequiredField></Label>
           <Input
             type="text"
             value={formData.country}
@@ -1095,18 +962,16 @@ const HostApplicationForm = () => {
             placeholder="United States"
             required
           />
-          <Hint>Use the full country name (e.g., "United States" not "USA" or "US")</Hint>
         </FormGroup>
 
         <FormGroup>
-          <Label>Date of Birth <RequiredField>*</RequiredField></Label>
+          <Label><FaCalendarAlt /> Date of Birth <RequiredField>*</RequiredField></Label>
           <Input
             type="date"
             value={formData.dateOfBirth}
             onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
             required
           />
-          <Hint>You must be at least 18 years old to become a host. Use the date picker or enter in YYYY-MM-DD format.</Hint>
         </FormGroup>
       </FormGrid>
     </>
@@ -1118,28 +983,12 @@ const HostApplicationForm = () => {
         <FaIdCard /> Identity Verification
       </StepTitle>
       <StepSubtitle>
-        Please provide your identity verification documents. These are required for security purposes.
+        Please provide your identity verification documents.
       </StepSubtitle>
-      
-      <FieldGuide>
-        <GuideTitle>
-          <FaInfoCircle /> Identity Verification Guide
-        </GuideTitle>
-        <GuideText>
-          Identity verification is required by law and helps protect both hosts and guests. All documents must be current and valid.
-        </GuideText>
-        <GuideList>
-          <GuideListItem><strong>ID Type:</strong> Choose the most recent and valid form of government-issued identification</GuideListItem>
-          <GuideListItem><strong>ID Number:</strong> Enter the complete number exactly as it appears on your document</GuideListItem>
-          <GuideListItem><strong>Document Images:</strong> Upload clear, high-quality photos of both sides of your ID</GuideListItem>
-          <GuideListItem><strong>Selfie:</strong> Take a recent photo in good lighting to verify your identity</GuideListItem>
-          <GuideListItem><strong>File Requirements:</strong> Images must be clear, readable, and under 10MB each</GuideListItem>
-        </GuideList>
-      </FieldGuide>
 
       <FormGrid>
         <FormGroup>
-          <Label>ID Type <RequiredField>*</RequiredField></Label>
+          <Label><FaIdCard /> ID Type <RequiredField>*</RequiredField></Label>
           <Select
             value={formData.idType}
             onChange={(e) => handleInputChange('idType', e.target.value)}
@@ -1151,11 +1000,10 @@ const HostApplicationForm = () => {
             <option value="tax_id">Tax ID</option>
             <option value="driving_license">Driving License</option>
           </Select>
-          <Hint>Choose the most recent and valid form of identification. Passport is preferred for international hosts.</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>ID Number <RequiredField>*</RequiredField></Label>
+          <Label><FaIdCard /> ID Number <RequiredField>*</RequiredField></Label>
           <Input
             type="text"
             value={formData.idNumber}
@@ -1163,13 +1011,12 @@ const HostApplicationForm = () => {
             placeholder="ID Number"
             required
           />
-          <Hint>Enter the complete ID number exactly as it appears on your document. Include all letters, numbers, and special characters.</Hint>
         </FormGroup>
       </FormGrid>
 
       <FormGrid>
         <FormGroup>
-          <Label>ID Front Image <RequiredField>*</RequiredField></Label>
+          <Label><FaCamera /> ID Front Image <RequiredField>*</RequiredField></Label>
         <FileUploadArea
           className={formData.idFrontImage ? 'has-file' : ''}
           onClick={() => document.getElementById('idFrontImage').click()}
@@ -1194,11 +1041,10 @@ const HostApplicationForm = () => {
               <FileSize>{(formData.idFrontImage.size / 1024 / 1024).toFixed(2)} MB</FileSize>
             </FilePreview>
           )}
-          <Hint>Take a clear photo of the front of your ID. Ensure all text is readable and the image is well-lit.</Hint>
         </FormGroup>
 
         <FormGroup>
-          <Label>ID Back Image <RequiredField>*</RequiredField></Label>
+          <Label><FaCamera /> ID Back Image <RequiredField>*</RequiredField></Label>
         <FileUploadArea
           className={formData.idBackImage ? 'has-file' : ''}
           onClick={() => document.getElementById('idBackImage').click()}
@@ -1223,11 +1069,10 @@ const HostApplicationForm = () => {
               <FileSize>{(formData.idBackImage.size / 1024 / 1024).toFixed(2)} MB</FileSize>
             </FilePreview>
           )}
-          <Hint>Take a clear photo of the back of your ID. Many IDs have important information on the reverse side.</Hint>
         </FormGroup>
 
         <FormGroup>
-          <Label>Selfie Image <RequiredField>*</RequiredField></Label>
+          <Label><FaCamera /> Selfie Image <RequiredField>*</RequiredField></Label>
         <FileUploadArea
           className={formData.selfieImage ? 'has-file' : ''}
           onClick={() => document.getElementById('selfieImage').click()}
@@ -1252,7 +1097,6 @@ const HostApplicationForm = () => {
               <FileSize>{(formData.selfieImage.size / 1024 / 1024).toFixed(2)} MB</FileSize>
             </FilePreview>
           )}
-          <Hint>Take a recent selfie in good lighting. This helps verify that you are the person in the ID documents.</Hint>
         </FormGroup>
       </FormGrid>
     </>
@@ -1267,59 +1111,33 @@ const HostApplicationForm = () => {
         Please provide your business and financial details for Stripe integration.
       </StepSubtitle>
 
-      <FieldGuide>
-        <GuideTitle>
-          <FaInfoCircle /> Business & Financial Information Guide
-        </GuideTitle>
-        <GuideText>
-          This information is required to create your Stripe Connect account for receiving payouts. All data is encrypted and secure.
-        </GuideText>
-        <GuideList>
-          <GuideListItem><strong>Business Structure:</strong> Choose the legal structure that matches your business registration</GuideListItem>
-          <GuideListItem><strong>Business Address:</strong> Only fill if different from your personal address</GuideListItem>
-          <GuideListItem><strong>SSN:</strong> Required for tax purposes and identity verification</GuideListItem>
-          <GuideListItem><strong>Bank Information:</strong> Used to set up automatic payouts to your account</GuideListItem>
-          <GuideListItem><strong>Security:</strong> All sensitive information is encrypted and never stored in plain text</GuideListItem>
-        </GuideList>
-      </FieldGuide>
-
-      <InfoBox>
-        <InfoIcon />
-        <InfoText>
-          <strong>Important:</strong> This information is required to create your Stripe Connect account for receiving payouts. 
-          All data is encrypted and secure.
-        </InfoText>
-      </InfoBox>
-
       <StepTitle style={{ marginTop: '32px', fontSize: '1.5rem' }}>
-        Business Information
+        <FaBuilding /> Business Information
       </StepTitle>
       
         <FormGrid>
           <FormGroup>
-          <Label>Business Name (Optional)</Label>
+          <Label><FaBuilding /> Business Name (Optional)</Label>
             <Input
               type="text"
             value={formData.businessName}
             onChange={(e) => handleInputChange('businessName', e.target.value)}
             placeholder="Your business name or leave blank for individual"
           />
-          <Hint>Leave blank if you're operating as an individual (sole proprietor). Use your registered business name if you have one.</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>Business Tax ID (EIN) - Optional</Label>
+          <Label><FaBuilding /> Business Tax ID (EIN) - Optional</Label>
           <Input
             type="text"
             value={formData.businessTaxId}
             onChange={(e) => handleInputChange('businessTaxId', e.target.value)}
             placeholder="12-3456789 (leave blank if individual)"
             />
-          <Hint>Required for businesses, leave blank for individual hosts. Format: XX-XXXXXXX (e.g., 12-3456789)</Hint>
         </FormGroup>
 
         <FormGroup>
-          <Label>Business Structure <RequiredField>*</RequiredField></Label>
+          <Label><FaBuilding /> Business Structure <RequiredField>*</RequiredField></Label>
           <Select
             value={formData.businessStructure}
             onChange={(e) => handleInputChange('businessStructure', e.target.value)}
@@ -1335,104 +1153,78 @@ const HostApplicationForm = () => {
             <option value="incorporated_non_profit">Incorporated Non-Profit</option>
             <option value="unincorporated_non_profit">Unincorporated Non-Profit</option>
           </Select>
-          <Hint>Select the legal structure that matches your business registration. If unsure, choose "Individual (Sole Proprietor)".</Hint>
           </FormGroup>
         </FormGrid>
 
       <StepTitle style={{ marginTop: '32px', fontSize: '1.5rem' }}>
-        Business Address (if different from personal)
+        <FaMapMarkerAlt /> Business Address (if different from personal)
       </StepTitle>
       
         <FormGrid>
           <FormGroup>
-          <Label>Business Street Address</Label>
+          <Label><FaMapMarkerAlt /> Business Street Address</Label>
             <Input
               type="text"
             value={formData.businessStreet}
             onChange={(e) => handleInputChange('businessStreet', e.target.value)}
             placeholder="Leave blank if same as personal address"
           />
-          <Hint>Only fill this if your business address is different from your personal address. Leave blank if they're the same.</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>Business City</Label>
+          <Label><FaMapMarkerAlt /> Business City</Label>
           <Input
             type="text"
             value={formData.businessCity}
             onChange={(e) => handleInputChange('businessCity', e.target.value)}
             placeholder="Leave blank if same as personal address"
           />
-          <Hint>Only fill this if your business city is different from your personal address.</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>Business State</Label>
+          <Label><FaMapMarkerAlt /> Business State</Label>
           <Input
             type="text"
             value={formData.businessState}
             onChange={(e) => handleInputChange('businessState', e.target.value)}
             placeholder="Leave blank if same as personal address"
           />
-          <Hint>Only fill this if your business state is different from your personal address.</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>Business Postal Code</Label>
+          <Label><FaMapMarkerAlt /> Business Postal Code</Label>
           <Input
             type="text"
             value={formData.businessPostalCode}
             onChange={(e) => handleInputChange('businessPostalCode', e.target.value)}
             placeholder="Leave blank if same as personal address"
           />
-          <Hint>Only fill this if your business postal code is different from your personal address.</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>Business Country</Label>
+          <Label><FaMapMarkerAlt /> Business Country</Label>
           <Input
             type="text"
             value={formData.businessCountry}
             onChange={(e) => handleInputChange('businessCountry', e.target.value)}
             placeholder="Leave blank if same as personal address"
           />
-          <Hint>Only fill this if your business country is different from your personal address.</Hint>
         </FormGroup>
         
         <FormGroup>
-          <Label>Business Phone</Label>
+          <Label><FaPhone /> Business Phone</Label>
           <Input
             type="tel"
             value={formData.businessPhone}
             onChange={(e) => handleInputChange('businessPhone', e.target.value)}
             placeholder="Leave blank if same as personal phone"
           />
-          <Hint>Only fill this if you have a separate business phone number. Include country code if international.</Hint>
         </FormGroup>
       </FormGrid>
 
       <StepTitle style={{ marginTop: '32px', fontSize: '1.5rem' }}>
-        Financial Information for Payouts
+        <FaCreditCard /> Financial Information for Payouts
       </StepTitle>
-      
-      <ProTip>
-        <ProTipTitle>
-          <FaInfoCircle /> Pro Tip: Bank Account Setup
-        </ProTipTitle>
-        <ProTipText>
-          <strong>Use a checking account for payouts</strong> - Most hosts prefer checking accounts over savings accounts for receiving payouts 
-          because they typically have fewer withdrawal restrictions and faster access to funds. Make sure your account is active and can receive 
-          electronic deposits.
-        </ProTipText>
-      </ProTip>
-      
-      <InfoBox>
-        <InfoIcon />
-        <InfoText>
-          <strong>Security Note:</strong> Your SSN and bank information are encrypted and only used to create your Stripe Connect account. 
-          We never store or access this information directly.
-        </InfoText>
-      </InfoBox>
       
       <FormGrid>
         <FormGroup>
@@ -1445,7 +1237,6 @@ const HostApplicationForm = () => {
             maxLength="11"
             required
           />
-          <Hint>Format: XXX-XX-XXXX (e.g., 123-45-6789). This is required for tax purposes and identity verification.</Hint>
         </FormGroup>
         
         <FormGroup>
@@ -1460,7 +1251,6 @@ const HostApplicationForm = () => {
             title="Please enter exactly 4 digits"
             required
           />
-          <Hint>Last 4 digits of your SSN for verification purposes. Must match the last 4 digits of your full SSN above.</Hint>
         </FormGroup>
 
         <FormGroup>
@@ -1472,7 +1262,6 @@ const HostApplicationForm = () => {
             placeholder="+1 (555) 123-4567"
             required
           />
-          <Hint>Phone number where you can be reached for account support and verification calls. Include country code if international.</Hint>
         </FormGroup>
         
         <FormGroup>
@@ -1486,7 +1275,6 @@ const HostApplicationForm = () => {
             <option value="checking">Checking</option>
             <option value="savings">Savings</option>
           </Select>
-          <Hint>Choose the account type where you want to receive payouts. Most hosts use checking accounts for easier access to funds.</Hint>
         </FormGroup>
         
         <FormGroup>
@@ -1501,7 +1289,6 @@ const HostApplicationForm = () => {
             title="Please enter exactly 9 digits"
             required
           />
-          <Hint>9-digit routing number found on your checks or bank statement. This identifies your bank and branch.</Hint>
         </FormGroup>
         
         <FormGroup>
@@ -1516,7 +1303,6 @@ const HostApplicationForm = () => {
             title="Please enter only numbers"
             required
           />
-          <Hint>Your bank account number (numbers only, no spaces or dashes). This is where your payouts will be deposited.</Hint>
           </FormGroup>
         </FormGrid>
     </>
@@ -1531,29 +1317,6 @@ const HostApplicationForm = () => {
         Please provide at least one payment method for receiving payouts.
       </StepSubtitle>
 
-      <FieldGuide>
-        <GuideTitle>
-          <FaInfoCircle /> Payment Methods Guide
-        </GuideTitle>
-        <GuideText>
-          This section is for additional payment methods. Your primary payout method is the bank account you provided in the previous step.
-        </GuideText>
-        <GuideList>
-          <GuideListItem><strong>Stripe Account:</strong> If you already have a Stripe account, you can link it here</GuideListItem>
-          <GuideListItem><strong>Credit Card:</strong> Optional backup payment method for certain transactions</GuideListItem>
-          <GuideListItem><strong>Primary Method:</strong> Your bank account from the previous step will be your main payout method</GuideListItem>
-          <GuideListItem><strong>Not Required:</strong> These fields are optional - you can leave them blank</GuideListItem>
-        </GuideList>
-      </FieldGuide>
-
-      <PaymentInfoBox>
-        <PaymentIcon />
-        <PaymentText>
-          <strong>Payment Setup:</strong> You can provide either a Stripe account ID or credit card information. 
-          After approval, we'll help you set up automatic payouts.
-        </PaymentText>
-      </PaymentInfoBox>
-
       <FormGrid>
         <FormGroup>
           <Label>Stripe Account ID (Optional)</Label>
@@ -1563,7 +1326,6 @@ const HostApplicationForm = () => {
             onChange={(e) => handleInputChange('stripeAccountId', e.target.value)}
             placeholder="acct_xxxxxxxxxxxxx"
           />
-          <Hint>If you already have a Stripe account, enter your account ID (starts with 'acct_'). This field is completely optional.</Hint>
         </FormGroup>
 
         <FormGroup>
@@ -1575,17 +1337,8 @@ const HostApplicationForm = () => {
             placeholder="1234"
             maxLength="4"
           />
-          <Hint>Last 4 digits of a credit card for backup payment method. This field is completely optional.</Hint>
         </FormGroup>
       </FormGrid>
-
-      <InfoBox>
-        <InfoIcon />
-        <InfoText>
-          <strong>Note:</strong> At least one payment method is required. If you don't have a Stripe account, 
-          you can provide credit card information and we'll help you set up payments after approval.
-        </InfoText>
-      </InfoBox>
     </>
   );
 
@@ -1598,35 +1351,9 @@ const HostApplicationForm = () => {
         Tell us about the property you want to list and your hosting experience.
       </StepSubtitle>
 
-      <ProTip>
-        <ProTipTitle>
-          <FaInfoCircle /> Pro Tip: Property Description
-        </ProTipTitle>
-        <ProTipText>
-          <strong>Be detailed and honest</strong> - A comprehensive property description helps guests understand exactly what to expect and 
-          can improve your booking rates. Include unique features, nearby attractions, and any special amenities. Honest descriptions lead 
-          to better guest satisfaction and fewer issues.
-        </ProTipText>
-      </ProTip>
-
-      <FieldGuide>
-        <GuideTitle>
-          <FaInfoCircle /> Property Information Guide
-        </GuideTitle>
-        <GuideText>
-          This section helps us understand what you plan to host and your experience level. Be detailed and honest in your descriptions.
-        </GuideText>
-        <GuideList>
-          <GuideListItem><strong>Property Type:</strong> Choose the primary type of property you plan to list</GuideListItem>
-          <GuideListItem><strong>Property Description:</strong> Be detailed about amenities, location, and unique features</GuideListItem>
-          <GuideListItem><strong>Hosting Experience:</strong> Share any relevant background, even if it's not directly related to hosting</GuideListItem>
-          <GuideListItem><strong>Be Honest:</strong> Accurate information helps us provide better support and improves guest satisfaction</GuideListItem>
-        </GuideList>
-      </FieldGuide>
-
       <FormGrid>
         <FormGroup>
-          <Label>Property Type <RequiredField>*</RequiredField></Label>
+          <Label><FaHome /> Property Type <RequiredField>*</RequiredField></Label>
           <Select
             value={formData.propertyType}
             onChange={(e) => handleInputChange('propertyType', e.target.value)}
@@ -1638,28 +1365,25 @@ const HostApplicationForm = () => {
             <option value="car">Car</option>
             <option value="other">Other</option>
           </Select>
-          <Hint>Select the primary type of property you plan to list. You can list multiple types later, but choose your main one.</Hint>
         </FormGroup>
 
       <FormGroup>
-          <Label>Property Description <RequiredField>*</RequiredField></Label>
+          <Label><FaFileAlt /> Property Description <RequiredField>*</RequiredField></Label>
         <TextArea
           value={formData.propertyDescription}
           onChange={(e) => handleInputChange('propertyDescription', e.target.value)}
             placeholder="Describe your property, amenities, and what makes it special..."
             required
         />
-          <Hint>Provide a detailed description of your property and its unique features. Include amenities, location highlights, and what makes it special.</Hint>
       </FormGroup>
 
       <FormGroup>
-          <Label>Hosting Experience</Label>
+          <Label><FaStar /> Hosting Experience</Label>
         <TextArea
           value={formData.hostingExperience}
           onChange={(e) => handleInputChange('hostingExperience', e.target.value)}
             placeholder="Tell us about your experience with hosting or customer service..."
         />
-          <Hint>Share any previous hosting experience, customer service skills, or relevant background. Even if you're new to hosting, tell us about your customer service experience.</Hint>
       </FormGroup>
       </FormGrid>
     </>
@@ -1674,47 +1398,85 @@ const HostApplicationForm = () => {
         Please review your application before submitting.
       </StepSubtitle>
 
-      <div style={{ background: '#f9f9f9', padding: '24px', borderRadius: '12px', marginBottom: '24px' }}>
-        <h3 style={{ marginBottom: '16px', color: '#222222' }}>Personal Information</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
-          <div><strong>Name:</strong> {formData.firstName} {formData.lastName}</div>
-          <div><strong>Email:</strong> {formData.email}</div>
-          <div><strong>Phone:</strong> {formData.phoneNumber}</div>
-          <div><strong>Date of Birth:</strong> {formData.dateOfBirth}</div>
-        </div>
+      <ReviewSection>
+        <ReviewTitle>
+          <FaInfoCircle /> Application Overview
+        </ReviewTitle>
+        <ReviewGrid>
+          <ReviewItem>
+            <ReviewLabel>Name</ReviewLabel>
+            <ReviewValue>{formData.firstName} {formData.lastName}</ReviewValue>
+          </ReviewItem>
+          <ReviewItem>
+            <ReviewLabel>Email</ReviewLabel>
+            <ReviewValue>{formData.email}</ReviewValue>
+          </ReviewItem>
+          <ReviewItem>
+            <ReviewLabel>Phone</ReviewLabel>
+            <ReviewValue>{formData.phoneNumber}</ReviewValue>
+          </ReviewItem>
+          <ReviewItem>
+            <ReviewLabel>Date of Birth</ReviewLabel>
+            <ReviewValue>{formData.dateOfBirth}</ReviewValue>
+          </ReviewItem>
+        </ReviewGrid>
         
-        <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Address</h3>
-        <div>{formData.street}, {formData.city}, {formData.state} {formData.postalCode}, {formData.country}</div>
-        
-        <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Identity Verification</h3>
-        <div><strong>ID Type:</strong> {formData.idType}</div>
-        <div><strong>ID Number:</strong> {formData.idNumber}</div>
-        <div><strong>Documents:</strong> {formData.idFrontImage ? 'Front ✓' : 'Front ✗'}, {formData.idBackImage ? 'Back ✓' : 'Back ✗'}, {formData.selfieImage ? 'Selfie ✓' : 'Selfie ✗'}</div>
-        
-         <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Business Information</h3>
-         <div><strong>Business Name:</strong> {formData.businessName || 'Individual (no business name)'}</div>
-         <div><strong>Business Tax ID:</strong> {formData.businessTaxId || 'Not provided'}</div>
-        <div><strong>Business Structure:</strong> {formData.businessStructure || 'Individual'}</div>
-         <div><strong>Business Address:</strong> {formData.businessStreet ? `${formData.businessStreet}, ${formData.businessCity}, ${formData.businessState} ${formData.businessPostalCode}, ${formData.businessCountry}` : 'Same as personal address'}</div>
-         <div><strong>Business Phone:</strong> {formData.businessPhone || 'Same as personal phone'}</div>
-         
-         <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Financial Information</h3>
-         <div><strong>SSN:</strong> {formData.ssn ? '****' : 'Not provided'}</div>
-         <div><strong>SSN Last 4:</strong> {formData.ssnLast4 ? '****' : 'Not provided'}</div>
-         <div><strong>Support Phone:</strong> {formData.supportPhone || 'Not provided'}</div>
-         <div><strong>Bank Account Type:</strong> {formData.bankAccountType || 'Not selected'}</div>
-         <div><strong>Bank Routing Number:</strong> {formData.bankRoutingNumber ? '****' : 'Not provided'}</div>
-         <div><strong>Bank Account Number:</strong> {formData.bankAccountNumber ? '****' : 'Not provided'}</div>
-        
-        <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Payment Methods</h3>
-        <div><strong>Stripe Account:</strong> {formData.stripeAccountId || 'Not provided'}</div>
-        <div><strong>Credit Card:</strong> {formData.creditCardLast4 ? `****${formData.creditCardLast4}` : 'Not provided'}</div>
-        
-        <h3 style={{ marginTop: '24px', marginBottom: '16px', color: '#222222' }}>Property Information</h3>
-        <div><strong>Type:</strong> {formData.propertyType}</div>
-        <div><strong>Description:</strong> {formData.propertyDescription}</div>
-        <div><strong>Experience:</strong> {formData.hostingExperience || 'Not provided'}</div>
-          </div>
+        <ReviewGrid>
+          <ReviewItem>
+            <ReviewLabel>Address</ReviewLabel>
+            <ReviewValue>{formData.street}, {formData.city}, {formData.state} {formData.postalCode}, {formData.country}</ReviewValue>
+          </ReviewItem>
+        </ReviewGrid>
+
+        <ReviewGrid>
+          <ReviewItem>
+            <ReviewLabel>Identity Verification</ReviewLabel>
+            <ReviewValue>ID Type: {formData.idType}</ReviewValue>
+            <ReviewValue>ID Number: {formData.idNumber}</ReviewValue>
+            <ReviewValue>Documents: {formData.idFrontImage ? 'Front ✓' : 'Front ✗'}, {formData.idBackImage ? 'Back ✓' : 'Back ✗'}, {formData.selfieImage ? 'Selfie ✓' : 'Selfie ✗'}</ReviewValue>
+          </ReviewItem>
+        </ReviewGrid>
+
+        <ReviewGrid>
+          <ReviewItem>
+            <ReviewLabel>Business Information</ReviewLabel>
+            <ReviewValue>Business Name: {formData.businessName || 'Individual (no business name)'}</ReviewValue>
+            <ReviewValue>Business Tax ID: {formData.businessTaxId || 'Not provided'}</ReviewValue>
+            <ReviewValue>Business Structure: {formData.businessStructure || 'Individual'}</ReviewValue>
+            <ReviewValue>Business Address: {formData.businessStreet ? `${formData.businessStreet}, ${formData.businessCity}, ${formData.businessState} ${formData.businessPostalCode}, ${formData.businessCountry}` : 'Same as personal address'}</ReviewValue>
+            <ReviewValue>Business Phone: {formData.businessPhone || 'Same as personal phone'}</ReviewValue>
+          </ReviewItem>
+        </ReviewGrid>
+
+        <ReviewGrid>
+          <ReviewItem>
+            <ReviewLabel>Financial Information</ReviewLabel>
+            <ReviewValue>SSN: {formData.ssn ? '****' : 'Not provided'}</ReviewValue>
+            <ReviewValue>SSN Last 4: {formData.ssnLast4 ? '****' : 'Not provided'}</ReviewValue>
+            <ReviewValue>Support Phone: {formData.supportPhone || 'Not provided'}</ReviewValue>
+            <ReviewValue>Bank Account Type: {formData.bankAccountType || 'Not selected'}</ReviewValue>
+            <ReviewValue>Bank Routing Number: {formData.bankAccountNumber ? '****' : 'Not provided'}</ReviewValue>
+            <ReviewValue>Bank Account Number: {formData.bankAccountNumber ? '****' : 'Not provided'}</ReviewValue>
+          </ReviewItem>
+        </ReviewGrid>
+
+        <ReviewGrid>
+          <ReviewItem>
+            <ReviewLabel>Payment Methods</ReviewLabel>
+            <ReviewValue>Stripe Account: {formData.stripeAccountId || 'Not provided'}</ReviewValue>
+            <ReviewValue>Credit Card: {formData.creditCardLast4 ? `****${formData.creditCardLast4}` : 'Not provided'}</ReviewValue>
+          </ReviewItem>
+        </ReviewGrid>
+
+        <ReviewGrid>
+          <ReviewItem>
+            <ReviewLabel>Property Information</ReviewLabel>
+            <ReviewValue>Type: {formData.propertyType}</ReviewValue>
+            <ReviewValue>Description: {formData.propertyDescription}</ReviewValue>
+            <ReviewValue>Experience: {formData.hostingExperience || 'Not provided'}</ReviewValue>
+          </ReviewItem>
+        </ReviewGrid>
+      </ReviewSection>
 
       <InfoBox>
         <InfoIcon />
@@ -1747,6 +1509,7 @@ const HostApplicationForm = () => {
 
   if (success && applicationData) {
     return (
+      <StyledComponents>
       <Container>
         <SuccessContainer>
           <SuccessIcon>
@@ -1758,18 +1521,11 @@ const HostApplicationForm = () => {
             We'll notify you via email once the review is complete.
           </SuccessMessage>
           
-          <InfoBox style={{ background: '#e3f2fd', borderColor: '#2196f3', marginBottom: '32px' }}>
+          <InfoBox style={{ background: 'linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%)', borderColor: '#2196f3', marginBottom: '32px' }}>
             <InfoIcon />
             <InfoText>
-              <strong>What happens next?</strong>
-              <br /><br />
-              1. <strong>Application Review:</strong> Our team will review your application within 2-3 business days
-              <br />
-              2. <strong>Stripe Account Created:</strong> We've already created your Stripe Connect account for secure payments
-              <br />
-              3. <strong>Admin Approval:</strong> Once approved, you'll receive a link to complete your Stripe verification
-              <br />
-              4. <strong>Start Hosting:</strong> After verification, you can start listing your property and accepting bookings
+              <strong>What happens next?</strong> Our team will review your application within 2-3 business days. 
+              You'll receive email notifications at each step of the process.
             </InfoText>
           </InfoBox>
           
@@ -1783,78 +1539,23 @@ const HostApplicationForm = () => {
           </ActionButtons>
         </SuccessContainer>
       </Container>
+        </StyledComponents>
     );
   }
 
   return (
+    <StyledComponents>
     <Container>
       <Header>
-        <HeaderLeft>
           <BackButton onClick={() => navigate(-1)}>
             <FaArrowLeft /> Back
           </BackButton>
           <Title>
             <FaFileAlt /> {isEditMode ? 'Edit Host Application' : 'Become a Host'}
           </Title>
-        </HeaderLeft>
       </Header>
 
-      <ApplicationOverview>
-        <OverviewTitle>🚀 Become a Host on DrivInn</OverviewTitle>
-        <OverviewDescription>
-          Complete this application to start hosting and earning money. The process takes about 10-15 minutes and includes identity verification and Stripe Connect setup for secure payments.
-        </OverviewDescription>
-        
-        <OverviewSteps>
-          <OverviewStep>
-            <OverviewStepNumber>1</OverviewStepNumber>
-            <OverviewStepTitle>Personal Information</OverviewStepTitle>
-            <OverviewStepText>Provide your contact details and address information</OverviewStepText>
-          </OverviewStep>
-          
-          <OverviewStep>
-            <OverviewStepNumber>2</OverviewStepNumber>
-            <OverviewStepTitle>Identity Verification</OverviewStepTitle>
-            <OverviewStepText>Upload ID documents and take a selfie for verification</OverviewStepText>
-          </OverviewStep>
-          
-          <OverviewStep>
-            <OverviewStepNumber>3</OverviewStepNumber>
-            <OverviewStepTitle>Business & Financial</OverviewStepTitle>
-            <OverviewStepText>Set up your business structure and bank account for payouts</OverviewStepText>
-          </OverviewStep>
-          
-          <OverviewStep>
-            <OverviewStepNumber>4</OverviewStepNumber>
-            <OverviewStepTitle>Payment Methods</OverviewStepTitle>
-            <OverviewStepText>Optional additional payment methods (bank account is primary)</OverviewStepText>
-          </OverviewStep>
-          
-          <OverviewStep>
-            <OverviewStepNumber>5</OverviewStepNumber>
-            <OverviewStepTitle>Property Details</OverviewStepTitle>
-            <OverviewStepText>Tell us about what you plan to host and your experience</OverviewStepText>
-          </OverviewStep>
-          
-          <OverviewStep>
-            <OverviewStepNumber>6</OverviewStepNumber>
-            <OverviewStepTitle>Review & Submit</OverviewStepTitle>
-            <OverviewStepText>Review your application and submit for approval</OverviewStepText>
-          </OverviewStep>
-        </OverviewSteps>
-      </ApplicationOverview>
 
-      <SecurityNotice>
-        <SecurityTitle>
-          <SecurityIcon />
-          Security & Privacy Notice
-        </SecurityTitle>
-        <SecurityText>
-          <strong>Your data security is our top priority.</strong> All sensitive information (SSN, bank details, ID documents) is encrypted using bank-level security. 
-          We use this information solely to create your Stripe Connect account and verify your identity. We never store or access your sensitive data in plain text, 
-          and all information is transmitted securely using HTTPS encryption.
-        </SecurityText>
-      </SecurityNotice>
 
       <FormCard>
         <ProgressBar>
@@ -1875,6 +1576,13 @@ const HostApplicationForm = () => {
             </Alert>
           )}
 
+          <InfoBox style={{ background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)', borderColor: '#6c757d', marginBottom: '24px' }}>
+            <InfoIcon style={{ color: '#6c757d' }} />
+            <InfoText style={{ color: '#495057' }}>
+              <strong>Tip:</strong> You can navigate freely between steps using the Previous and Next buttons. Fill out the form at your own pace!
+            </InfoText>
+          </InfoBox>
+
           {renderStepContent()}
         </FormContent>
 
@@ -1891,7 +1599,6 @@ const HostApplicationForm = () => {
             <StepButton
               type="button"
               onClick={handleNextStep}
-              disabled={!canProceedToNextStep()}
             >
               Next
             </StepButton>
@@ -1915,70 +1622,9 @@ const HostApplicationForm = () => {
         </StepNavigation>
       </FormCard>
 
-      <FAQSection>
-        <FAQTitle>❓ Frequently Asked Questions</FAQTitle>
-        
-        <FAQItem>
-          <FAQQuestion>
-            <FaInfoCircle /> How long does the application process take?
-          </FAQQuestion>
-          <FAQAnswer>
-            The application form takes about 10-15 minutes to complete. After submission, our team reviews applications within 2-3 business days. 
-            You'll receive email notifications at each step of the process.
-          </FAQAnswer>
-        </FAQItem>
 
-        <FAQItem>
-          <FAQQuestion>
-            <FaInfoCircle /> What happens after I submit my application?
-          </FAQQuestion>
-          <FAQAnswer>
-            After submission, we'll create your Stripe Connect account and send you an onboarding link. You'll need to complete Stripe's 
-            verification process, then our team will review everything. Once approved, you can start listing your property and accepting bookings.
-          </FAQAnswer>
-        </FAQItem>
-
-        <FAQItem>
-          <FAQQuestion>
-            <FaInfoCircle /> Is my personal information secure?
-          </FAQQuestion>
-          <FAQAnswer>
-            Absolutely. We use bank-level encryption for all sensitive data. Your SSN, bank details, and ID documents are encrypted and 
-            only used to create your Stripe Connect account. We never store or access this information in plain text.
-          </FAQAnswer>
-        </FAQItem>
-
-        <FAQItem>
-          <FAQQuestion>
-            <FaInfoCircle /> What if I don't have a business?
-          </FAQQuestion>
-          <FAQAnswer>
-            No problem! Most hosts operate as individuals (sole proprietors). Simply select "Individual (Sole Proprietor)" as your business 
-            structure and leave the business fields blank. Your personal information will be used for the Stripe account.
-          </FAQAnswer>
-        </FAQItem>
-
-        <FAQItem>
-          <FAQQuestion>
-            <FaInfoCircle /> Can I edit my application after submission?
-          </FAQQuestion>
-          <FAQAnswer>
-            You can edit your application while it's being reviewed by contacting our support team. However, once approved, you'll need to 
-            update your information through your host dashboard.
-          </FAQAnswer>
-        </FAQItem>
-
-        <FAQItem>
-          <FAQQuestion>
-            <FaInfoCircle /> What if I need help during the process?
-          </FAQQuestion>
-          <FAQAnswer>
-            We're here to help! If you encounter any issues or have questions, contact our support team at support@drivinn.com or 
-            use the chat feature on our website. We typically respond within a few hours.
-          </FAQAnswer>
-        </FAQItem>
-      </FAQSection>
     </Container>
+      </StyledComponents>
   );
 };
 

@@ -5,6 +5,11 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const Listing = require('../models/listing');
 const HostApplication = require('../models/HostApplication');
 
+// Helper function to generate Stripe Connect dashboard URL
+const generateStripeDashboardUrl = (accountId) => {
+  const environment = process.env.NODE_ENV === 'production' ? 'live' : 'test';
+  return `https://dashboard.stripe.com/${accountId}/${environment}/dashboard`;
+};
 
 // Helper function to check for date overlaps
 const checkDateOverlap = async (listingId, startDate, endDate, excludeBookingId = null) => {
@@ -152,7 +157,7 @@ exports.createBooking = async (req, res) => {
           hostGuidance: {
             message: 'Your Stripe account needs additional verification to enable automatic payouts',
             action: 'Visit your Stripe dashboard to complete verification',
-            dashboardUrl: `https://dashboard.stripe.com/express/${hostApplication.stripeConnect.accountId}`,
+            dashboardUrl: generateStripeDashboardUrl(hostApplication.stripeConnect.accountId),
             commonIssues: [
               'Identity documents not yet verified',
               'Bank account information not provided',
@@ -808,41 +813,94 @@ exports.capturePayment = async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent);
     
     if (paymentIntent.status === 'requires_capture') {
-      // Capture the payment
-      const capturedPayment = await stripe.paymentIntents.capture(session.payment_intent);
-      console.log('✅ Payment captured successfully:', capturedPayment.id);
-      
-      // Find and update the booking
+      // Find the booking and listing to get host information
       const booking = await Booking.findOne({ paymentSessionId: sessionId });
-      if (booking) {
-        await Booking.findByIdAndUpdate(booking._id, {
-          status: 'reserved',
-          updatedAt: new Date()
+      if (!booking) {
+        return res.status(404).json({
+          message: 'Booking not found for this session',
+          error: 'BOOKING_NOT_FOUND'
         });
-        console.log('✅ Booking status updated to reserved:', booking._id);
       }
 
-      // Update payment record
+      const listing = await Listing.findById(booking.home).populate('owner');
+      if (!listing) {
+        return res.status(404).json({
+          message: 'Listing not found for this booking',
+          error: 'LISTING_NOT_FOUND'
+        });
+      }
+
+      // Find host application to get Stripe Connect account
+      const hostApplication = await HostApplication.findOne({ 
+        user: listing.owner._id, 
+        status: 'approved' 
+      });
+
+      if (!hostApplication || !hostApplication.stripeConnect?.accountId) {
+        return res.status(400).json({
+          message: 'Host account not configured for automatic payouts',
+          error: 'HOST_ACCOUNT_NOT_CONFIGURED',
+          details: 'The host must complete their Stripe Connect account setup to receive automatic payouts.'
+        });
+      }
+
+      // Capture the payment with transfer_data for automatic payout
+      let capturedPayment;
+      try {
+        capturedPayment = await stripe.paymentIntents.capture(session.payment_intent, {
+          transfer_data: {
+            destination: hostApplication.stripeConnect.accountId,
+          },
+          application_fee_amount: Math.round(booking.totalPrice * 0.10 * 100), // 10% platform fee
+        });
+        console.log('✅ Payment captured with transfer_data successfully:', capturedPayment.id);
+        console.log('💸 Transfer ID:', capturedPayment.latest_charge?.transfer);
+      } catch (captureError) {
+        console.error('❌ Error capturing payment with transfer_data:', captureError);
+        return res.status(400).json({
+          message: 'Payment capture failed',
+          error: 'PAYMENT_CAPTURE_FAILED',
+          details: captureError.message
+        });
+      }
+      
+      // Update booking status
+      await Booking.findByIdAndUpdate(booking._id, {
+        status: 'reserved',
+        updatedAt: new Date()
+      });
+      console.log('✅ Booking status updated to reserved:', booking._id);
+
+      // Update payment record with transfer details
       const payment = await Payment.findOne({ stripeSessionId: sessionId });
       if (payment) {
         await Payment.findByIdAndUpdate(payment._id, {
           status: 'completed',
           transactionId: capturedPayment.id,
           stripePaymentIntentId: capturedPayment.id,
+          payoutStatus: 'completed',
+          stripeTransferId: capturedPayment.latest_charge?.transfer,
+          payoutCompletedAt: new Date(),
           completedAt: new Date(),
+          transferStatus: 'completed',
+          transferCompletedAt: new Date(),
           metadata: {
             ...payment.metadata,
             paymentCaptured: true,
-            captureTimestamp: new Date()
+            captureTimestamp: new Date(),
+            transferProcessed: true,
+            transferId: capturedPayment.latest_charge?.transfer
           }
         });
-        console.log('✅ Payment record updated:', payment._id);
+        console.log('✅ Payment record updated with transfer details:', payment._id);
+        console.log('💸 Automatic payout to host completed successfully');
       }
 
       res.json({
-        message: 'Payment captured successfully',
+        message: 'Payment captured successfully with automatic payout to host',
         paymentIntent: capturedPayment.id,
-        status: 'reserved'
+        status: 'reserved',
+        transferId: capturedPayment.latest_charge?.transfer
       });
     } else {
       console.log('⚠️ Payment intent status:', paymentIntent.status);

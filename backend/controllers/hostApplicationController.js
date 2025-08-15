@@ -11,6 +11,12 @@ cloudinary.config({
   api_secret: process.env.API_SECRET,
 });
 
+// Helper function to generate Stripe Connect dashboard URL (fallback)
+const generateStripeDashboardUrl = (accountId) => {
+  const environment = process.env.NODE_ENV === 'production' ? 'live' : 'test';
+  return `https://dashboard.stripe.com/${accountId}/${environment}/dashboard`;
+};
+
 // Helper function to upload file to Stripe and get file ID
 const uploadFileToStripe = async (fileUrl, purpose = 'identity_document') => {
   try {
@@ -1348,7 +1354,8 @@ exports.submitApplication = async (req, res) => {
           id: account.id,
           status: account.charges_enabled && account.payouts_enabled ? 'active' : 'pending',
           onboardingUrl: accountLink.url,
-          dashboardUrl: `https://dashboard.stripe.com/express/${account.id}`
+          dashboardUrl: generateStripeDashboardUrl(account.id),
+        loginUrl: accountLink.url
         }
       });
 
@@ -1501,7 +1508,21 @@ exports.approveApplication = async (req, res) => {
       stripeAccount: {
         id: application.stripeConnect.accountId,
         status: application.stripeConnect.accountStatus,
-        dashboardUrl: `https://dashboard.stripe.com/express/${application.stripeConnect.accountId}`
+        dashboardUrl: generateStripeDashboardUrl(application.stripeConnect.accountId),
+        onboardingUrl: await (async () => {
+          try {
+            const accountLink = await stripe.accountLinks.create({
+              account: application.stripeConnect.accountId,
+              refresh_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/host-application-status`,
+              return_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/host-application-status`,
+              type: 'account_onboarding',
+            });
+            return accountLink.url;
+          } catch (error) {
+            console.error('Error creating onboarding link:', error);
+            return null;
+          }
+        })()
       }
     });
   } catch (err) {
@@ -1615,6 +1636,22 @@ exports.getStripeSetupStatus = async (req, res) => {
     // Get current account status from Stripe
     const account = await stripe.accounts.retrieve(application.stripeConnect.accountId);
     
+    // For existing hosts, we need to create a fresh onboarding link
+    let onboardingUrl = null;
+    try {
+      const accountLink = await stripe.accountLinks.create({
+        account: application.stripeConnect.accountId,
+        refresh_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/host-application-status`,
+        return_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/host-application-status`,
+        type: 'account_onboarding',
+      });
+      onboardingUrl = accountLink.url;
+    } catch (onboardingError) {
+      console.error('Error creating onboarding link:', onboardingError);
+      // Fallback to dashboard URL if onboarding link creation fails
+      onboardingUrl = generateStripeDashboardUrl(application.stripeConnect.accountId);
+    }
+    
     res.json({ 
       message: 'Stripe account setup status retrieved',
       accountId: application.stripeConnect.accountId,
@@ -1622,7 +1659,8 @@ exports.getStripeSetupStatus = async (req, res) => {
       chargesEnabled: account.charges_enabled,
       payoutsEnabled: account.payouts_enabled,
       requirements: account.requirements,
-      dashboardUrl: `https://dashboard.stripe.com/express/${application.stripeConnect.accountId}`
+      dashboardUrl: generateStripeDashboardUrl(application.stripeConnect.accountId),
+      onboardingUrl: onboardingUrl
     });
     
   } catch (err) {

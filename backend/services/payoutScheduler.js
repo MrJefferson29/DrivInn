@@ -9,6 +9,7 @@ const HostApplication = require('../models/HostApplication');
 const processDuePayouts = async () => {
   try {
     console.log('🔄 Running automatic payout scheduler...');
+    console.log('⏰ Current time:', new Date().toISOString());
     
     const now = new Date();
     
@@ -36,8 +37,15 @@ const processDuePayouts = async () => {
     
     console.log(`📋 Found ${duePayouts.length} due payouts to process`);
     
+    if (duePayouts.length === 0) {
+      console.log('✅ No due payouts found, scheduler completed');
+      return;
+    }
+    
     for (const paymentData of duePayouts) {
       try {
+        console.log(`\n💳 Processing payout for payment: ${paymentData._id}`);
+        
         const payment = await Payment.findById(paymentData._id);
         const booking = await Booking.findById(paymentData.bookingData._id);
         const listing = await Listing.findById(booking.home).populate('owner');
@@ -48,108 +56,81 @@ const processDuePayouts = async () => {
 
         if (!payment || !booking || !listing || !hostApplication) {
           console.log('❌ Missing data for payment:', paymentData._id);
+          console.log('  - Payment exists:', !!payment);
+          console.log('  - Booking exists:', !!booking);
+          console.log('  - Listing exists:', !!listing);
+          console.log('  - Host application exists:', !!hostApplication);
           continue;
         }
 
         console.log(`💳 Processing payout for booking ${booking._id} (check-in: ${booking.checkIn})`);
+        console.log(`  - Payment status: ${payment.status}`);
+        console.log(`  - Payout status: ${payment.payoutStatus}`);
+        console.log(`  - Transfer status: ${payment.transferStatus || 'N/A'}`);
+        console.log(`  - Host: ${listing.owner.firstName} ${listing.owner.lastName}`);
+        console.log(`  - Stripe Connect account: ${hostApplication.stripeConnect?.accountId || 'N/A'}`);
         
-        // Process payout based on host's Stripe Connect status
-        if (hostApplication.stripeConnect?.accountId && 
-            hostApplication.stripeConnect.accountStatus === 'active') {
+        // Check if payment was already processed by webhook
+        if (payment.status === 'completed' && payment.payoutStatus === 'completed') {
+          console.log('✅ Payment already processed by webhook, skipping payout scheduler for booking:', booking._id);
+          continue;
+        }
+
+        // Check if payment was processed by webhook but payout status needs updating
+        if (payment.status === 'completed' && payment.payoutStatus === 'pending') {
+          console.log('💳 Payment completed by webhook, updating payout status for booking:', booking._id);
           
-          // Check if this payment was set up with automatic payout (transfer_data)
-          const hasAutomaticPayout = payment.metadata?.hasTransferData === true;
-          
-          if (!hasAutomaticPayout) {
-            // Reject payments that don't support automatic payouts
-            console.error('❌ Payment does not support automatic payout - rejecting');
-            payment.payoutStatus = 'failed';
-            payment.payoutFailureReason = 'Payment not configured for automatic payout. Host account may not be fully configured.';
-            payment.payoutFailureDetails = 'This payment was created without transfer_data, which is required for automatic payouts. The host must complete their Stripe Connect account setup.';
-            await payment.save();
-            
-            // Update booking status
-            booking.status = 'payment_failed';
-            booking.paymentFailureReason = 'Automatic payout not supported';
-            await booking.save();
-            
-            console.log('❌ Payment rejected - automatic payout not supported for booking:', booking._id);
-            continue;
-          }
-          
-          // All payments MUST use automatic payout via transfer_data
-          console.log('💳 Processing automatic payout via transfer_data...');
-          
-          try {
-            // Capture the payment intent (this releases the funds to the host automatically)
-            const paymentIntent = await stripe.paymentIntents.capture(
-              payment.stripePaymentIntentId,
-              {
-                transfer_data: {
-                  destination: hostApplication.stripeConnect.accountId,
-                },
-                application_fee_amount: Math.round(booking.totalPrice * 0.10 * 100), // 10% platform fee
-              }
-            );
-            
-            console.log('✅ Payment captured and transferred automatically to host:', paymentIntent.id);
-            
-            // Update payment status
-            payment.payoutStatus = 'completed';
-            payment.payoutCompletedAt = new Date();
-            payment.stripeTransferId = paymentIntent.latest_charge?.transfer;
-            await payment.save();
-            
-            // Update booking status
-            booking.status = 'confirmed';
-            booking.paymentStatus = 'completed';
-            await booking.save();
-            
-            console.log('✅ Automatic payout completed successfully for booking:', booking._id);
-            
-          } catch (stripeError) {
-            console.error('❌ Error processing automatic payout:', stripeError);
-            
-            // Update payment status
-            payment.payoutStatus = 'failed';
-            payment.payoutFailureReason = 'Stripe error during automatic payout';
-            payment.payoutFailureDetails = stripeError.message;
-            await payment.save();
-            
-            // Update booking status
-            booking.status = 'payment_failed';
-            booking.paymentFailureReason = 'Automatic payout failed';
-            await booking.save();
-            
-            console.error('❌ Automatic payout failed for booking:', booking._id, 'Error:', stripeError.message);
-          }
-          
-        } else {
-          // Host account not fully configured - reject all payments
-          console.error('❌ Host account not fully configured for Stripe Connect, rejecting payment for booking:', booking._id);
-          
-          payment.payoutStatus = 'failed';
-          payment.payoutFailureReason = 'Host account not fully configured';
-          payment.payoutFailureDetails = 'The host must complete their Stripe Connect account setup to receive automatic payouts.';
+          // Update payment status to reflect webhook processing
+          payment.payoutStatus = 'completed';
+          payment.payoutCompletedAt = new Date();
+          payment.transferStatus = 'completed';
+          payment.transferCompletedAt = new Date();
           await payment.save();
           
-          booking.status = 'payment_failed';
-          booking.paymentFailureReason = 'Host account incomplete';
+          // Update booking status
+          booking.status = 'confirmed';
+          booking.paymentStatus = 'completed';
           await booking.save();
           
-          console.log('❌ Payment rejected - host account incomplete for booking:', booking._id);
+          console.log('✅ Payout status updated successfully for booking:', booking._id);
+          continue;
         }
+
+        // Check if payment failed during webhook processing
+        if (payment.status === 'failed' || payment.payoutStatus === 'failed') {
+          console.log('❌ Payment failed during webhook processing for booking:', booking._id);
+          console.log('  - Failure reason:', payment.payoutFailureReason || 'Unknown');
+          continue;
+        }
+
+        // If payment is still pending, it means webhook hasn't processed it yet
+        if (payment.status === 'pending') {
+          console.log('⏳ Payment still pending, waiting for webhook processing for booking:', booking._id);
+          console.log('  - This is normal - webhook will process when payment completes');
+          continue;
+        }
+
+        // Handle any other payment statuses
+        console.log('⚠️ Unexpected payment status for booking:', booking._id);
+        console.log('  - Payment status:', payment.status);
+        console.log('  - Payout status:', payment.payoutStatus);
+        console.log('  - Transfer status:', payment.transferStatus);
         
       } catch (error) {
         console.error(`❌ Error processing payout for payment ${paymentData._id}:`, error);
+        console.error('  - Error details:', error.message);
+        console.error('  - Stack trace:', error.stack);
         continue;
       }
     }
     
-    console.log('✅ Automatic payout scheduler completed');
+    console.log('\n✅ Automatic payout scheduler completed');
+    console.log('⏰ Next run in 1 hour');
     
   } catch (error) {
     console.error('❌ Error in automatic payout scheduler:', error);
+    console.error('  - Error details:', error.message);
+    console.error('  - Stack trace:', error.stack);
   }
 };
 
