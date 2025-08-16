@@ -64,6 +64,18 @@ const listingSchema = new mongoose.Schema({
     checkIn: { type: String }, // e.g., '14:00'
     checkOut: { type: String }, // e.g., '11:00'
 
+    // Review and rating fields
+    averageRating: { type: Number, default: 0 },
+    totalReviews: { type: Number, default: 0 },
+    detailedRatings: {
+      cleanliness: { type: Number, default: 0 },
+      communication: { type: Number, default: 0 },
+      checkIn: { type: Number, default: 0 },
+      accuracy: { type: Number, default: 0 },
+      location: { type: Number, default: 0 },
+      value: { type: Number, default: 0 }
+    },
+
     // Car fields
     carDetails: {
         make: String,

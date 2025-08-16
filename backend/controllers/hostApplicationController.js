@@ -11,10 +11,9 @@ cloudinary.config({
   api_secret: process.env.API_SECRET,
 });
 
-// Helper function to generate Stripe Connect dashboard URL (fallback)
+// Helper function to generate Stripe Connect Express dashboard URL
 const generateStripeDashboardUrl = (accountId) => {
-  const environment = process.env.NODE_ENV === 'production' ? 'live' : 'test';
-  return `https://dashboard.stripe.com/${accountId}/${environment}/dashboard`;
+  return `https://connect.stripe.com/app/express#${accountId}/overview`;
 };
 
 // Helper function to upload file to Stripe and get file ID
@@ -1594,8 +1593,10 @@ exports.refreshStripeAccountStatus = async (req, res) => {
       return res.status(404).json({ message: 'No Stripe account found' });
     }
     
-    // Get current account status from Stripe
-    const account = await stripe.accounts.retrieve(application.stripeConnect.accountId);
+    // Get current account status from Stripe using Connect API
+    const account = await stripe.accounts.retrieve(application.stripeConnect.accountId, {
+      stripeAccount: application.stripeConnect.accountId
+    });
     
     // Update application status
     application.stripeConnect.accountStatus = account.charges_enabled && account.payouts_enabled ? 'active' : 'pending';
@@ -1633,8 +1634,10 @@ exports.getStripeSetupStatus = async (req, res) => {
       return res.status(404).json({ message: 'No Stripe account found' });
     }
     
-    // Get current account status from Stripe
-    const account = await stripe.accounts.retrieve(application.stripeConnect.accountId);
+    // Get current account status from Stripe using Connect API
+    const account = await stripe.accounts.retrieve(application.stripeConnect.accountId, {
+      stripeAccount: application.stripeConnect.accountId
+    });
     
     // For existing hosts, we need to create a fresh onboarding link
     let onboardingUrl = null;
@@ -1644,12 +1647,22 @@ exports.getStripeSetupStatus = async (req, res) => {
         refresh_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/host-application-status`,
         return_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/host-application-status`,
         type: 'account_onboarding',
+      }, {
+        stripeAccount: application.stripeConnect.accountId
       });
       onboardingUrl = accountLink.url;
     } catch (onboardingError) {
       console.error('Error creating onboarding link:', onboardingError);
-      // Fallback to dashboard URL if onboarding link creation fails
-      onboardingUrl = generateStripeDashboardUrl(application.stripeConnect.accountId);
+      
+      // Check if it's a permission error and handle gracefully
+      if (onboardingError.code === 'oauth_not_supported') {
+        console.log('OAuth not supported for this account, using dashboard URL instead');
+        onboardingUrl = generateStripeDashboardUrl(application.stripeConnect.accountId);
+      } else {
+        // For other errors, try to use the dashboard URL as fallback
+        console.log('Using dashboard URL as fallback due to onboarding error');
+        onboardingUrl = generateStripeDashboardUrl(application.stripeConnect.accountId);
+      }
     }
     
     res.json({ 
@@ -1665,6 +1678,31 @@ exports.getStripeSetupStatus = async (req, res) => {
     
   } catch (err) {
     console.error('Error getting Stripe setup status:', err);
+    
+    // If we can't retrieve the account, try to provide basic info
+    try {
+      const application = await HostApplication.findOne({ 
+        user: req.user._id, 
+        status: 'approved' 
+      });
+      
+      if (application?.stripeConnect?.accountId) {
+        res.json({ 
+          message: 'Stripe account setup status retrieved (limited)',
+          accountId: application.stripeConnect.accountId,
+          accountStatus: 'unknown',
+          chargesEnabled: false,
+          payoutsEnabled: false,
+          requirements: null,
+          dashboardUrl: generateStripeDashboardUrl(application.stripeConnect.accountId),
+          onboardingUrl: generateStripeDashboardUrl(application.stripeConnect.accountId)
+        });
+        return;
+      }
+    } catch (fallbackError) {
+      console.error('Fallback error handling failed:', fallbackError);
+    }
+    
     res.status(500).json({ message: 'Error getting setup status', error: err.message });
   }
 };
@@ -1685,8 +1723,10 @@ exports.createStripeLoginLink = async (req, res) => {
       return res.status(404).json({ message: 'No Stripe account found' });
     }
     
-    // Create a login link to the host's Stripe dashboard
-    const loginLink = await stripe.accounts.createLoginLink(application.stripeConnect.accountId);
+    // Create a login link to the host's Stripe dashboard using Connect API
+    const loginLink = await stripe.accounts.createLoginLink(application.stripeConnect.accountId, {
+      stripeAccount: application.stripeConnect.accountId
+    });
     
     res.json({ 
       message: 'Stripe dashboard login link created',

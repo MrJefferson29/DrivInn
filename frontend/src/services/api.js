@@ -44,6 +44,19 @@ export const authAPI = {
   getMe: () => api.get('/auth/me'),
 };
 
+// Users API calls
+export const usersAPI = {
+  getMyProfile: () => api.get('/users/me'),
+  updateProfile: (userId, data) => api.put(`/users/${userId}`, data),
+  uploadProfileImage: (userId, formData) => api.put(`/users/${userId}/profile-image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  getHostProfile: () => api.get('/users/host/profile'),
+  updateHostProfile: (data) => api.put('/users/host/profile', data),
+  getUserNotifications: (userId) => api.get(`/users/${userId}/notifications`),
+  getUserStats: () => api.get('/users/stats'),
+};
+
 // Listings API calls
 export const listingsAPI = {
   getAllListings: (params = {}) => api.get('/listings', { params }),
@@ -61,8 +74,13 @@ export const listingsAPI = {
 
 // Reviews API calls
 export const reviewsAPI = {
-  getReviewsForListing: (listingId) => api.get(`/reviews/${listingId}`),
-  addReview: (listingId, reviewData) => api.post(`/reviews/${listingId}`, reviewData),
+  createReview: (reviewData) => api.post('/reviews', reviewData),
+  getListingReviews: (listingId, params = {}) => api.get(`/reviews/listing/${listingId}`, { params }),
+  getUserReviews: (userId) => api.get(`/reviews/user/${userId}`),
+  updateReview: (reviewId, reviewData) => api.put(`/reviews/${reviewId}`, reviewData),
+  deleteReview: (reviewId) => api.delete(`/reviews/${reviewId}`),
+  addHostResponse: (reviewId, responseData) => api.post(`/reviews/${reviewId}/response`, responseData),
+  markReviewHelpful: (reviewId) => api.post(`/reviews/${reviewId}/helpful`),
 };
 
 // Bookings API calls

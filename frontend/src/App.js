@@ -52,6 +52,7 @@ function App() {
           <Route path="/become-a-host-info" element={<BecomeAHostInfo />} />
           <Route path="/become-a-host/apply" element={<HostApplicationForm />} />
           <Route path="/become-a-host/status" element={<HostApplicationStatus />} />
+          <Route path="/host-application-status" element={<HostApplicationStatus />} />
           <Route path="/admin/host-applications" element={<AdminHostApplicationsPanel />} />
           <Route path="/admin/payments" element={<AdminPaymentsDashboard />} />
           <Route path="/notifications" element={<UserNotifications />} />

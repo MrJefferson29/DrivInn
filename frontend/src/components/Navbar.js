@@ -214,7 +214,7 @@ const NavbarComponent = () => {
                 onClick={(e) => handleDashboardClick(e, stripeConnectAccount.dashboardUrl)}
                 className="host-link desktop-only dashboard-link"
               >
-                                 <MdDashboard /> {stripeConnectAccount.isOnboardingLink ? 'Complete Stripe Setup' : 'Dashboard'}
+                                 <MdDashboard /> Dashboard
               </Nav.Link>
          );
              } else {
@@ -225,7 +225,7 @@ const NavbarComponent = () => {
              </Nav.Link>
                            <span 
                 className="setup-required"
-                title="Your Stripe Connect account needs to be fully verified to access the Dashboard. This includes completing identity verification, bank account setup, and business verification. Click 'Complete Stripe Setup' to continue the verification process."
+                title="Your Stripe Connect account needs to be fully verified to access the Dashboard. This includes completing identity verification, bank account setup, and business verification. Once verified, you'll get access to your Stripe dashboard."
               >
                 ⚠️ Setup Required
               </span>
@@ -361,7 +361,7 @@ const NavbarComponent = () => {
                               href={stripeConnectAccount.dashboardUrl} 
                               onClick={(e) => handleDashboardClick(e, stripeConnectAccount.dashboardUrl)}
                             >
-                              <MdDashboard /> {stripeConnectAccount.isOnboardingLink ? 'Complete Stripe Setup' : 'Dashboard'}
+                              <MdDashboard /> Dashboard
                             </Dropdown.Item>
                                                  ) : (
                            <>
@@ -450,15 +450,12 @@ const NavbarComponent = () => {
           <Modal.Header closeButton>
             <Modal.Title>
               <MdDashboard style={{ marginRight: '8px' }} />
-                             {stripeConnectAccount?.isOnboardingLink ? 'Complete Stripe Setup' : 'Dashboard Access'}
+                             Dashboard Access
             </Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <p>
-              {stripeConnectAccount?.isOnboardingLink 
-                ? 'Your Stripe Connect setup link couldn\'t be opened automatically. This link will take you to complete your Stripe account setup and verification.'
-                : 'Your Stripe Connect dashboard couldn\'t be opened automatically. Please use one of these options:'
-              }
+              Your Stripe Connect dashboard couldn't be opened automatically. Please use one of these options:
             </p>
            
            <div style={{ marginBottom: '20px' }}>
@@ -507,18 +504,8 @@ const NavbarComponent = () => {
                        <div style={{ marginTop: '15px', fontSize: '14px', color: '#6c757d' }}>
               <p><strong>Note:</strong> If you continue to have issues accessing your dashboard, please:</p>
               <ul style={{ marginBottom: '0', paddingLeft: '20px' }}>
-                                 {stripeConnectAccount?.isOnboardingLink ? (
-                   <>
-                     <li>This setup link will take you to complete your Stripe Connect account verification</li>
-                     <li>You\'ll need to provide identity documents, bank account info, and business details</li>
-                     <li>If the link expires, refresh the page to get a new one</li>
-                   </>
-                 ) : (
-                  <>
-                    <li>Complete your Stripe Connect account verification</li>
-                    <li>Ensure your bank account is properly linked</li>
-                  </>
-                )}
+                <li>Complete your Stripe Connect account verification</li>
+                <li>Ensure your bank account is properly linked</li>
                 <li>Contact support if the issue persists</li>
               </ul>
             </div>

@@ -94,6 +94,7 @@ import {
 } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext';
 import { useMediaQuery } from 'react-responsive';
+import { listingsAPI, likesAPI, chatAPI, reviewsAPI } from '../services/api';
 import BookingForm from './BookingForm';
 import LikeButton from './LikeButton';
 import ChatScreen from './ChatScreen';
@@ -1580,6 +1581,8 @@ const ListingDetails = () => {
   const [showAllPastBookings, setShowAllPastBookings] = useState(false);
   const [listingStatus, setListingStatus] = useState(null);
   const [showDeactivationModal, setShowDeactivationModal] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
   const isMobile = useMediaQuery({ maxWidth: 768 });
 
   // Fetch listing data
@@ -1644,6 +1647,23 @@ const ListingDetails = () => {
       });
     }
   }, [listing, user]);
+
+  // Fetch reviews for the listing
+  useEffect(() => {
+    if (listing && listing._id) {
+      setReviewsLoading(true);
+      reviewsAPI.getListingReviews(listing._id)
+        .then(response => {
+          setReviews(response.data.reviews || []);
+          setReviewsLoading(false);
+        })
+        .catch(err => {
+          console.error('Error fetching reviews:', err);
+          setReviews([]);
+          setReviewsLoading(false);
+        });
+    }
+  }, [listing]);
 
   const handleBackClick = () => {
     navigate(-1);
@@ -2077,9 +2097,11 @@ const highlightIcons = {
             <RatingSection>
               <Rating>
                 <StarIcon />
-                4.8
+                {listing.averageRating ? listing.averageRating.toFixed(1) : '0.0'}
               </Rating>
-              <ReviewsCount>24 reviews</ReviewsCount>
+              <ReviewsCount>
+                {listing.totalReviews || 0} reviews
+              </ReviewsCount>
             </RatingSection>
             
             {/* Mobile Price and Status for Host */}
@@ -2555,6 +2577,129 @@ const highlightIcons = {
               </DashboardActions>
             </DashboardSection>
           )}
+
+          {/* Reviews Section */}
+          <ReviewsSection>
+            <ReviewsHeader>
+              <h3>
+                <FaStar style={{ color: airbnbRed, marginRight: '8px' }} />
+                Reviews
+              </h3>
+              <div className="d-flex align-items-center">
+                <span style={{ fontSize: '1.1rem', fontWeight: '600', marginRight: '8px' }}>
+                  {listing.averageRating ? listing.averageRating.toFixed(1) : '0'}
+                </span>
+                <StarIcon />
+                <span style={{ color: airbnbGray, marginLeft: '8px' }}>
+                  {listing.totalReviews || 0} reviews
+                </span>
+              </div>
+            </ReviewsHeader>
+            
+            {listing.totalReviews > 0 && (
+              <DetailedRatingsSummary>
+                <h5>Detailed Ratings</h5>
+                <div className="row">
+                  {Object.entries(listing.detailedRatings || {}).map(([category, rating]) => (
+                    <div key={category} className="col-6 mb-2">
+                      <div className="d-flex justify-content-between align-items-center">
+                        <span style={{ textTransform: 'capitalize' }}>
+                          {category === 'checkIn' ? 'Check-in' : category}
+                        </span>
+                        <span style={{ fontWeight: '600' }}>
+                          {rating ? rating.toFixed(1) : '0'}/5
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </DetailedRatingsSummary>
+            )}
+
+            <ReviewsList>
+              {reviewsLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: airbnbGray }}>
+                  <Spinner animation="border" size="lg" style={{ marginBottom: '16px' }} />
+                  <p>Loading reviews...</p>
+                </div>
+              ) : reviews.length > 0 ? (
+                <div className="reviews-grid">
+                  {reviews.map((review) => (
+                    <ReviewCard key={review.id}>
+                      <ReviewHeader>
+                        <div className="reviewer-info">
+                          {review.user?.profileImage ? (
+                            <ReviewerAvatar src={review.user.profileImage} alt={`${review.user?.firstName || ''} ${review.user?.lastName || ''}`} />
+                          ) : (
+                            <ReviewerAvatarPlaceholder>
+                              {review.user?.firstName?.[0] || ''}{review.user?.lastName?.[0] || ''}
+                            </ReviewerAvatarPlaceholder>
+                          )}
+                          <div className="reviewer-details">
+                            <h6 className="reviewer-name">
+                              {review.user?.firstName || 'Anonymous'} {review.user?.lastName || ''}
+                            </h6>
+                            <div className="review-rating">
+                              {[...Array(5)].map((_, index) => (
+                                <FaStar
+                                  key={index}
+                                  size={14}
+                                  style={{
+                                    color: index < (review.rating || 0) ? '#ffc107' : '#ddd',
+                                    marginRight: '2px'
+                                  }}
+                                />
+                              ))}
+                              <span className="rating-text">{review.rating || 0}/5</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="review-date">
+                          {new Date(review.createdAt).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </div>
+                      </ReviewHeader>
+                      
+                      <ReviewTitle>{review.title || 'No Title'}</ReviewTitle>
+                      
+                      <ReviewContent>
+                        {review.content && review.content.length > 150 ? (
+                          <>
+                            {review.content.substring(0, 150)}...
+                            <button className="read-more-btn">Read more</button>
+                          </>
+                        ) : (
+                          review.content || 'No content'
+                        )}
+                      </ReviewContent>
+                      
+                      {review.detailedRatings && Object.keys(review.detailedRatings).length > 0 && (
+                        <DetailedRatings>
+                          {Object.entries(review.detailedRatings).map(([category, rating]) => (
+                            <div key={category} className="rating-item">
+                              <span className="category-name">
+                                {category === 'checkIn' ? 'Check-in' : category.charAt(0).toUpperCase() + category.slice(1)}
+                              </span>
+                              <span className="category-rating">{rating || 0}/5</span>
+                            </div>
+                          ))}
+                        </DetailedRatings>
+                      )}
+                    </ReviewCard>
+                  ))}
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: airbnbGray }}>
+                  <FaComment size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+                  <h5>No reviews yet</h5>
+                  <p>Be the first to share your experience!</p>
+                </div>
+              )}
+            </ReviewsList>
+          </ReviewsSection>
         </MainContent>
 
         <Sidebar>
@@ -2814,5 +2959,201 @@ const highlightIcons = {
     </Container>
   );
 };
+
+// Reviews Section Styled Components
+const ReviewsSection = styled.div`
+  margin-top: 48px;
+  padding: 32px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid ${airbnbBorder};
+`;
+
+const ReviewsHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid ${airbnbBorder};
+
+  h3 {
+    margin: 0;
+    color: ${airbnbDark};
+    font-size: 1.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+  }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+`;
+
+const DetailedRatingsSummary = styled.div`
+  background: ${airbnbLightGray};
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+
+  h5 {
+    margin-bottom: 16px;
+    color: ${airbnbDark};
+    font-weight: 600;
+  }
+
+  .row {
+    margin: 0;
+  }
+
+  .col-6 {
+    padding: 0 8px;
+  }
+`;
+
+const ReviewsList = styled.div`
+  min-height: 200px;
+`;
+
+// Review Card Styled Components
+const ReviewCard = styled.div`
+  background: white;
+  border: 1px solid ${airbnbBorder};
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+  }
+`;
+
+const ReviewHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+
+  .reviewer-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .reviewer-details {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .reviewer-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: ${airbnbDark};
+  }
+
+  .review-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .rating-text {
+    font-size: 0.85rem;
+    color: ${airbnbGray};
+    margin-left: 4px;
+  }
+
+  .review-date {
+    font-size: 0.8rem;
+    color: ${airbnbGray};
+    font-weight: 500;
+  }
+`;
+
+const ReviewerAvatar = styled.img`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid ${airbnbBorder};
+`;
+
+const ReviewerAvatarPlaceholder = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  border: 2px solid ${airbnbBorder};
+`;
+
+const ReviewTitle = styled.h6`
+  margin: 0 0 12px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: ${airbnbDark};
+`;
+
+const ReviewContent = styled.div`
+  margin-bottom: 16px;
+  line-height: 1.6;
+  color: ${airbnbDark};
+
+  .read-more-btn {
+    background: none;
+    border: none;
+    color: ${airbnbRed};
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 8px;
+    text-decoration: underline;
+
+    &:hover {
+      color: #d32f2f;
+    }
+  }
+`;
+
+const DetailedRatings = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  padding: 12px;
+  background: ${airbnbLightGray};
+  border-radius: 8px;
+  border: 1px solid ${airbnbBorder};
+
+  .rating-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+  }
+
+  .category-name {
+    color: ${airbnbGray};
+    text-transform: capitalize;
+  }
+
+  .category-rating {
+    font-weight: 600;
+    color: ${airbnbDark};
+  }
+`;
 
 export default ListingDetails; 

@@ -29,4 +29,7 @@ router.get('/:id/notifications', verifyToken, isSelfOrAdmin, userController.getU
 router.get('/host/profile', verifyToken, userController.getHostProfile);
 router.put('/host/profile', verifyToken, userController.updateHostProfile);
 
+// User statistics route
+router.get('/stats', verifyToken, userController.getUserStats);
+
 module.exports = router; 

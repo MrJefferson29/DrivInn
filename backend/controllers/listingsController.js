@@ -1,4 +1,5 @@
 const Listing = require('../models/listing');
+const Review = require('../models/review');
 const cloudinary = require('cloudinary').v2;
 const NotificationService = require('../services/notificationService');
 require('dotenv').config();
@@ -40,7 +41,21 @@ exports.getAllListings = async (req, res) => {
     }
     
     const listings = await Listing.find(query).populate('owner', 'firstName lastName email profileImage');
-    res.json(listings);
+    
+    // Add review statistics to each listing efficiently
+    const listingIds = listings.map(listing => listing._id);
+    const reviewStats = await Review.getAverageRatingsForListings(listingIds);
+    
+    const listingsWithReviews = listings.map((listing, index) => {
+      const listingObj = listing.toObject();
+      return {
+        ...listingObj,
+        rating: reviewStats[index].averageRating,
+        reviews: reviewStats[index].totalReviews
+      };
+    });
+    
+    res.json(listingsWithReviews);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -50,7 +65,17 @@ exports.getListingById = async (req, res) => {
   try {
     const listing = await Listing.findById(req.params.id).populate('owner', 'name email profileImage');
     if (!listing) return res.status(404).json({ message: 'Listing not found' });
-    res.json(listing);
+    
+    // Add review statistics to the listing
+    const reviewStats = await Review.getAverageRating(listing._id);
+    const listingObj = listing.toObject();
+    const listingWithReviews = {
+      ...listingObj,
+      rating: reviewStats.averageRating,
+      reviews: reviewStats.totalReviews
+    };
+    
+    res.json(listingWithReviews);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -349,7 +374,21 @@ exports.getNearbyListings = async (req, res) => {
         }
       }
     });
-    res.json(listings);
+    
+    // Add review statistics to each listing efficiently
+    const listingIds = listings.map(listing => listing._id);
+    const reviewStats = await Review.getAverageRatingsForListings(listingIds);
+    
+    const listingsWithReviews = listings.map((listing, index) => {
+      const listingObj = listing.toObject();
+      return {
+        ...listingObj,
+        rating: reviewStats[index].averageRating,
+        reviews: reviewStats[index].totalReviews
+      };
+    });
+    
+    res.json(listingsWithReviews);
   } catch (err) {
     res.status(500).json({ message: 'Error finding nearby listings', error: err.message });
   }
@@ -360,8 +399,22 @@ exports.getMostVisitedApartments = async (req, res) => {
     const apartments = await Listing.find({ type: 'apartment' })
       .sort({ bookingCount: -1 })
       .limit(12);
-    console.log('Most visited apartments:', apartments);
-    res.json(apartments);
+    
+    // Add review statistics to each apartment efficiently
+    const apartmentIds = apartments.map(apartment => apartment._id);
+    const reviewStats = await Review.getAverageRatingsForListings(apartmentIds);
+    
+    const apartmentsWithReviews = apartments.map((apartment, index) => {
+      const apartmentObj = apartment.toObject();
+      return {
+        ...apartmentObj,
+        rating: reviewStats[index].averageRating,
+        reviews: reviewStats[index].totalReviews
+      };
+    });
+    
+    console.log('Most visited apartments:', apartmentsWithReviews);
+    res.json(apartmentsWithReviews);
   } catch (err) {
     console.error('Error fetching most visited apartments:', err);
     res.status(500).json({ message: 'Error fetching most visited apartments', error: err.message });
@@ -373,7 +426,21 @@ exports.getMostBookedCars = async (req, res) => {
     const cars = await Listing.find({ type: 'car' })
       .sort({ bookingCount: -1 })
       .limit(12);
-    res.json(cars);
+    
+    // Add review statistics to each car efficiently
+    const carIds = cars.map(car => car._id);
+    const reviewStats = await Review.getAverageRatingsForListings(carIds);
+    
+    const carsWithReviews = cars.map((car, index) => {
+      const carObj = car.toObject();
+      return {
+        ...carObj,
+        rating: reviewStats[index].averageRating,
+        reviews: reviewStats[index].totalReviews
+      };
+    });
+    
+    res.json(carsWithReviews);
   } catch (err) {
     console.error('Error fetching most booked cars:', err);
     res.status(500).json({ message: 'Error fetching most booked cars', error: err.message });

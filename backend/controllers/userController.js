@@ -179,6 +179,85 @@ exports.getHostProfile = async (req, res) => {
   }
 };
 
+// Get user statistics (for all users)
+exports.getUserStats = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    let stats = {
+      totalBookings: 0,
+      totalListings: 0,
+      totalRevenue: 0,
+      totalSpent: 0,
+      totalReviews: 0,
+      averageRating: 0
+    };
+    
+    try {
+      // Import models dynamically to avoid circular dependencies
+      const Booking = require('../models/booking');
+      const Listing = require('../models/listing');
+      const Review = require('../models/review');
+      
+      if (user.role === 'host') {
+        // Get host statistics
+        const [bookings, listings] = await Promise.all([
+          Booking.find({ host: user._id }),
+          Listing.find({ owner: user._id })
+        ]);
+        
+        stats.totalBookings = bookings.length;
+        stats.totalListings = listings.length;
+        stats.totalRevenue = bookings.reduce((sum, booking) => 
+          sum + (booking.totalPrice || 0), 0
+        );
+        
+        // Get average rating from listings
+        if (listings.length > 0) {
+          const totalRating = listings.reduce((sum, listing) => 
+            sum + (listing.averageRating || 0), 0
+          );
+          stats.averageRating = totalRating / listings.length;
+        }
+      } else if (user.role === 'guest') {
+        // Get guest statistics
+        const [bookings, reviews] = await Promise.all([
+          Booking.find({ user: user._id }),
+          Review.find({ user: user._id, status: 'published' })
+        ]);
+        
+        stats.totalBookings = bookings.length;
+        stats.totalReviews = reviews.length;
+        stats.totalSpent = bookings.reduce((sum, booking) => 
+          sum + (booking.totalPrice || 0), 0
+        );
+      }
+    } catch (modelError) {
+      console.error('Error loading models:', modelError);
+      console.error('Model error details:', modelError.stack);
+      // If models fail to load, return basic stats without the problematic data
+      if (user.role === 'host') {
+        stats.totalBookings = 0;
+        stats.totalListings = 0;
+        stats.totalRevenue = 0;
+        stats.averageRating = 0;
+      } else if (user.role === 'guest') {
+        stats.totalBookings = 0;
+        stats.totalReviews = 0;
+        stats.totalSpent = 0;
+      }
+    }
+    
+    res.json(stats);
+  } catch (err) {
+    console.error('Error in getUserStats:', err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
 // Update host profile information (for hosts only)
 exports.updateHostProfile = async (req, res) => {
   try {

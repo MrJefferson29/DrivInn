@@ -10,6 +10,16 @@ const http = require('http');
 const socketio = require('socket.io');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+// Import models to ensure they are registered with Mongoose
+require('./models/user');
+require('./models/listing');
+require('./models/booking');
+require('./models/payment');
+require('./models/HostApplication');
+require('./models/notification');
+require('./models/chat');
+require('./models/review');
+
 // Import payout scheduler
 const { startPayoutScheduler, runInitialPayoutCheck } = require('./services/payoutScheduler');
 
@@ -45,6 +55,28 @@ app.post(
       );
 
       console.log('📋 Webhook received:', event.type);
+
+      // Handle Connect events (events on connected accounts)
+      if (event.account) {
+        console.log('🔗 Connect webhook event for account:', event.account);
+        console.log('📋 Event type:', event.type);
+        
+        // Handle Connect-specific events
+        if (event.type === 'account.updated') {
+          console.log('✅ Connected account updated:', event.account);
+          // You can add logic here to sync account status changes
+        }
+        
+        if (event.type === 'account.external_account.updated') {
+          console.log('✅ Connected account external account updated:', event.account);
+          // Handle bank account updates
+        }
+        
+        if (event.type === 'payout.failed') {
+          console.log('❌ Connected account payout failed:', event.account);
+          // Handle payout failures
+        }
+      }
 
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
@@ -105,10 +137,7 @@ app.post(
               const paymentIntent = await stripe.paymentIntents.capture(
                 session.payment_intent,
                 {
-                  transfer_data: {
-                    destination: hostApplication.stripeConnect.accountId,
-                  },
-                  application_fee_amount: Math.round(booking.totalPrice * 0.10 * 100), // 10% platform fee
+                  stripeAccount: hostApplication.stripeConnect.accountId
                 }
               );
 

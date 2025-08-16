@@ -1,247 +1,263 @@
-# Airbnb Clone Project - Complete File Index
+# DrivInn Project Index - Stripe Integration & Host Registration
 
 ## Project Overview
-This is a full-stack Airbnb clone application with both frontend (React) and backend (Node.js/Express) components. The application supports property listings (apartments and cars), user authentication, booking system, and host applications.
+DrivInn is a rental platform that allows users to list and book properties (apartments, houses, cars). The platform uses Stripe for payment processing and host onboarding through Stripe Connect Express accounts.
 
 ## Project Structure
+
+### Frontend (`/frontend`)
+- **Framework**: React 19.1.0 with React Router v7
+- **Styling**: Styled Components + Bootstrap
+- **Payment Integration**: Stripe React components (`@stripe/react-stripe-js`, `@stripe/stripe-js`)
+
+### Backend (`/backend`)
+- **Runtime**: Node.js with Express 5.1.0
+- **Database**: MongoDB with Mongoose
+- **Payment Processing**: Stripe SDK v18.4.0
+- **File Uploads**: Multer for document processing
+
+## Stripe Integration Architecture
+
+### 1. Host Application & Stripe Connect Account Creation
+
+#### Frontend Components
+- **`HostApplicationForm.js`**: Multi-step form for host applications
+  - Step 1: Personal Information (name, email, phone, address)
+  - Step 2: Identity Verification (ID documents, selfie)
+  - Step 3: Business & Financial Information (SSN, bank details)
+  - Step 4: Payment Methods (Stripe account setup)
+  - Step 5: Property Information & Review
+
+#### Backend Controllers
+- **`hostApplicationController.js`**: Handles application submission and Stripe account creation
+  - `submitApplication()`: Creates Stripe Connect Express account during submission
+  - `approveApplication()`: Approves applications and generates onboarding links
+  - `refreshStripeAccountStatus()`: Updates Stripe account status
+  - `createStripeLoginLink()`: Creates Stripe dashboard access links
+
+#### Key Stripe Integration Points
+```javascript
+// Stripe Connect Express account creation
+const account = await stripe.accounts.create({
+  type: 'express',
+  country: countryCode,
+  email: req.body.email,
+  capabilities: {
+    card_payments: { requested: true },
+    transfers: { requested: true },
+    tax_reporting_us_1099_k: { requested: true },
+  },
+  business_type: businessStructure,
+  // ... additional configuration
+});
 ```
-airbnb/
-├── frontend/          # React frontend application
-├── backend/           # Node.js/Express backend API
-├── package.json       # Root package configuration
-└── README.md         # Project documentation
+
+### 2. Stripe Connect Account Management
+
+#### Account Types
+- **Express Accounts**: Simplified onboarding for hosts
+- **Automatic Payouts**: Platform handles transfers to host accounts
+- **Manual Payout Schedule**: Controlled by platform payout scheduler
+
+#### Account Status Tracking
+```javascript
+stripeConnect: {
+  accountId: String,
+  accountStatus: ['pending', 'active', 'restricted', 'disabled'],
+  onboardingCompleted: Boolean,
+  pendingRequirements: Mixed
+}
 ```
 
-## Technology Stack
+### 3. Payment Flow & Payouts
 
-### Frontend
-- **React** - UI framework
-- **React Router** - Client-side routing
-- **Styled Components** - CSS-in-JS styling
-- **React Icons** - Icon library
-- **React Bootstrap** - UI components
-- **React Responsive** - Mobile responsiveness
+#### Guest Payment Process
+1. Guest selects property and dates
+2. Stripe Checkout session created with `transfer_data`
+3. Payment captured and transferred to host's Stripe Connect account
+4. Platform fee (10%) automatically deducted
 
-### Backend
-- **Node.js** - Runtime environment
-- **Express.js** - Web framework
-- **MongoDB** - Database
-- **Mongoose** - ODM for MongoDB
-- **JWT** - Authentication
-- **bcrypt** - Password hashing
-- **multer** - File uploads
+#### Payout Scheduler
+- **`payoutScheduler.js`**: Automated service for processing payouts
+- Runs every 15 minutes to check completed bookings
+- Transfers funds to host Stripe Connect accounts
 
-## Quick Start
+#### Webhook Processing
+- **`server.js`**: Handles Stripe webhooks
+- Processes `checkout.session.completed` events
+- Updates booking status and initiates payouts
 
-### Backend Setup
+### 4. API Endpoints
+
+#### Host Applications
+```javascript
+POST /host-applications          // Submit application + create Stripe account
+GET  /host-applications/me      // Get user's application
+POST /host-applications/refresh-stripe-status    // Update Stripe status
+POST /host-applications/create-stripe-login-link // Generate dashboard link
+GET  /host-applications/stripe-setup-status      // Get setup progress
+```
+
+#### Admin Routes
+```javascript
+GET  /host-applications          // List all applications (admin only)
+PUT  /host-applications/:id/approve  // Approve application
+PUT  /host-applications/:id/decline  // Decline application
+```
+
+### 5. Data Models
+
+#### HostApplication Schema
+```javascript
+{
+  // Personal Information
+  firstName, lastName, email, phoneNumber, dateOfBirth,
+  street, city, state, postalCode, country,
+  
+  // Identity Verification
+  idType, idNumber, idFrontImage, idBackImage, selfieImage,
+  
+  // Business Information
+  businessName, businessTaxId, businessStructure,
+  businessAddress, businessPhone,
+  
+  // Financial Information
+  ssn, ssnLast4, supportPhone,
+  bankAccount: { accountNumber, routingNumber, accountType },
+  
+  // Stripe Connect Integration
+  stripeConnect: {
+    accountId, accountStatus, onboardingCompleted, pendingRequirements
+  },
+  
+  // Property Information
+  propertyType, propertyDescription, hostingExperience
+}
+```
+
+#### User Schema Updates
+```javascript
+{
+  role: 'host',
+  hostProfile: {
+    stripeConnectAccountId: String,
+    stripeConnectStatus: String,
+    // ... other host-specific fields
+  }
+}
+```
+
+### 6. Environment Configuration
+
+#### Required Environment Variables
 ```bash
+# Stripe Configuration
+STRIPE_SECRET_KEY=sk_test_xxx          # Stripe secret key
+STRIPE_WEBHOOK_SECRET=whsec_xxx        # Webhook endpoint secret
+FRONTEND_URL=http://localhost:3000     # Frontend URL for redirects
+
+# Database & Server
+MONGODB_URI=mongodb://localhost:27017/drivinn
+PORT=5000
+JWT_SECRET=your_jwt_secret
+
+# Email & File Storage
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+```
+
+### 7. Security & Compliance
+
+#### Identity Verification
+- Government-issued ID documents (front/back)
+- Selfie verification
+- SSN validation (last 4 digits)
+- Business verification for company accounts
+
+#### Stripe Compliance
+- KYC (Know Your Customer) requirements
+- 1099-K tax reporting setup
+- PCI compliance through Stripe
+- Secure document storage
+
+### 8. User Experience Flow
+
+#### Host Onboarding
+1. **Application Submission**: Complete multi-step form
+2. **Document Upload**: ID verification and business documents
+3. **Stripe Account Creation**: Automatic during submission
+4. **Admin Review**: 2-3 business day review process
+5. **Approval & Onboarding**: Complete Stripe verification
+6. **Active Hosting**: Start receiving payments
+
+#### Guest Booking
+1. **Property Selection**: Browse available listings
+2. **Payment**: Stripe Checkout with automatic host payout
+3. **Confirmation**: Booking confirmed with payment verification
+
+### 9. Error Handling & Monitoring
+
+#### Stripe Error Handling
+- Account creation failures
+- Webhook signature verification
+- Payment capture errors
+- Transfer failures
+
+#### Application Status Tracking
+- Pending admin review
+- Stripe verification requirements
+- Onboarding completion status
+- Account activation status
+
+### 10. Development & Testing
+
+#### Local Development
+```bash
+# Backend
 cd backend
 npm install
 npm start
-```
 
-### Frontend Setup
-```bash
+# Frontend
 cd frontend
 npm install
 npm start
 ```
 
-## File Index Summary
+#### Stripe Testing
+- Use Stripe test keys for development
+- Test webhook endpoints with Stripe CLI
+- Verify Connect account creation flow
+- Test payment and payout scenarios
 
-### Frontend Files (Total: ~50 files)
-- **Core Files**: 4 files (App.js, index.js, etc.)
-- **Components**: 35+ files organized by feature
-- **Context**: 3 state management files
-- **Services**: 1 API service file
-- **Data**: 5 world cities datasets
-- **Styles**: Multiple CSS files
-
-### Backend Files (Total: ~20 files)
-- **Models**: 6 database schemas
-- **Controllers**: 7 business logic files
-- **Routes**: 8 API endpoint files
-- **Middleware**: 1 authentication middleware
-- **Core**: 4 configuration files
-- **Data**: 1 seeding script
-
-## Key Features
-
-### User Features
-- User registration and authentication
-- Profile management
-- Property search and filtering
-- Booking system
-- Reviews and ratings
-- Notifications
-
-### Host Features
-- Host application system
-- Property listing creation
-- Listing management
-- Booking management
-- Analytics dashboard
-
-### Admin Features
-- User management
-- Host application approval
-- Content moderation
-- System analytics
-
-## API Endpoints
-
-### Authentication
-- `POST /auth/register` - User registration
-- `POST /auth/login` - User login
-- `POST /auth/logout` - User logout
-
-### Listings
-- `GET /listings` - Get all listings
-- `POST /listings` - Create listing
-- `GET /listings/:id` - Get specific listing
-- `PUT /listings/:id` - Update listing
-- `DELETE /listings/:id` - Delete listing
-
-### Bookings
-- `GET /bookings` - Get user bookings
-- `POST /bookings` - Create booking
-- `PUT /bookings/:id` - Update booking
-
-### Users
-- `GET /users/profile` - Get profile
-- `PUT /users/profile` - Update profile
-
-## Database Models
-
-### Core Models
-1. **User** - Authentication and profile data
-2. **Listing** - Property information
-3. **Booking** - Reservation data
-4. **Review** - User feedback
-5. **HostApplication** - Host applications
-6. **Notification** - User notifications
-
-## Component Architecture
-
-### Frontend Components
-- **Authentication**: Login, Register
-- **Navigation**: Navbar, BottomNav
-- **Listings**: Cards, Details, Grid, Creation, Editing
-- **Search**: Filters, Search bar
-- **User**: Profile, Edit Profile
-- **Host**: Application forms, Status
-- **Admin**: Application panel
-
-### Backend Structure
-- **Models**: Data schemas
-- **Controllers**: Business logic
-- **Routes**: API endpoints
-- **Middleware**: Request processing
-
-## Development Guidelines
-
-### Code Organization
-- Feature-based component grouping
-- Clear separation of concerns
-- Consistent naming conventions
-- Modular architecture
-
-### Styling
-- Styled-components for component styling
-- Responsive design principles
-- Airbnb-inspired color palette
-- Mobile-first approach
-
-### State Management
-- React Context API
-- Local component state
-- API service layer
-- Error handling
-
-## File Size Analysis
-
-### Largest Frontend Files
-- `CreateListing.js` (59KB) - Complex form
-- `SearchFilters.js` (24KB) - Advanced search
-- `ListingDetails.js` (26KB) - Detailed view
-- `Home.css` (29KB) - Extensive styling
-
-### Largest Backend Files
-- `listingsController.js` (11KB) - Complex operations
-- `userController.js` (5.1KB) - User management
-- `demoListings.js` (9.4KB) - Seed data
-
-## Performance Considerations
+## Key Files Summary
 
 ### Frontend
-- Lazy loading for components
-- Image optimization
-- Efficient filtering
-- Responsive images
+- `HostApplicationForm.js` - Main application form
+- `HostApplicationStatus.js` - Application status display
+- `AdminHostApplicationsPanel.js` - Admin management interface
+- `api.js` - API service calls
 
 ### Backend
-- Database indexing
-- Query optimization
-- File upload handling
-- Caching strategies
+- `hostApplicationController.js` - Core business logic
+- `server.js` - Stripe webhook handling
+- `payoutScheduler.js` - Automated payout processing
+- `HostApplication.js` - Data model
+- `hostApplications.js` - API routes
 
-## Security Features
+### Configuration
+- `package.json` files - Dependencies
+- `.env` files - Environment variables (not in repo)
+- `AUTOMATIC_PAYOUT_FIXES.md` - Implementation details
 
-### Authentication
-- JWT token-based auth
-- Password hashing with bcrypt
-- Protected routes
-- Session management
+## Integration Points
 
-### Data Protection
-- Input validation
-- SQL injection prevention
-- XSS protection
-- CORS configuration
+1. **Stripe Connect**: Host account creation and management
+2. **Payment Processing**: Guest payments and host payouts
+3. **Document Management**: ID verification and business documents
+4. **Admin Workflow**: Application review and approval process
+5. **Notification System**: Email and in-app notifications
+6. **Payout Automation**: Scheduled transfers to host accounts
 
-## Deployment
-
-### Frontend
-- Build optimization
-- Static file serving
-- Environment variables
-- CDN integration
-
-### Backend
-- Environment configuration
-- Database connection
-- Error logging
-- Health checks
-
-## Testing Strategy
-
-### Frontend Testing
-- Component testing
-- Integration testing
-- User interaction testing
-- Responsive testing
-
-### Backend Testing
-- API endpoint testing
-- Database testing
-- Authentication testing
-- Error handling testing
-
-## Future Enhancements
-
-### Planned Features
-- Real-time messaging
-- Advanced analytics
-- Payment integration
-- Mobile app
-- AI-powered recommendations
-- Virtual tours
-- Social features
-
-### Technical Improvements
-- Performance optimization
-- Advanced caching
-- Microservices architecture
-- Containerization
-- CI/CD pipeline
-- Monitoring and logging 
+This architecture provides a complete Stripe-integrated hosting platform with automated payouts, secure identity verification, and comprehensive admin management tools. 

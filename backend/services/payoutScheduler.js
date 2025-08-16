@@ -80,19 +80,58 @@ const processDuePayouts = async () => {
         if (payment.status === 'completed' && payment.payoutStatus === 'pending') {
           console.log('💳 Payment completed by webhook, updating payout status for booking:', booking._id);
           
-          // Update payment status to reflect webhook processing
-          payment.payoutStatus = 'completed';
-          payment.payoutCompletedAt = new Date();
-          payment.transferStatus = 'completed';
-          payment.transferCompletedAt = new Date();
-          await payment.save();
+          try {
+            // Update payment status to reflect webhook processing
+            payment.payoutStatus = 'completed';
+            payment.payoutCompletedAt = new Date();
+            payment.transferStatus = 'completed';
+            payment.transferCompletedAt = new Date();
+            await payment.save();
+            
+            // Update booking status with better error handling
+            try {
+              booking.status = 'confirmed';
+              if (booking.schema.paths.paymentStatus) {
+                booking.paymentStatus = 'completed';
+              }
+              await booking.save();
+              console.log('✅ Booking status updated to confirmed for booking:', booking._id);
+            } catch (bookingError) {
+              console.error('❌ Error updating booking status:', bookingError);
+              console.error('  - Booking ID:', booking._id);
+              console.error('  - Current status:', booking.status);
+              console.error('  - Error details:', bookingError.message);
+              
+              // Try to update with a valid status if 'confirmed' fails
+              if (bookingError.message.includes('not a valid enum value')) {
+                try {
+                  // Check what statuses are valid
+                  const validStatuses = booking.schema.paths.status.enumValues;
+                  console.log('  - Valid statuses:', validStatuses);
+                  
+                  // Use 'completed' if available, otherwise 'reserved'
+                  if (validStatuses.includes('completed')) {
+                    booking.status = 'completed';
+                  } else if (validStatuses.includes('reserved')) {
+                    booking.status = 'reserved';
+                  }
+                  
+                  await booking.save();
+                  console.log('✅ Booking status updated to fallback status for booking:', booking._id);
+                } catch (fallbackError) {
+                  console.error('❌ Fallback status update also failed:', fallbackError.message);
+                }
+              }
+            }
+            
+            console.log('✅ Payout status updated successfully for booking:', booking._id);
+          } catch (updateError) {
+            console.error('❌ Error updating payment/booking status:', updateError);
+            console.error('  - Payment ID:', payment._id);
+            console.error('  - Booking ID:', booking._id);
+            console.error('  - Error details:', updateError.message);
+          }
           
-          // Update booking status
-          booking.status = 'confirmed';
-          booking.paymentStatus = 'completed';
-          await booking.save();
-          
-          console.log('✅ Payout status updated successfully for booking:', booking._id);
           continue;
         }
 

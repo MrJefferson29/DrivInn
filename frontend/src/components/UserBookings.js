@@ -14,12 +14,16 @@ import {
   MdInfo,
   MdHome,
   MdExplore,
-  MdPayment
+  MdPayment,
+  MdRateReview,
+  MdCheckCircleOutline
 } from 'react-icons/md';
 import { useAuth } from '../context/AuthContext';
 import { bookingsAPI } from '../services/api';
+import { reviewsAPI } from '../services/api';
 import styled from 'styled-components';
 import './UserBookings.css';
+import ReviewForm from './ReviewForm';
 
 const UserBookings = () => {
   const [bookings, setBookings] = useState([]);
@@ -29,6 +33,12 @@ const UserBookings = () => {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState(null);
+  
+  // Review-related state
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewingBooking, setReviewingBooking] = useState(null);
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState(null);
 
   const { user } = useAuth();
 
@@ -84,6 +94,48 @@ const UserBookings = () => {
     }
   };
 
+  // Review handling functions
+  const handleWriteReview = (booking) => {
+    setReviewingBooking(booking);
+    setReviewError(null);
+    setShowReviewModal(true);
+  };
+
+  const handleSubmitReview = async (reviewData) => {
+    try {
+      setSubmittingReview(true);
+      setReviewError(null);
+      
+      await reviewsAPI.createReview(reviewData);
+      
+      // Update the booking to mark it as reviewed
+      setBookings(prevBookings => 
+        prevBookings.map(booking => 
+          booking._id === reviewingBooking._id 
+            ? { ...booking, hasReview: true }
+            : booking
+        )
+      );
+      
+      setShowReviewModal(false);
+      setReviewingBooking(null);
+      
+      // Show success message or refresh bookings
+      fetchBookings();
+    } catch (err) {
+      setReviewError(err.response?.data?.message || 'Failed to submit review. Please try again.');
+      console.error('Error submitting review:', err);
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const handleCancelReview = () => {
+    setShowReviewModal(false);
+    setReviewingBooking(null);
+    setReviewError(null);
+  };
+
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: { variant: 'warning', icon: <MdPending />, text: 'Pending' },
@@ -137,6 +189,15 @@ const UserBookings = () => {
            booking.status !== 'checked-in' && 
            booking.status !== 'checked-out' && 
            booking.status !== 'cancelled';
+  };
+
+  const canReviewBooking = (booking) => {
+    // Can review if booking is completed and hasn't been reviewed yet
+    return booking.status === 'completed' && !booking.hasReview;
+  };
+
+  const hasReviewedBooking = (booking) => {
+    return booking.hasReview;
   };
 
   if (loading) {
@@ -311,16 +372,35 @@ const UserBookings = () => {
                           <span className="price-label">total</span>
                         </div>
 
-                        {isBookingCancellable(booking) && (
-                          <Button
-                            variant="outline-danger"
-                            size="sm"
-                            className="cancel-button"
-                            onClick={() => handleCancelBooking(booking)}
-                          >
-                            <MdCancel /> Cancel
-                          </Button>
-                        )}
+                        <div className="booking-actions">
+                          {isBookingCancellable(booking) && (
+                            <Button
+                              variant="outline-danger"
+                              size="sm"
+                              className="cancel-button"
+                              onClick={() => handleCancelBooking(booking)}
+                            >
+                              <MdCancel /> Cancel
+                            </Button>
+                          )}
+                          
+                          {canReviewBooking(booking) && (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              className="review-button"
+                              onClick={() => handleWriteReview(booking)}
+                            >
+                              <MdRateReview /> Write Review
+                            </Button>
+                          )}
+                          
+                          {hasReviewedBooking(booking) && (
+                            <Badge bg="success" className="reviewed-badge">
+                              <MdCheckCircleOutline /> Reviewed
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     </BookingCard>
                   ))}
@@ -386,6 +466,37 @@ const UserBookings = () => {
             )}
           </Button>
         </Modal.Footer>
+      </Modal>
+
+      {/* Review Modal */}
+      <Modal 
+        show={showReviewModal} 
+        onHide={handleCancelReview} 
+        size="lg"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>
+            <MdRateReview className="modal-icon" />
+            Write a Review
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {reviewError && (
+            <Alert variant="danger" className="mb-3">
+              {reviewError}
+            </Alert>
+          )}
+          
+          {reviewingBooking && (
+            <ReviewForm
+              booking={reviewingBooking}
+              onSubmit={handleSubmitReview}
+              onCancel={handleCancelReview}
+              isLoading={submittingReview}
+            />
+          )}
+        </Modal.Body>
       </Modal>
     </>
   );

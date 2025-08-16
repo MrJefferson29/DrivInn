@@ -9,7 +9,7 @@ const bookingSchema = new mongoose.Schema({
   totalPrice: { type: Number, required: true },
   status: { 
     type: String, 
-    enum: ['pending', 'reserved', 'cancelled', 'completed'], 
+    enum: ['pending', 'reserved', 'confirmed', 'cancelled', 'completed'], 
     default: 'pending' 
   },
   paymentSessionId: { type: String },
@@ -18,6 +18,37 @@ const bookingSchema = new mongoose.Schema({
     enum: ['pending', 'processing', 'completed', 'failed'], 
     default: 'pending' 
   },
+  
+  // Review-related fields
+  canReview: {
+    type: Boolean,
+    default: false
+  },
+  hasReview: {
+    type: Boolean,
+    default: false
+  },
+  reviewId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Review'
+  },
+  
+  // Check-in/out tracking
+  checkedIn: {
+    type: Boolean,
+    default: false
+  },
+  checkedOut: {
+    type: Boolean,
+    default: false
+  },
+  checkInDate: {
+    type: Date
+  },
+  checkOutDate: {
+    type: Date
+  },
+  
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

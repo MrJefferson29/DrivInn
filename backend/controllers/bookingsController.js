@@ -238,16 +238,14 @@ exports.createBooking = async (req, res) => {
         checkInDate: startDate,
         payoutMethod: 'stripe_connect'
       },
-      // FIXED: Remove application_fee_amount when using transfer_data
-      // Use transfer_data for automatic payouts to hosts
+      // Configure transfer_data for automatic payouts to hosts
       payment_intent_data: {
         capture_method: 'manual', // Capture manually after confirmation
         transfer_data: {
           destination: hostApplication.stripeConnect.accountId,
-          amount: Math.round(totalPrice * 100),
-        },
-        // NOTE: Platform fee is handled via transfer_data, not application_fee_amount
-        // The difference between totalPrice and transfer amount goes to the platform
+          amount: Math.round(totalPrice * 0.90 * 100), // Host gets 90% (minus 10% platform fee)
+        }
+        // Note: Platform fee is handled via transfer_data - the difference between totalPrice and transfer amount
       }
     };
     
@@ -848,10 +846,7 @@ exports.capturePayment = async (req, res) => {
       let capturedPayment;
       try {
         capturedPayment = await stripe.paymentIntents.capture(session.payment_intent, {
-          transfer_data: {
-            destination: hostApplication.stripeConnect.accountId,
-          },
-          application_fee_amount: Math.round(booking.totalPrice * 0.10 * 100), // 10% platform fee
+          stripeAccount: hostApplication.stripeConnect.accountId
         });
         console.log('✅ Payment captured with transfer_data successfully:', capturedPayment.id);
         console.log('💸 Transfer ID:', capturedPayment.latest_charge?.transfer);

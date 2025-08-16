@@ -572,7 +572,7 @@ const ListingCard = ({ listing, onCardClick }) => {
       return [
         { icon: <FaBed />, text: `${listing.beds || 0} beds` },
         { icon: <FaBath />, text: `${listing.bathrooms || 0} baths` },
-        { icon: <FaUsers />, text: `${listing.guests || 0} guests` }
+        { icon: <FaHome />, text: `${listing.bedrooms || 0} bedrooms` }
       ];
     } else {
       return [
@@ -585,7 +585,7 @@ const ListingCard = ({ listing, onCardClick }) => {
 
   const getAmenities = () => {
     const amenities = listing.amenities || listing.carDetails?.features || [];
-    return amenities.slice(0, 2);
+    return amenities.slice(0, 3);
   };
 
   const getAvailability = () => {
@@ -661,14 +661,16 @@ const ListingCard = ({ listing, onCardClick }) => {
         <Location>
           <FaMapMarkerAlt />
           {listing.address ? listing.address : (listing.location && listing.location.coordinates ? `${listing.location.coordinates[1]}, ${listing.location.coordinates[0]}` : 'No location')}
-          <Distance>{listing.distance || '2.5 km away'}</Distance>
+          {/* <Distance>{listing.distance || '2.5 km away'}</Distance> */}
         </Location>
         
-        <Rating>
-          <StarIcon />
-          <RatingNumber>{listing.rating || 4.5}</RatingNumber>
-          <ReviewsCount>({listing.reviews || 0} reviews)</ReviewsCount>
-        </Rating>
+        {listing.reviews > 0 && (
+          <Rating>
+            <StarIcon />
+            <RatingNumber>{listing.rating.toFixed(1)}</RatingNumber>
+            <ReviewsCount>({listing.reviews} reviews)</ReviewsCount>
+          </Rating>
+        )}
         
         <Details>
           {getDetails().map((detail, index) => (
