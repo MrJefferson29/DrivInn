@@ -90,8 +90,9 @@ export const bookingsAPI = {
   createBooking: (bookingData) => api.post('/bookings', bookingData),
   cancelBooking: (id) => api.delete(`/bookings/${id}`),
   verifyPayment: (sessionId) => api.get(`/bookings/verify-payment/${sessionId}`),
-  updateBookingStatus: (bookingId, status) => api.put('/bookings/update-status', { bookingId, status }),
   checkDateAvailability: (listingId, startDate, endDate) => api.get(`/bookings/check-availability/${listingId}/${startDate}/${endDate}`),
+  triggerStatusUpdate: () => api.post('/bookings/update-statuses'),
+  checkStatuses: () => api.get('/bookings/check-statuses'),
 };
 
 // Host Applications API calls
@@ -124,7 +125,6 @@ export const paymentsAPI = {
   getPaymentStatus: (paymentId) => api.get(`/payments/status/${paymentId}`),
   getUserPayments: () => api.get('/payments/user-payments'),
   adminGetAllPayments: () => api.get('/payments/admin/all'),
-  manualPaymentStatusCheck: (paymentId) => api.post(`/payments/manual-check/${paymentId}`),
 };
 
 export default api; 

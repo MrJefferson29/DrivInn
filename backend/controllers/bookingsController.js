@@ -486,33 +486,6 @@ exports.updateAllBookingStatuses = async (req, res) => {
   }
 };
 
-// Temporary endpoint to manually update booking status (for testing)
-exports.updateBookingStatus = async (req, res) => {
-  try {
-    const { bookingId, status } = req.body;
-    
-    if (!bookingId || !status) {
-      return res.status(400).json({ message: 'Booking ID and status are required' });
-    }
-
-    const booking = await Booking.findByIdAndUpdate(
-      bookingId,
-      { status },
-      { new: true }
-    ).populate('home', 'title images price city country');
-
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-
-    console.log(`✅ Booking ${bookingId} status updated to ${status}`);
-    res.json({ message: 'Booking status updated successfully', booking });
-  } catch (err) {
-    console.error('Update booking status error:', err);
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-};
-
 // Verify payment and get booking details
 exports.verifyPayment = async (req, res) => {
   try {
@@ -653,7 +626,6 @@ exports.getPendingPayouts = async (req, res) => {
     });
   }
 };
-
 
 // Handle payment cancellation
 exports.cancelPayment = async (req, res) => {

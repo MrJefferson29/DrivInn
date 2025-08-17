@@ -25,6 +25,7 @@ const updateBookingStatuses = async () => {
       console.log(`    - Check-out: ${booking.checkOut}`);
       console.log(`    - Checked In: ${booking.checkedIn}`);
       console.log(`    - Checked Out: ${booking.checkedOut}`);
+      console.log(`    - Payment Status: ${booking.paymentStatus}`);
     }
     
     let updatedCount = 0;
@@ -45,7 +46,7 @@ const updateBookingStatuses = async () => {
           await sendStatusChangeNotifications(booking, oldStatus, newStatus);
           
           // Update payout status if check-in occurred
-          if (newStatus === 'checked_in' && oldStatus === 'confirmed') {
+          if (newStatus === 'checked_in' && oldStatus === 'reserved') {
             await updatePayoutStatus(booking);
           }
         } else {
@@ -85,6 +86,41 @@ const updateBookingStatuses = async () => {
         } catch (error) {
           errorCount++;
           console.error(`❌ Error updating past booking ${booking._id}:`, error.message);
+        }
+      }
+    }
+    
+    // Check for bookings that should be checked in (past check-in time but still reserved)
+    console.log('🔍 Checking for bookings that should be checked in...');
+    const now = new Date();
+    const bookingsToCheckIn = await Booking.find({
+      status: 'reserved',
+      paymentStatus: 'completed',
+      checkedIn: false,
+      checkIn: { $lte: now }
+    });
+    
+    if (bookingsToCheckIn.length > 0) {
+      console.log(`📋 Found ${bookingsToCheckIn.length} bookings that should be checked in`);
+      
+      for (const booking of bookingsToCheckIn) {
+        try {
+          const oldStatus = booking.status;
+          booking.status = 'checked_in';
+          booking.checkedIn = true;
+          booking.checkInDate = now;
+          booking.canReview = true;
+          
+          await booking.save();
+          updatedCount++;
+          
+          console.log(`✅ Marked booking ${booking._id} as checked in (was: ${oldStatus})`);
+          
+          // Send check-in notification
+          await sendStatusChangeNotifications(booking, oldStatus, 'checked_in');
+        } catch (error) {
+          errorCount++;
+          console.error(`❌ Error updating check-in for booking ${booking._id}:`, error.message);
         }
       }
     }
@@ -188,8 +224,21 @@ const updatePayoutStatus = async (booking) => {
 const startBookingStatusScheduler = () => {
   console.log('⏰ Starting booking status scheduler...');
   
-  // Run every 5 minutes for more accurate check-in/check-out timing
+  // Run every minute for immediate status updates
+  cron.schedule('* * * * *', async () => {
+    console.log('🔄 Running scheduled booking status update (every minute)...');
+    await updateBookingStatuses();
+  });
+  
+  // Also run every 5 minutes for more comprehensive updates
   cron.schedule('*/5 * * * *', async () => {
+    console.log('🕐 5-minute comprehensive booking status check...');
+    await updateBookingStatuses();
+  });
+  
+  // Also run every 15 minutes to catch any missed updates
+  cron.schedule('*/15 * * * *', async () => {
+    console.log('🕐 15-minute booking status check...');
     await updateBookingStatuses();
   });
   
@@ -199,7 +248,7 @@ const startBookingStatusScheduler = () => {
     await updateBookingStatuses();
   });
   
-  console.log('✅ Booking status scheduler started (runs every 5 minutes + hourly)');
+  console.log('✅ Booking status scheduler started (runs every minute + 5 minutes + 15 minutes + hourly)');
 };
 
 // Run initial status check when server starts

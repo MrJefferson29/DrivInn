@@ -21,9 +21,6 @@ router.post('/cancel-payment/:sessionId', verifyToken, bookingsController.cancel
 // Admin route to update all booking statuses
 router.put('/update-statuses', verifyToken, authorizeRole('admin'), bookingsController.updateAllBookingStatuses);
 
-// Temporary route to update booking status (for testing)
-router.put('/update-status', verifyToken, bookingsController.updateBookingStatus);
-
 // Manual trigger for booking status updates (for testing)
 router.post('/update-statuses', verifyToken, async (req, res) => {
   try {
