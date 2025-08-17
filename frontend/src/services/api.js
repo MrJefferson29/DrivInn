@@ -124,6 +124,7 @@ export const paymentsAPI = {
   getPaymentStatus: (paymentId) => api.get(`/payments/status/${paymentId}`),
   getUserPayments: () => api.get('/payments/user-payments'),
   adminGetAllPayments: () => api.get('/payments/admin/all'),
+  manualPaymentStatusCheck: (paymentId) => api.post(`/payments/manual-check/${paymentId}`),
 };
 
 export default api; 

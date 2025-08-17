@@ -48,6 +48,7 @@ app.post(
     const sig = req.headers['stripe-signature'];
 
     try {
+      // Verify webhook signature
       const event = stripe.webhooks.constructEvent(
         req.body,
         sig,
@@ -55,6 +56,7 @@ app.post(
       );
 
       console.log('📋 Webhook received:', event.type);
+      console.log('📋 Event ID:', event.id);
 
       // Handle Connect events (events on connected accounts)
       if (event.account) {
@@ -78,10 +80,13 @@ app.post(
         }
       }
 
+      // Handle checkout session completion
       if (event.type === 'checkout.session.completed') {
         const session = event.data.object;
         console.log('✅ Checkout session completed:', session.id);
         console.log('📋 Session metadata:', session.metadata);
+        console.log('📋 Payment status:', session.payment_status);
+        console.log('📋 Session status:', session.status);
 
         // Find booking by payment session ID
         const Booking = require('./models/booking');
@@ -97,6 +102,8 @@ app.post(
           }
 
           console.log('✅ Found booking for session:', booking._id);
+          console.log('📋 Current booking status:', booking.status);
+          console.log('📋 Current payment status:', booking.paymentStatus);
 
           // Find the listing and host application to get Stripe Connect account
           const Listing = require('./models/listing');
@@ -128,10 +135,14 @@ app.post(
           }, { new: true });
 
           console.log('✅ Booking status updated to reserved:', updatedBooking._id);
+          console.log('✅ Booking payment status updated to completed');
 
           // Find and update payment record
           const payment = await Payment.findOne({ stripeSessionId: session.id });
           if (payment) {
+            console.log('✅ Found payment record:', payment._id);
+            console.log('📋 Current payment status:', payment.status);
+            
             // Payment is automatically captured and transferred to host
             // Update payment status to completed
             const updatedPayment = await Payment.findByIdAndUpdate(payment._id, {
@@ -143,14 +154,19 @@ app.post(
               payoutCompletedAt: new Date(),
               completedAt: new Date(),
               metadata: {
-                ...payment.metadata,
+                ...(payment.metadata || {}),
                 stripeSessionId: session.id,
                 paymentIntentId: session.payment_intent,
-                webhookProcessed: true
+                webhookProcessed: true,
+                webhookEventId: event.id,
+                webhookProcessedAt: new Date()
               }
             }, { new: true });
 
             console.log('✅ Payment updated to completed status:', updatedPayment._id);
+            console.log('✅ Payment payout status updated to completed');
+          } else {
+            console.log('⚠️ No payment record found for session:', session.id);
           }
 
           // Send notification to host about new booking
@@ -164,6 +180,7 @@ app.post(
 
         } catch (error) {
           console.error('❌ Error updating booking/payment:', error);
+          console.error('❌ Error stack:', error.stack);
         }
       }
 
@@ -188,13 +205,17 @@ app.post(
               transactionId: paymentIntent.id,
               completedAt: new Date(),
               metadata: {
-                ...payment.metadata,
+                ...(payment.metadata || {}),
                 paymentIntentStatus: paymentIntent.status,
-                webhookProcessed: true
+                webhookProcessed: true,
+                webhookEventId: event.id,
+                webhookProcessedAt: new Date()
               }
             });
 
             console.log('✅ Payment updated with payment intent details');
+          } else {
+            console.log('⚠️ No payment found for payment intent:', paymentIntent.id);
           }
         } catch (error) {
           console.error('❌ Error updating payment with payment intent:', error);
@@ -221,10 +242,12 @@ app.post(
               status: 'failed',
               failedAt: new Date(),
               metadata: {
-                ...payment.metadata,
+                ...(payment.metadata || {}),
                 paymentIntentStatus: paymentIntent.status,
                 failureReason: paymentIntent.last_payment_error?.message || 'Payment failed',
-                webhookProcessed: true
+                webhookProcessed: true,
+                webhookEventId: event.id,
+                webhookProcessedAt: new Date()
               }
             });
 
@@ -247,13 +270,66 @@ app.post(
         }
       }
 
+      // Handle transfer events (when money is transferred to host)
+      if (event.type === 'transfer.created') {
+        const transfer = event.data.object;
+        console.log('✅ Transfer created:', transfer.id);
+        console.log('📋 Transfer amount:', transfer.amount);
+        console.log('📋 Transfer destination:', transfer.destination);
+        
+        // Find payment by transfer destination (host account)
+        const Payment = require('./models/payment');
+        try {
+          const payment = await Payment.findOne({ 
+            'metadata.stripeTransferId': transfer.id 
+          });
+
+          if (payment) {
+            console.log('✅ Found payment for transfer:', payment._id);
+            
+            // Update payment with transfer details
+            await Payment.findByIdAndUpdate(payment._id, {
+              transferStatus: 'completed',
+              transferCompletedAt: new Date(),
+              stripeTransferId: transfer.id,
+              metadata: {
+                ...(payment.metadata || {}),
+                transferId: transfer.id,
+                transferAmount: transfer.amount,
+                transferCurrency: transfer.currency,
+                webhookProcessed: true,
+                webhookEventId: event.id,
+                webhookProcessedAt: new Date()
+              }
+            });
+
+            console.log('✅ Payment updated with transfer details');
+          }
+        } catch (error) {
+          console.error('❌ Error updating payment with transfer:', error);
+        }
+      }
+
       res.json({ received: true });
     } catch (err) {
       console.error('❌ Webhook Error:', err.message);
+      console.error('❌ Webhook Error Stack:', err.stack);
       res.status(400).send(`Webhook Error: ${err.message}`);
     }
   }
 );
+
+// Webhook health check endpoint
+app.get('/webhook-health', (req, res) => {
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET ? 'configured' : 'missing',
+    stripeKey: process.env.STRIPE_SECRET_KEY ? 'configured' : 'missing',
+    webhookEndpoint: '/webhook',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 
 // JSON parser for all other routes
 app.use(express.json());

@@ -522,17 +522,26 @@ exports.verifyPayment = async (req, res) => {
       return res.status(400).json({ message: 'Session ID is required' });
     }
 
+    console.log('🔍 Manually verifying payment for session:', sessionId);
+
     // Retrieve Stripe session to confirm payment state
     let session;
     try {
       session = await stripe.checkout.sessions.retrieve(sessionId);
+      console.log('✅ Stripe session retrieved:', session.id);
+      console.log('📋 Session status:', session.status);
+      console.log('📋 Payment status:', session.payment_status);
     } catch (stripeErr) {
-      console.error('Stripe session retrieve error:', stripeErr.message);
+      console.error('❌ Stripe session retrieve error:', stripeErr.message);
+      return res.status(400).json({ 
+        message: 'Invalid session ID or Stripe error',
+        error: stripeErr.message
+      });
     }
 
     // Find booking by session ID
     const booking = await Booking.findOne({ paymentSessionId: sessionId })
-      .populate('home', 'title images price city country')
+      .populate('home', 'title images price city country rating checkIn checkOut')
       .populate('user', 'firstName lastName email');
 
     if (!booking) {
@@ -544,46 +553,75 @@ exports.verifyPayment = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to view this booking' });
     }
 
+    console.log('✅ Found booking:', booking._id);
+    console.log('📋 Current booking status:', booking.status);
+    console.log('📋 Current payment status:', booking.paymentStatus);
+
     // If Stripe confirms the payment is complete/paid, update booking status
     const isPaid = session && (session.payment_status === 'paid' || session.status === 'complete');
-    if (isPaid && booking.status !== 'reserved') {
-      booking.status = 'reserved';
-      booking.paymentStatus = 'completed';
-      await booking.save();
+    
+    if (isPaid) {
+      console.log('✅ Payment confirmed as paid by Stripe');
+      
+      // Update booking status if not already updated
+      if (booking.status !== 'reserved') {
+        booking.status = 'reserved';
+        booking.paymentStatus = 'completed';
+        await booking.save();
+        console.log('✅ Booking status updated to reserved');
+      }
       
       // Update payment record if available
       try {
-        let payment;
-        if (session && session.metadata && session.metadata.paymentId) {
-          payment = await Payment.findById(session.metadata.paymentId);
-        }
-        if (!payment) {
-          payment = await Payment.findOne({ stripeSessionId: sessionId });
-        }
+        let payment = await Payment.findOne({ stripeSessionId: sessionId });
+        
         if (payment) {
-          payment.status = 'completed';
-          payment.transactionId = session.payment_intent || session.id;
-          payment.stripePaymentIntentId = session.payment_intent;
-          payment.payoutMethod = 'stripe_connect';
-          payment.metadata = {
-            ...(payment.metadata || {}),
-            stripeSessionId: session.id,
-            paymentIntentId: session.payment_intent,
-          };
-          await payment.save();
+          console.log('✅ Found payment record:', payment._id);
+          console.log('📋 Current payment status:', payment.status);
+          
+          if (payment.status !== 'completed') {
+            payment.status = 'completed';
+            payment.transactionId = session.payment_intent || session.id;
+            payment.stripePaymentIntentId = session.payment_intent;
+            payment.payoutMethod = 'stripe_connect';
+            payment.payoutStatus = 'completed';
+            payment.payoutCompletedAt = new Date();
+            payment.completedAt = new Date();
+            payment.metadata = {
+              ...(payment.metadata || {}),
+              stripeSessionId: session.id,
+              paymentIntentId: session.payment_intent,
+              manuallyVerified: true,
+              verifiedAt: new Date()
+            };
+            await payment.save();
+            console.log('✅ Payment status updated to completed');
+          }
+        } else {
+          console.log('⚠️ No payment record found for session:', sessionId);
         }
       } catch (updatePaymentErr) {
-        console.error('Payment update error (verifyPayment):', updatePaymentErr.message);
+        console.error('❌ Payment update error (verifyPayment):', updatePaymentErr.message);
       }
+    } else {
+      console.log('⚠️ Payment not yet completed according to Stripe');
+      console.log('📋 Session status:', session.status);
+      console.log('📋 Payment status:', session.payment_status);
     }
 
     res.json({
       booking,
-      paymentStatus: booking.status === 'reserved' ? 'completed' : 'pending'
+      paymentStatus: booking.status === 'reserved' ? 'completed' : 'pending',
+      stripeSession: {
+        id: session.id,
+        status: session.status,
+        paymentStatus: session.payment_status,
+        paymentIntent: session.payment_intent
+      }
     });
 
   } catch (err) {
-    console.error('Verify payment error:', err);
+    console.error('❌ Verify payment error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
