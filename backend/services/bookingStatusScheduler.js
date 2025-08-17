@@ -202,18 +202,22 @@ const updatePayoutStatus = async (booking) => {
   try {
     // Find the payment record for this booking
     const Payment = require('../models/payment');
-    const payment = await Payment.findOne({ 
+    const payment = await Payment.findOne({
       booking: booking._id,
       status: 'completed'
     });
     
     if (payment && payment.payoutStatus === 'pending') {
-      // Update payout status to processing since guest has checked in
-      payment.payoutStatus = 'processing';
-      payment.payoutProcessingAt = new Date();
+      // Schedule payout for 1 hour after check-in
+      const scheduledPayoutAt = new Date(booking.checkInDate.getTime() + 60 * 60 * 1000); // 1 hour later
+      
+      // Update payout status to scheduled
+      payment.payoutStatus = 'scheduled';
+      payment.scheduledPayoutAt = scheduledPayoutAt;
+      payment.payoutScheduled = true;
       await payment.save();
       
-      console.log(`💳 Updated payout status to processing for booking ${booking._id}`);
+      console.log(`💳 Scheduled payout for booking ${booking._id} at ${scheduledPayoutAt.toISOString()}`);
     }
   } catch (error) {
     console.error('❌ Error updating payout status:', error);

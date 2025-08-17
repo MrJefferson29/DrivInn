@@ -15,10 +15,10 @@ const paymentSchema = new mongoose.Schema({
   refundedAt: { type: Date },
   
   // Payout-related fields
-  payoutStatus: { 
-    type: String, 
-    enum: ['pending', 'processing', 'completed', 'failed'], 
-    default: 'pending' 
+  payoutStatus: {
+    type: String,
+    enum: ['pending', 'processing', 'completed', 'failed'],
+    default: 'pending'
   },
   payoutMethod: { type: String, enum: ['stripe_connect'], default: 'stripe_connect' },
   payoutDate: { type: Date },
@@ -30,6 +30,8 @@ const paymentSchema = new mongoose.Schema({
   transferStatus: { type: String, enum: ['pending', 'completed', 'failed'], default: 'pending' }, // Transfer status
   transferCompletedAt: { type: Date }, // When transfer was completed
   platformFee: { type: Number, default: 0 }, // Platform fee amount
+  scheduledPayoutAt: { type: Date }, // When payout is scheduled for
+  payoutScheduled: { type: Boolean, default: false }, // Whether payout is scheduled
   
   metadata: { type: mongoose.Schema.Types.Mixed }
 }, { timestamps: true });
@@ -42,5 +44,6 @@ paymentSchema.index({ payoutStatus: 1 }); // Index for payout queries
 paymentSchema.index({ payoutDate: 1 }); // Index for payout date queries
 paymentSchema.index({ stripeTransferId: 1 }); // Index for transfer queries
 paymentSchema.index({ transferStatus: 1 }); // Index for transfer status queries
+paymentSchema.index({ scheduledPayoutAt: 1, payoutStatus: 1 }); // Index for scheduled payouts
 
 module.exports = mongoose.model('Payment', paymentSchema);

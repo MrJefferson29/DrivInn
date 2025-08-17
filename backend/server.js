@@ -22,6 +22,8 @@ require('./models/review');
 
 // Import booking status scheduler
 const { startBookingStatusScheduler, runInitialStatusCheck } = require('./services/bookingStatusScheduler');
+// Import delayed payout processor
+const { startDelayedPayoutProcessor } = require('./services/delayedPayoutProcessor');
 
 dotenv.config({ path: './.env' });
 
@@ -33,6 +35,10 @@ connectDB().then(() => {
   console.log('🚀 Starting booking status scheduler...');
   startBookingStatusScheduler();
   runInitialStatusCheck();
+  
+  // Start delayed payout processor
+  console.log('🚀 Starting delayed payout processor...');
+  startDelayedPayoutProcessor();
 }).catch(err => {
   console.error('❌ Failed to start schedulers:', err);
 });
@@ -143,15 +149,14 @@ app.post(
             console.log('✅ Found payment record:', payment._id);
             console.log('📋 Current payment status:', payment.status);
             
-            // Payment is automatically captured and transferred to host
-            // Update payment status to completed
+            // Payment is automatically captured but transfer to host will be delayed
+            // Update payment status to completed but leave payout status as pending
             const updatedPayment = await Payment.findByIdAndUpdate(payment._id, {
               status: 'completed',
               transactionId: session.payment_intent,
               stripePaymentIntentId: session.payment_intent,
               payoutMethod: 'stripe_connect',
-              payoutStatus: 'completed',
-              payoutCompletedAt: new Date(),
+              payoutStatus: 'pending', // Keep as pending for delayed processing
               completedAt: new Date(),
               metadata: {
                 ...(payment.metadata || {}),

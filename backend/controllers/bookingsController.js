@@ -237,14 +237,8 @@ exports.createBooking = async (req, res) => {
         hostId: listingDoc.owner._id.toString(),
         checkInDate: startDate,
         payoutMethod: 'stripe_connect'
-      },
-      // Configure transfer_data for automatic payouts to hosts
-      payment_intent_data: {
-        transfer_data: {
-          destination: hostApplication.stripeConnect.accountId,
-        }
-        // Note: Platform fee is handled via transfer_data - Stripe automatically calculates the transfer amount
       }
+      // Note: No transfer_data - funds will be held in platform account and transferred later
     };
     
     console.log('💳 Creating Stripe Checkout session with transfer_data...');
@@ -557,8 +551,7 @@ exports.verifyPayment = async (req, res) => {
             payment.transactionId = session.payment_intent || session.id;
             payment.stripePaymentIntentId = session.payment_intent;
             payment.payoutMethod = 'stripe_connect';
-            payment.payoutStatus = 'completed';
-            payment.payoutCompletedAt = new Date();
+            payment.payoutStatus = 'pending'; // Keep as pending for delayed processing
             payment.completedAt = new Date();
             payment.metadata = {
               ...(payment.metadata || {}),
