@@ -241,7 +241,7 @@ exports.createBooking = async (req, res) => {
       // Note: No transfer_data - funds will be held in platform account and transferred later
     };
     
-    console.log('💳 Creating Stripe Checkout session with transfer_data...');
+    console.log('💳 Creating Stripe Checkout session...');
     const session = await stripe.checkout.sessions.create(sessionConfig);
     console.log('✅ Stripe Checkout session created:', session.id);
 
@@ -270,7 +270,7 @@ exports.createBooking = async (req, res) => {
       stripeSessionId: session.id,
       metadata: {
         paymentMethod: paymentMethod,
-        hasTransferData: true, // Using transfer_data for automatic payouts
+        hasTransferData: false, // Not using transfer_data - funds will be held in platform account and transferred later
         stripePaymentIntentId: session.payment_intent // Store payment intent ID for webhook handling
       }
     });
@@ -577,7 +577,7 @@ exports.verifyPayment = async (req, res) => {
 
     res.json({
       booking,
-      paymentStatus: booking.status === 'reserved' ? 'completed' : 'pending',
+      paymentStatus: booking.paymentStatus === 'completed' ? 'completed' : 'pending',
       stripeSession: {
         id: session.id,
         status: session.status,

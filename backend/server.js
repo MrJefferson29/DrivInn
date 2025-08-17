@@ -169,7 +169,7 @@ app.post(
             }, { new: true });
 
             console.log('✅ Payment updated to completed status:', updatedPayment._id);
-            console.log('✅ Payment payout status updated to completed');
+            console.log('✅ Payment payout status kept as pending for delayed processing');
           } else {
             console.log('⚠️ No payment record found for session:', session.id);
           }
