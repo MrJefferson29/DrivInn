@@ -85,17 +85,8 @@ const hostApplicationSchema = new mongoose.Schema({
   },
   businessStructure: {
     type: String,
-    required: false,
-    enum: [
-      'individual',
-      'single_member_llc',
-      'multi_member_llc', 
-      'private_partnership',
-      'private_corporation',
-      'public_corporation',
-      'incorporated_non_profit',
-      'unincorporated_non_profit'
-    ]
+    default: 'individual',
+    required: false
   },
   // Financial Information
   ssn: {

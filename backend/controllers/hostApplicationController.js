@@ -119,7 +119,7 @@ exports.submitApplication = async (req, res) => {
 
     // Check if user is at least 18 years old
     const today = new Date();
-    const age = today.getFullYear() - dateOfBirth.getFullYear();
+    let age = today.getFullYear() - dateOfBirth.getFullYear();
     const monthDiff = today.getMonth() - dateOfBirth.getMonth();
     if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dateOfBirth.getDate())) {
       age--;
@@ -173,12 +173,6 @@ exports.submitApplication = async (req, res) => {
       });
     }
 
-    if (req.body.businessPhone && req.body.businessPhone.length > 20) {
-      return res.status(400).json({
-        message: 'Business phone number must be less than 20 characters'
-      });
-    }
-
     if (req.body.supportPhone && req.body.supportPhone.length > 20) {
       return res.status(400).json({
         message: 'Support phone number must be less than 20 characters'
@@ -189,12 +183,6 @@ exports.submitApplication = async (req, res) => {
     if (req.body.phoneNumber && req.body.phoneNumber.trim().length === 0) {
       return res.status(400).json({
         message: 'Phone number cannot be just whitespace'
-      });
-    }
-
-    if (req.body.businessPhone && req.body.businessPhone.trim().length === 0) {
-      return res.status(400).json({
-        message: 'Business phone number cannot be just whitespace'
       });
     }
 
@@ -252,11 +240,8 @@ exports.submitApplication = async (req, res) => {
         lastName: req.body.lastName,
         email: req.body.email,
         phoneNumber: req.body.phoneNumber,
-        businessStructure: req.body.businessStructure,
-        propertyType: req.body.propertyType,
-      hasBusinessInfo: !!(req.body.businessName || req.body.businessTaxId),
-      hasFinancialInfo: !!(req.body.ssn || req.body.bankAccountNumber)
-    });
+        hasFinancialInfo: !!(req.body.ssn || req.body.bankAccountNumber)
+      });
 
     // Validate required files
     if (!req.files || !req.files.idFrontImage || !req.files.idBackImage || !req.files.selfieImage) {
@@ -276,35 +261,6 @@ exports.submitApplication = async (req, res) => {
     }
 
     console.log('File validation passed');
-
-    // Validate business structure if business information is provided
-    if (req.body.businessName || req.body.businessTaxId) {
-      if (!req.body.businessStructure || req.body.businessStructure === 'individual') {
-        return res.status(400).json({
-          message: 'Business structure must be specified when providing business information'
-        });
-      }
-    }
-
-    // Validate business structure enum values
-    const validBusinessStructures = [
-      'individual',
-      'single_member_llc',
-      'multi_member_llc', 
-      'private_partnership',
-      'private_corporation',
-      'public_corporation',
-      'incorporated_non_profit',
-      'unincorporated_non_profit'
-    ];
-
-    if (req.body.businessStructure && !validBusinessStructures.includes(req.body.businessStructure)) {
-      return res.status(400).json({
-        message: `Invalid business structure. Must be one of: ${validBusinessStructures.join(', ')}`
-      });
-    }
-
-    console.log('Business structure validation passed');
 
     // Validate SSN format if provided
     if (req.body.ssn && !/^\d{3}-\d{2}-\d{4}$/.test(req.body.ssn)) {
@@ -375,12 +331,6 @@ exports.submitApplication = async (req, res) => {
       });
     }
 
-    if (req.body.businessCountry && !validCountries.includes(req.body.businessCountry)) {
-      return res.status(400).json({
-        message: `Invalid business country. Must be one of: ${validCountries.join(', ')}`
-      });
-    }
-
     console.log('Country validation passed');
 
     // Validate postal code format based on country
@@ -392,23 +342,39 @@ exports.submitApplication = async (req, res) => {
       'Germany': /^\d{5}$/,
       'France': /^\d{5}$/,
       'Spain': /^\d{5}$/,
-      'Italy': /^\d{5}$/
+      'Italy': /^\d{5}$/,
+      'Netherlands': /^\d{4} ?[A-Z]{2}$/i,
+      'Belgium': /^\d{4}$/,
+      'Switzerland': /^\d{4}$/,
+      'Austria': /^\d{4}$/,
+      'Sweden': /^\d{3} ?\d{2}$/,
+      'Norway': /^\d{4}$/,
+      'Denmark': /^\d{4}$/,
+      'Finland': /^\d{5}$/,
+      'Ireland': /^[A-Z]\d{2} ?[A-Z0-9]{4}$/i,
+      'Portugal': /^\d{4}-\d{3}$/,
+      'Greece': /^\d{5}$/,
+      'Poland': /^\d{2}-\d{3}$/,
+      'Czech Republic': /^\d{3} ?\d{2}$/,
+      'Hungary': /^\d{4}$/,
+      'Slovakia': /^\d{3} ?\d{2}$/,
+      'Slovenia': /^\d{4}$/,
+      'Croatia': /^\d{5}$/,
+      'Romania': /^\d{6}$/,
+      'Bulgaria': /^\d{4}$/,
+      'Estonia': /^\d{5}$/,
+      'Latvia': /^\d{4}$/,
+      'Lithuania': /^\d{5}$/,
+      'Luxembourg': /^\d{4}$/,
+      'Malta': /^[A-Z]{3} ?\d{4}$/i,
+      'Cyprus': /^\d{4}$/
     };
 
-    if (postalCodeValidation[req.body.country]) {
+    if (req.body.postalCode && postalCodeValidation[req.body.country]) {
       const regex = postalCodeValidation[req.body.country];
       if (!regex.test(req.body.postalCode)) {
         return res.status(400).json({
           message: `Invalid postal code format for ${req.body.country}`
-        });
-      }
-    }
-
-    if (req.body.businessPostalCode && postalCodeValidation[req.body.businessCountry]) {
-      const regex = postalCodeValidation[req.body.businessCountry];
-      if (!regex.test(req.body.businessPostalCode)) {
-        return res.status(400).json({
-          message: `Invalid business postal code format for ${req.body.businessCountry}`
         });
       }
     }
@@ -419,10 +385,12 @@ exports.submitApplication = async (req, res) => {
     const stateValidation = {
       'United States': /^[A-Z]{2}$/,
       'Canada': /^[A-Z]{2}$/,
-      'Australia': /^[A-Z]{2,3}$/
+      'Australia': /^[A-Z]{2,3}$/,
+      'Germany': /^[A-Z]{2}$/,
+      'India': /^[A-Z]{2}$/
     };
 
-    if (stateValidation[req.body.country]) {
+    if (req.body.state && stateValidation[req.body.country]) {
       const regex = stateValidation[req.body.country];
       if (!regex.test(req.body.state)) {
         return res.status(400).json({
@@ -431,26 +399,46 @@ exports.submitApplication = async (req, res) => {
       }
     }
 
-    if (req.body.businessState && stateValidation[req.body.businessCountry]) {
-      const regex = stateValidation[req.body.businessCountry];
-      if (!regex.test(req.body.businessState)) {
-        return res.status(400).json({
-          message: `Invalid business state format for ${req.body.businessCountry}. Use standard abbreviations (e.g., NY, CA, TX)`
-        });
-      }
-    }
-
     console.log('State validation passed');
 
     // Validate phone number format based on country
     const phoneValidation = {
-      'United States': /^\+?1[\s\-]?\(?[0-9]{3}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{4}$/,
-      'Canada': /^\+?1[\s\-]?\(?[0-9]{3}\)?[\s\-]?[0-9]{3}[\s\-]?[0-9]{4}$/,
-      'United Kingdom': /^\+?44[\s\-]?[0-9]{4}[\s\-]?[0-9]{6}$/,
-      'Australia': /^\+?61[\s\-]?[0-9]{1}[\s\-]?[0-9]{4}[\s\-]?[0-9]{4}$/
+      'United States': /^\+1\s?\(?\d{3}\)?\s?\d{3}-?\d{4}$/,
+      'Canada': /^\+1\s?\(?\d{3}\)?\s?\d{3}-?\d{4}$/,
+      'United Kingdom': /^\+44\s?\d{4}\s?\d{6}$/,
+      'Australia': /^\+61\s?\d{1}\s?\d{4}\s?\d{4}$/,
+      'Germany': /^\+49\s?\d{2,4}\s?\d{3,8}$/,
+      'France': /^\+33\s?\d{1}\s?\d{2}\s?\d{2}\s?\d{2}\s?\d{2}$/,
+      'Spain': /^\+34\s?\d{3}\s?\d{3}\s?\d{3}$/,
+      'Italy': /^\+39\s?\d{3}\s?\d{3}\s?\d{3}$/,
+      'Netherlands': /^\+31\s?\d{1,2}\s?\d{3,4}\s?\d{4}$/,
+      'Belgium': /^\+32\s?\d{1,2}\s?\d{2,3}\s?\d{2,3}\s?\d{2}$/,
+      'Switzerland': /^\+41\s?\d{2}\s?\d{3}\s?\d{2}\s?\d{2}$/,
+      'Austria': /^\+43\s?\d{1,4}\s?\d{3,8}$/,
+      'Sweden': /^\+46\s?\d{1,2}\s?\d{3}\s?\d{2}\s?\d{2}$/,
+      'Norway': /^\+47\s?\d{3}\s?\d{2}\s?\d{3}$/,
+      'Denmark': /^\+45\s?\d{2}\s?\d{2}\s?\d{2}\s?\d{2}$/,
+      'Finland': /^\+358\s?\d{2}\s?\d{3}\s?\d{4}$/,
+      'Ireland': /^\+353\s?\d{1,2}\s?\d{3}\s?\d{4}$/,
+      'Portugal': /^\+351\s?\d{2}\s?\d{3}\s?\d{3}$/,
+      'Greece': /^\+30\s?\d{2,4}\s?\d{3,8}$/,
+      'Poland': /^\+48\s?\d{2}\s?\d{3}\s?\d{2}\s?\d{2}$/,
+      'Czech Republic': /^\+420\s?\d{3}\s?\d{3}\s?\d{3}$/,
+      'Hungary': /^\+36\s?\d{1,2}\s?\d{3}\s?\d{4}$/,
+      'Slovakia': /^\+421\s?\d{2}\s?\d{3}\s?\d{3}$/,
+      'Slovenia': /^\+386\s?\d{1,2}\s?\d{3}\s?\d{3}$/,
+      'Croatia': /^\+385\s?\d{1,2}\s?\d{3}\s?\d{3}$/,
+      'Romania': /^\+40\s?\d{2,3}\s?\d{3}\s?\d{3}$/,
+      'Bulgaria': /^\+359\s?\d{2}\s?\d{3}\s?\d{3}$/,
+      'Estonia': /^\+372\s?\d{3,4}\s?\d{3,4}$/,
+      'Latvia': /^\+371\s?\d{2}\s?\d{3}\s?\d{3}$/,
+      'Lithuania': /^\+370\s?\d{2,3}\s?\d{3}\s?\d{3}$/,
+      'Luxembourg': /^\+352\s?\d{2,3}\s?\d{2,3}\s?\d{2,3}$/,
+      'Malta': /^\+356\s?\d{4}\s?\d{4}$/,
+      'Cyprus': /^\+357\s?\d{2}\s?\d{6}$/
     };
 
-    if (phoneValidation[req.body.country]) {
+    if (req.body.phoneNumber && phoneValidation[req.body.country]) {
       const regex = phoneValidation[req.body.country];
       if (!regex.test(req.body.phoneNumber)) {
         return res.status(400).json({
@@ -459,44 +447,59 @@ exports.submitApplication = async (req, res) => {
       }
     }
 
-    if (req.body.businessPhone && phoneValidation[req.body.businessCountry]) {
-      const regex = phoneValidation[req.body.businessCountry];
-      if (!regex.test(req.body.businessPhone)) {
-        return res.status(400).json({
-          message: `Invalid business phone number format for ${req.body.businessCountry}. Please include country code.`
-            });
-          }
-        }
-        
-    console.log('Phone number validation passed');
+    console.log('Phone number format validation passed');
 
-    // Validate postal code length
+    // Validate field lengths
+    if (req.body.street && req.body.street.length > 100) {
+      return res.status(400).json({
+        message: 'Street address must be less than 100 characters'
+      });
+    }
+
+    if (req.body.city && req.body.city.length > 50) {
+      return res.status(400).json({
+        message: 'City must be less than 50 characters'
+      });
+    }
+
+    if (req.body.state && req.body.state.length > 50) {
+      return res.status(400).json({
+        message: 'State must be less than 50 characters'
+      });
+    }
+
     if (req.body.postalCode && req.body.postalCode.length > 10) {
       return res.status(400).json({
         message: 'Postal code must be less than 10 characters'
       });
     }
 
-    if (req.body.businessPostalCode && req.body.businessPostalCode.length > 10) {
+    // Validate fields are not just whitespace
+    if (req.body.street && req.body.street.trim().length === 0) {
       return res.status(400).json({
-        message: 'Business postal code must be less than 10 characters'
+        message: 'Street address cannot be just whitespace'
       });
     }
 
-    // Validate postal codes are not just whitespace
+    if (req.body.city && req.body.city.trim().length === 0) {
+      return res.status(400).json({
+        message: 'City cannot be just whitespace'
+      });
+    }
+
+    if (req.body.state && req.body.state.trim().length === 0) {
+      return res.status(400).json({
+        message: 'State cannot be just whitespace'
+      });
+    }
+
     if (req.body.postalCode && req.body.postalCode.trim().length === 0) {
       return res.status(400).json({
         message: 'Postal code cannot be just whitespace'
       });
     }
 
-    if (req.body.businessPostalCode && req.body.businessPostalCode.trim().length === 0) {
-      return res.status(400).json({
-        message: 'Business postal code cannot be just whitespace'
-      });
-    }
-
-    console.log('Postal code length validation passed');
+    console.log('Field length validation passed');
 
     // Validate SSN length
     if (req.body.ssn && req.body.ssn.length > 11) {
@@ -505,11 +508,55 @@ exports.submitApplication = async (req, res) => {
       });
     }
 
+    // Validate SSN last 4 digits length
     if (req.body.ssnLast4 && req.body.ssnLast4.length > 4) {
       return res.status(400).json({
-        message: 'SSN last 4 digits must be exactly 4 characters'
+        message: 'SSN last 4 digits must be less than 4 characters'
       });
     }
+
+    // Validate support phone length
+    if (req.body.supportPhone && req.body.supportPhone.length > 20) {
+      return res.status(400).json({
+        message: 'Support phone number must be less than 20 characters'
+      });
+    }
+
+    // Validate bank account number length
+    if (req.body.bankAccountNumber && req.body.bankAccountNumber.length > 17) {
+      return res.status(400).json({
+        message: 'Bank account number must be less than 17 characters'
+      });
+    }
+
+    // Validate bank routing number length
+    if (req.body.bankRoutingNumber && req.body.bankRoutingNumber.length > 9) {
+      return res.status(400).json({
+        message: 'Bank routing number must be less than 9 characters'
+      });
+    }
+
+    // Validate property description length
+    if (req.body.propertyDescription.length < 20) {
+      return res.status(400).json({
+        message: 'Property description must be at least 20 characters long'
+      });
+    }
+
+    if (req.body.propertyDescription.length > 1000) {
+      return res.status(400).json({
+        message: 'Property description must be less than 1000 characters'
+      });
+    }
+
+    // Validate hosting experience length
+    if (req.body.hostingExperience && req.body.hostingExperience.length > 500) {
+      return res.status(400).json({
+        message: 'Hosting experience must be less than 500 characters'
+      });
+    }
+
+    console.log('Field length validation passed');
 
     // Validate SSN is not just whitespace
     if (req.body.ssn && req.body.ssn.trim().length === 0) {
@@ -526,19 +573,6 @@ exports.submitApplication = async (req, res) => {
 
     console.log('SSN length validation passed');
 
-    // Validate bank account number length
-    if (req.body.bankAccountNumber && req.body.bankAccountNumber.length > 17) {
-      return res.status(400).json({
-        message: 'Bank account number must be less than 17 characters'
-      });
-    }
-
-    if (req.body.bankRoutingNumber && req.body.bankRoutingNumber.length > 9) {
-      return res.status(400).json({
-        message: 'Bank routing number must be exactly 9 characters'
-      });
-    }
-
     // Validate bank account numbers are not just whitespace
     if (req.body.bankAccountNumber && req.body.bankAccountNumber.trim().length === 0) {
       return res.status(400).json({
@@ -553,38 +587,6 @@ exports.submitApplication = async (req, res) => {
     }
 
     console.log('Bank account number length validation passed');
-
-    // Validate business tax ID length
-    if (req.body.businessTaxId && req.body.businessTaxId.length > 20) {
-      return res.status(400).json({
-        message: 'Business tax ID must be less than 20 characters'
-      });
-    }
-
-    // Validate business tax ID is not just whitespace
-    if (req.body.businessTaxId && req.body.businessTaxId.trim().length === 0) {
-      return res.status(400).json({
-        message: 'Business tax ID cannot be just whitespace'
-      });
-    }
-
-    console.log('Business tax ID length validation passed');
-
-    // Validate business structure length
-    if (req.body.businessStructure && req.body.businessStructure.length > 30) {
-      return res.status(400).json({
-        message: 'Business structure must be less than 30 characters'
-      });
-    }
-
-    // Validate business structure is not just whitespace
-    if (req.body.businessStructure && req.body.businessStructure.trim().length === 0) {
-      return res.status(400).json({
-        message: 'Business structure cannot be just whitespace'
-      });
-    }
-
-    console.log('Business structure length validation passed');
 
     // Validate property type length
     if (req.body.propertyType && req.body.propertyType.length > 20) {
@@ -641,22 +643,10 @@ exports.submitApplication = async (req, res) => {
       });
     }
 
-    if (req.body.businessCountry && req.body.businessCountry.length > 50) {
-      return res.status(400).json({
-        message: 'Business country must be less than 50 characters'
-      });
-    }
-
     // Validate country is not just whitespace
     if (req.body.country && req.body.country.trim().length === 0) {
       return res.status(400).json({
         message: 'Country cannot be just whitespace'
-      });
-    }
-
-    if (req.body.businessCountry && req.body.businessCountry.trim().length === 0) {
-      return res.status(400).json({
-        message: 'Business country cannot be just whitespace'
       });
     }
 
@@ -669,22 +659,10 @@ exports.submitApplication = async (req, res) => {
       });
     }
 
-    if (req.body.businessState && req.body.businessState.length > 50) {
-      return res.status(400).json({
-        message: 'Business state must be less than 50 characters'
-      });
-    }
-
     // Validate state is not just whitespace
     if (req.body.state && req.body.state.trim().length === 0) {
       return res.status(400).json({
         message: 'State cannot be just whitespace'
-      });
-    }
-
-    if (req.body.businessState && req.body.businessState.trim().length === 0) {
-      return res.status(400).json({
-        message: 'Business state cannot be just whitespace'
       });
     }
 
@@ -697,22 +675,10 @@ exports.submitApplication = async (req, res) => {
       });
     }
 
-    if (req.body.businessCity && req.body.businessCity.length > 50) {
-      return res.status(400).json({
-        message: 'Business city must be less than 50 characters'
-      });
-    }
-
     // Validate city is not just whitespace
     if (req.body.city && req.body.city.trim().length === 0) {
       return res.status(400).json({
         message: 'City cannot be just whitespace'
-      });
-    }
-
-    if (req.body.businessCity && req.body.businessCity.trim().length === 0) {
-      return res.status(400).json({
-        message: 'Business city cannot be just whitespace'
       });
     }
 
@@ -725,12 +691,6 @@ exports.submitApplication = async (req, res) => {
       });
     }
 
-    if (req.body.businessStreet && req.body.businessStreet.length > 100) {
-      return res.status(400).json({
-        message: 'Business street address must be less than 100 characters'
-      });
-    }
-
     // Validate street address is not just whitespace
     if (req.body.street && req.body.street.trim().length === 0) {
       return res.status(400).json({
@@ -738,40 +698,7 @@ exports.submitApplication = async (req, res) => {
       });
     }
 
-    if (req.body.businessStreet && req.body.businessStreet.trim().length === 0) {
-      return res.status(400).json({
-        message: 'Business street address cannot be just whitespace'
-      });
-    }
-
     console.log('Street address length validation passed');
-
-    // Validate business tax ID format based on country
-    if (req.body.businessTaxId) {
-      const taxIdValidation = {
-        'United States': /^\d{2}-\d{7}$/,
-        'Canada': /^\d{9}[A-Z]{2}$/,
-        'United Kingdom': /^\d{10}$/
-      };
-
-      if (taxIdValidation[req.body.businessCountry]) {
-        const regex = taxIdValidation[req.body.businessCountry];
-        if (!regex.test(req.body.businessTaxId)) {
-          return res.status(400).json({
-            message: `Invalid business tax ID format for ${req.body.businessCountry}`
-          });
-        }
-      }
-    }
-
-    console.log('Business tax ID validation passed');
-
-    // Validate hosting experience length if provided
-    if (req.body.hostingExperience && req.body.hostingExperience.length > 500) {
-      return res.status(400).json({
-        message: 'Hosting experience description must be less than 500 characters'
-      });
-    }
 
     // Validate hosting experience is not just whitespace if provided
     if (req.body.hostingExperience && req.body.hostingExperience.trim().length === 0) {
@@ -781,22 +708,6 @@ exports.submitApplication = async (req, res) => {
     }
 
     console.log('Hosting experience validation passed');
-
-    // Validate business name length if provided
-    if (req.body.businessName && req.body.businessName.length > 100) {
-      return res.status(400).json({
-        message: 'Business name must be less than 100 characters'
-      });
-    }
-
-    // Validate business name is not just whitespace if provided
-    if (req.body.businessName && req.body.businessName.trim().length === 0) {
-      return res.status(400).json({
-        message: 'Business name cannot be just whitespace'
-      });
-    }
-
-    console.log('Business name validation passed');
 
     // Validate address field lengths
     const addressFields = ['street', 'city', 'state'];
@@ -816,45 +727,6 @@ exports.submitApplication = async (req, res) => {
         });
       }
     }
-
-    if (req.body.businessStreet && req.body.businessStreet.length > 100) {
-      return res.status(400).json({
-        message: 'Business street address must be less than 100 characters'
-      });
-    }
-
-    if (req.body.businessCity && req.body.businessCity.length > 100) {
-      return res.status(400).json({
-        message: 'Business city must be less than 100 characters'
-      });
-    }
-
-    if (req.body.businessState && req.body.businessState.length > 100) {
-      return res.status(400).json({
-        message: 'Business state must be less than 100 characters'
-      });
-    }
-
-    // Validate business address fields are not just whitespace if provided
-    if (req.body.businessStreet && req.body.businessStreet.trim().length === 0) {
-      return res.status(400).json({
-        message: 'Business street address cannot be just whitespace'
-      });
-    }
-
-    if (req.body.businessCity && req.body.businessCity.trim().length === 0) {
-      return res.status(400).json({
-        message: 'Business city cannot be just whitespace'
-      });
-    }
-
-    if (req.body.businessState && req.body.businessState.trim().length === 0) {
-      return res.status(400).json({
-        message: 'Business state cannot be just whitespace'
-      });
-    }
-
-    console.log('Address field validation passed');
 
     // Validate ID number length
     if (req.body.idNumber && req.body.idNumber.length > 50) {
@@ -923,12 +795,6 @@ exports.submitApplication = async (req, res) => {
       });
     }
 
-    if (req.body.businessPhone && req.body.businessPhone.length > 20) {
-      return res.status(400).json({
-        message: 'Business phone number must be less than 20 characters'
-      });
-    }
-
     if (req.body.supportPhone && req.body.supportPhone.length > 20) {
       return res.status(400).json({
         message: 'Support phone number must be less than 20 characters'
@@ -937,14 +803,14 @@ exports.submitApplication = async (req, res) => {
 
     console.log('Phone number length validation passed');
 
-    // Prepare application data
-      const applicationData = {
+    // Create the host application
+      const application = new HostApplication({
         user: req.user._id,
-      // Personal Information
         firstName: req.body.firstName,
         lastName: req.body.lastName,
         email: req.body.email,
         phoneNumber: req.body.phoneNumber,
+        dateOfBirth: req.body.dateOfBirth,
         postalAddress: {
           street: req.body.street,
           city: req.body.city,
@@ -952,7 +818,6 @@ exports.submitApplication = async (req, res) => {
           postalCode: req.body.postalCode,
           country: req.body.country
         },
-        dateOfBirth: req.body.dateOfBirth,
         identityDocuments: {
           idType: req.body.idType,
           idNumber: req.body.idNumber,
@@ -960,67 +825,48 @@ exports.submitApplication = async (req, res) => {
           idBackImage: null,
           selfieImage: null
         },
-      // Business Information
-      businessName: req.body.businessName || null,
-      businessTaxId: req.body.businessTaxId || null,
-      businessAddress: req.body.businessStreet ? {
-          street: req.body.businessStreet,
-          city: req.body.businessCity,
-          state: req.body.businessState,
-          postalCode: req.body.businessPostalCode,
-          country: req.body.businessCountry
-      } : null,
-      businessPhone: req.body.businessPhone || null,
-      businessStructure: req.body.businessStructure || 'individual',
-      // Financial Information
-      ssn: req.body.ssn || null,
-      ssnLast4: req.body.ssnLast4 || null,
-      supportPhone: req.body.supportPhone || null,
-      bankAccount: req.body.bankAccountNumber ? {
+        businessStructure: 'individual', // Hardcoded - all users have individual accounts
+        ssn: req.body.ssn,
+        ssnLast4: req.body.ssnLast4,
+        supportPhone: req.body.supportPhone,
+        bankAccount: {
           accountNumber: req.body.bankAccountNumber,
           routingNumber: req.body.bankRoutingNumber,
           accountType: req.body.bankAccountType
-      } : null,
-      // Payment Methods
-      paymentMethods: {
-        stripeAccountId: req.body.stripeAccountId || undefined,
-        creditCard: req.body.creditCardLast4 ? { last4: req.body.creditCardLast4 } : undefined
         },
         propertyType: req.body.propertyType,
         propertyDescription: req.body.propertyDescription,
         hostingExperience: req.body.hostingExperience,
         status: 'pending',
         submittedAt: new Date()
-      };
+      });
 
-    console.log('Prepared application data:', JSON.stringify(applicationData, null, 2));
-
-      // Handle file uploads
+      // Update the application with uploaded file URLs
       if (req.files && Object.keys(req.files).length > 0) {
         console.log('Files received:', Object.keys(req.files));
       
-      // Validate file types
-      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+        // Validate file types
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
         
         // Handle idFrontImage
         if (req.files.idFrontImage && req.files.idFrontImage[0]) {
           try {
             const file = req.files.idFrontImage[0];
           
-          // Validate file type
-          if (!allowedTypes.includes(file.mimetype)) {
-            return res.status(400).json({
-              message: `Invalid file type for ID front image. Allowed types: ${allowedTypes.join(', ')}`
-            });
-          }
-          
-          // Validate file size (max 5MB)
-          if (file.size > 5 * 1024 * 1024) {
-            return res.status(400).json({
-              message: 'ID front image file size must be less than 5MB'
-            });
-          }
-          
+            // Validate file type
+            if (!allowedTypes.includes(file.mimetype)) {
+              return res.status(400).json({
+                message: `Invalid file type for ID front image. Allowed types: ${allowedTypes.join(', ')}`
+              });
+            }
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+              return res.status(400).json({
+                message: 'ID front image file size must be less than 5MB'
+              });
+            }
+            
             const base64String = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
             
             const result = await cloudinary.uploader.upload(base64String, {
@@ -1028,8 +874,8 @@ exports.submitApplication = async (req, res) => {
               resource_type: 'auto',
               public_id: `${req.user._id}_idFront_${Date.now()}`
             });
-            applicationData.identityDocuments.idFrontImage = result.secure_url;
-          console.log('ID front image uploaded successfully:', result.secure_url);
+            application.identityDocuments.idFrontImage = result.secure_url;
+            console.log('ID front image uploaded successfully:', result.secure_url);
           } catch (uploadError) {
             console.error('Cloudinary upload error for idFrontImage:', uploadError);
             return res.status(500).json({ 
@@ -1043,20 +889,20 @@ exports.submitApplication = async (req, res) => {
           try {
             const file = req.files.idBackImage[0];
           
-          // Validate file type
-          if (!allowedTypes.includes(file.mimetype)) {
-            return res.status(400).json({
-              message: `Invalid file type for ID back image. Allowed types: ${allowedTypes.join(', ')}`
-            });
-          }
-          
-          // Validate file size (max 5MB)
-          if (file.size > 5 * 1024 * 1024) {
-            return res.status(400).json({
-              message: 'ID back image file size must be less than 5MB'
-            });
-          }
-          
+            // Validate file type
+            if (!allowedTypes.includes(file.mimetype)) {
+              return res.status(400).json({
+                message: `Invalid file type for ID back image. Allowed types: ${allowedTypes.join(', ')}`
+              });
+            }
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+              return res.status(400).json({
+                message: 'ID back image file size must be less than 5MB'
+              });
+            }
+            
             const base64String = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
             
             const result = await cloudinary.uploader.upload(base64String, {
@@ -1064,8 +910,8 @@ exports.submitApplication = async (req, res) => {
               resource_type: 'auto',
               public_id: `${req.user._id}_idBack_${Date.now()}`
             });
-            applicationData.identityDocuments.idBackImage = result.secure_url;
-          console.log('ID back image uploaded successfully:', result.secure_url);
+            application.identityDocuments.idBackImage = result.secure_url;
+            console.log('ID back image uploaded successfully:', result.secure_url);
           } catch (uploadError) {
             console.error('Cloudinary upload error for idBackImage:', uploadError);
             return res.status(500).json({ 
@@ -1079,20 +925,20 @@ exports.submitApplication = async (req, res) => {
           try {
             const file = req.files.selfieImage[0];
           
-          // Validate file type
-          if (!allowedTypes.includes(file.mimetype)) {
-            return res.status(400).json({
-              message: `Invalid file type for selfie image. Allowed types: ${allowedTypes.join(', ')}`
-            });
-          }
-          
-          // Validate file size (max 5MB)
-          if (file.size > 5 * 1024 * 1024) {
-            return res.status(400).json({
-              message: 'Selfie image file size must be less than 5MB'
-            });
-          }
-          
+            // Validate file type
+            if (!allowedTypes.includes(file.mimetype)) {
+              return res.status(400).json({
+                message: `Invalid file type for selfie image. Allowed types: ${allowedTypes.join(', ')}`
+              });
+            }
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+              return res.status(400).json({
+                message: 'Selfie image file size must be less than 5MB'
+              });
+            }
+            
             const base64String = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
             
             const result = await cloudinary.uploader.upload(base64String, {
@@ -1100,8 +946,8 @@ exports.submitApplication = async (req, res) => {
               resource_type: 'auto',
               public_id: `${req.user._id}_selfie_${Date.now()}`
             });
-            applicationData.identityDocuments.selfieImage = result.secure_url;
-          console.log('Selfie image uploaded successfully:', result.secure_url);
+            application.identityDocuments.selfieImage = result.secure_url;
+            console.log('Selfie image uploaded successfully:', result.secure_url);
           } catch (uploadError) {
             console.error('Cloudinary upload error for selfieImage:', uploadError);
             return res.status(500).json({ 
@@ -1109,22 +955,19 @@ exports.submitApplication = async (req, res) => {
             });
           }
         }
-    }
+      }
 
-    // Verify all required files were uploaded successfully
-    if (!applicationData.identityDocuments.idFrontImage || 
-        !applicationData.identityDocuments.idBackImage || 
-        !applicationData.identityDocuments.selfieImage) {
-      return res.status(500).json({
-        message: 'Failed to upload one or more required identity documents. Please try again.'
-      });
-    }
+      // Verify all required files were uploaded successfully
+      if (!application.identityDocuments.idFrontImage || 
+          !application.identityDocuments.idBackImage || 
+          !application.identityDocuments.selfieImage) {
+        return res.status(500).json({
+          message: 'Failed to upload one or more required identity documents. Please try again.'
+        });
+      }
 
-    console.log('All files uploaded successfully');
+      console.log('All files uploaded successfully');
 
-    // Create the host application
-      const application = new HostApplication(applicationData);
-    
     try {
       await application.save();
       console.log('Host application created successfully:', application._id);
@@ -1139,8 +982,7 @@ exports.submitApplication = async (req, res) => {
     // Now create Stripe Connect Express account
     try {
       console.log('Creating Stripe Connect Express account for host:', req.user._id);
-      console.log('Business structure:', req.body.businessStructure);
-      console.log('Country:', req.body.businessCountry || req.body.country);
+      console.log('Country:', req.body.country);
 
       // Helper function to convert country name to ISO code
       const getCountryCode = (countryName) => {
@@ -1185,7 +1027,7 @@ exports.submitApplication = async (req, res) => {
         return code;
       };
 
-      const countryCode = getCountryCode(req.body.businessCountry || req.body.country);
+      const countryCode = getCountryCode(req.body.country);
       console.log('Using country code:', countryCode);
 
       // Prepare Stripe account creation parameters
@@ -1198,7 +1040,7 @@ exports.submitApplication = async (req, res) => {
           transfers: { requested: true },
           tax_reporting_us_1099_k: { requested: true },
         },
-        business_type: req.body.businessStructure === 'individual' ? 'individual' : 'company',
+        business_type: 'individual', // All users will have individual accounts
         business_profile: {
           support_phone: req.body.supportPhone || req.body.phoneNumber,
           url: null,
@@ -1219,44 +1061,28 @@ exports.submitApplication = async (req, res) => {
         },
       };
 
-      // Add company or individual details based on business structure
-      if (req.body.businessStructure !== 'individual') {
-        stripeAccountParams.company = {
-          name: req.body.businessName || `${req.body.firstName} ${req.body.lastName} Hosting Services`,
-          tax_id: req.body.businessTaxId || null,
-          phone: req.body.supportPhone || req.body.phoneNumber,
-          address: {
-            line1: req.body.businessStreet || req.body.street,
-            city: req.body.businessCity || req.body.city,
-            state: req.body.businessState || req.body.state,
-            postal_code: req.body.businessPostalCode || req.body.postalCode,
-            country: countryCode,
-          },
-          structure: req.body.businessStructure || 'individual',
-        };
-      } else {
-        stripeAccountParams.individual = {
-          first_name: req.body.firstName,
-          last_name: req.body.lastName,
-          email: req.body.email,
-          phone: req.body.supportPhone || req.body.phoneNumber,
-          dob: {
-            day: new Date(req.body.dateOfBirth).getDate(),
-            month: new Date(req.body.dateOfBirth).getMonth() + 1,
-            year: new Date(req.body.dateOfBirth).getFullYear(),
-          },
-          ssn_last_4: req.body.ssnLast4 || null,
-          id_number: req.body.ssn ? req.body.ssn.replace(/[^0-9]/g, '') : null,
-          address: {
-            line1: req.body.street,
-            city: req.body.city,
-            state: req.body.state,
-            postal_code: req.body.postalCode,
-            country: countryCode,
-          },
-        };
-      }
-
+      // All users will have individual accounts - business information is optional
+      stripeAccountParams.individual = {
+        first_name: req.body.firstName,
+        last_name: req.body.lastName,
+        email: req.body.email,
+        phone: req.body.supportPhone || req.body.phoneNumber,
+        dob: {
+          day: new Date(req.body.dateOfBirth).getDate(),
+          month: new Date(req.body.dateOfBirth).getMonth() + 1,
+          year: new Date(req.body.dateOfBirth).getFullYear(),
+        },
+        ssn_last_4: req.body.ssnLast4 || null,
+        id_number: req.body.ssn ? req.body.ssn.replace(/[^0-9]/g, '') : null,
+        address: {
+          line1: req.body.street,
+          city: req.body.city,
+          state: req.body.state,
+          postal_code: req.body.postalCode,
+          country: countryCode,
+        },
+      };
+      
       console.log('Stripe account creation parameters:', JSON.stringify(stripeAccountParams, null, 2));
 
       // Validate Stripe account parameters
@@ -1264,12 +1090,8 @@ exports.submitApplication = async (req, res) => {
         throw new Error('Missing required Stripe account parameters: country and email are required');
       }
 
-      if (stripeAccountParams.business_type === 'company' && !stripeAccountParams.company) {
-        throw new Error('Company information is required when business_type is company');
-      }
-
       if (stripeAccountParams.business_type === 'individual' && !stripeAccountParams.individual) {
-        throw new Error('Individual information is required when business_type is individual');
+        throw new Error('Individual information is required for individual account type');
       }
 
       console.log('Stripe account parameters validated successfully');
@@ -1476,10 +1298,7 @@ exports.approveApplication = async (req, res) => {
     const userUpdateData = {
       role: 'host',
       hostProfile: {
-        businessName: application.businessName,
-        businessTaxId: application.businessTaxId,
-        businessAddress: application.businessAddress,
-        businessPhone: application.businessPhone,
+        businessStructure: 'individual', // Hardcoded - all users have individual accounts
         ssnLast4: application.ssnLast4,
         bankAccount: application.bankAccount,
         stripeConnectAccountId: application.stripeConnect.accountId,
@@ -1594,9 +1413,7 @@ exports.refreshStripeAccountStatus = async (req, res) => {
     }
     
     // Get current account status from Stripe using Connect API
-    const account = await stripe.accounts.retrieve(application.stripeConnect.accountId, {
-      stripeAccount: application.stripeConnect.accountId
-    });
+    const account = await stripe.accounts.retrieve(application.stripeConnect.accountId);
     
     // Update application status
     application.stripeConnect.accountStatus = account.charges_enabled && account.payouts_enabled ? 'active' : 'pending';
@@ -1635,9 +1452,7 @@ exports.getStripeSetupStatus = async (req, res) => {
     }
     
     // Get current account status from Stripe using Connect API
-    const account = await stripe.accounts.retrieve(application.stripeConnect.accountId, {
-      stripeAccount: application.stripeConnect.accountId
-    });
+    const account = await stripe.accounts.retrieve(application.stripeConnect.accountId);
     
     // For existing hosts, we need to create a fresh onboarding link
     let onboardingUrl = null;
@@ -1647,8 +1462,6 @@ exports.getStripeSetupStatus = async (req, res) => {
         refresh_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/host-application-status`,
         return_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/host-application-status`,
         type: 'account_onboarding',
-      }, {
-        stripeAccount: application.stripeConnect.accountId
       });
       onboardingUrl = accountLink.url;
     } catch (onboardingError) {
@@ -1724,9 +1537,7 @@ exports.createStripeLoginLink = async (req, res) => {
     }
     
     // Create a login link to the host's Stripe dashboard using Connect API
-    const loginLink = await stripe.accounts.createLoginLink(application.stripeConnect.accountId, {
-      stripeAccount: application.stripeConnect.accountId
-    });
+    const loginLink = await stripe.accounts.createLoginLink(application.stripeConnect.accountId);
     
     res.json({ 
       message: 'Stripe dashboard login link created',

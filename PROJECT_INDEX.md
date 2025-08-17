@@ -57,7 +57,7 @@ const account = await stripe.accounts.create({
 #### Account Types
 - **Express Accounts**: Simplified onboarding for hosts
 - **Automatic Payouts**: Platform handles transfers to host accounts
-- **Manual Payout Schedule**: Controlled by platform payout scheduler
+- **Automatic Capture**: Payments are automatically captured and transferred
 
 #### Account Status Tracking
 ```javascript
@@ -74,18 +74,13 @@ stripeConnect: {
 #### Guest Payment Process
 1. Guest selects property and dates
 2. Stripe Checkout session created with `transfer_data`
-3. Payment captured and transferred to host's Stripe Connect account
+3. Payment automatically captured and transferred to host's Stripe Connect account
 4. Platform fee (10%) automatically deducted
-
-#### Payout Scheduler
-- **`payoutScheduler.js`**: Automated service for processing payouts
-- Runs every 15 minutes to check completed bookings
-- Transfers funds to host Stripe Connect accounts
 
 #### Webhook Processing
 - **`server.js`**: Handles Stripe webhooks
 - Processes `checkout.session.completed` events
-- Updates booking status and initiates payouts
+- Updates booking status and payment records
 
 ### 4. API Endpoints
 
@@ -201,7 +196,6 @@ CLOUDINARY_API_SECRET=your_api_secret
 #### Stripe Error Handling
 - Account creation failures
 - Webhook signature verification
-- Payment capture errors
 - Transfer failures
 
 #### Application Status Tracking
@@ -229,7 +223,7 @@ npm start
 - Use Stripe test keys for development
 - Test webhook endpoints with Stripe CLI
 - Verify Connect account creation flow
-- Test payment and payout scenarios
+- Test payment scenarios
 
 ## Key Files Summary
 
@@ -242,7 +236,6 @@ npm start
 ### Backend
 - `hostApplicationController.js` - Core business logic
 - `server.js` - Stripe webhook handling
-- `payoutScheduler.js` - Automated payout processing
 - `HostApplication.js` - Data model
 - `hostApplications.js` - API routes
 
@@ -258,6 +251,6 @@ npm start
 3. **Document Management**: ID verification and business documents
 4. **Admin Workflow**: Application review and approval process
 5. **Notification System**: Email and in-app notifications
-6. **Payout Automation**: Scheduled transfers to host accounts
+6. **Payout Automation**: Automatic transfers to host accounts
 
 This architecture provides a complete Stripe-integrated hosting platform with automated payouts, secure identity verification, and comprehensive admin management tools. 

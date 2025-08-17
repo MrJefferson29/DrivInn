@@ -742,9 +742,8 @@ const AdminHostApplicationsPanel = () => {
             
             <TableCell>
               <div>
-                <div><strong>Business:</strong> {application.businessName || 'Individual'}</div>
-                <div><strong>Structure:</strong> {application.businessStructure || 'N/A'}</div>
-                <div><strong>Tax ID:</strong> {application.businessTaxId || 'N/A'}</div>
+                <div><strong>Account Type:</strong> Individual</div>
+                <div><strong>Structure:</strong> Individual</div>
               </div>
             </TableCell>
             
@@ -835,11 +834,8 @@ const AdminHostApplicationsPanel = () => {
                   <p>{selectedApplication.postalAddress?.street}, {selectedApplication.postalAddress?.city}, {selectedApplication.postalAddress?.state} {selectedApplication.postalAddress?.postalCode}, {selectedApplication.postalAddress?.country}</p>
                   
                   <h4>Business Information</h4>
-                  <p><strong>Business Name:</strong> {selectedApplication.businessName || 'Individual (no business name)'}</p>
-                  <p><strong>Business Tax ID:</strong> {selectedApplication.businessTaxId || 'Not provided'}</p>
-                  <p><strong>Business Structure:</strong> {selectedApplication.businessStructure || 'Individual'}</p>
-                  <p><strong>Business Address:</strong> {selectedApplication.businessAddress?.street ? `${selectedApplication.businessAddress.street}, ${selectedApplication.businessAddress.city}, ${selectedApplication.businessAddress.state} ${selectedApplication.businessAddress.postalCode}, ${selectedApplication.businessAddress.country}` : 'Same as personal address'}</p>
-                  <p><strong>Business Phone:</strong> {selectedApplication.businessPhone || 'Same as personal phone'}</p>
+                  <p><strong>Account Type:</strong> Individual</p>
+                  <p><strong>Structure:</strong> Individual</p>
                   
                   <h4>Financial Information</h4>
                   <p><strong>SSN Last 4:</strong> {selectedApplication.ssnLast4 ? '****' : 'Not provided'}</p>
@@ -864,7 +860,7 @@ const AdminHostApplicationsPanel = () => {
                       <p><strong>Onboarding Completed:</strong> {selectedApplication.stripeConnect.onboardingCompleted ? 'Yes' : 'No'}</p>
                     </>
                   )}
-          </div>
+                </div>
               )}
               
               {modalType === 'approve' && (
@@ -874,7 +870,7 @@ const AdminHostApplicationsPanel = () => {
                   <p>This will grant the user host privileges and allow them to create listings.</p>
                   <p><strong>Note:</strong> You must provide a Stripe remediation link for the user to complete their account setup.</p>
                   
-              <FormGroup>
+                  <FormGroup>
                     <Label>Admin Note (Optional)</Label>
                     <TextArea
                       value={adminNote}
@@ -884,9 +880,9 @@ const AdminHostApplicationsPanel = () => {
                     <small style={{ color: '#6c757d', fontSize: '0.85rem' }}>
                       Note: Stripe Connect account is created when the user submits their application. You can find the account in your Stripe dashboard.
                     </small>
-              </FormGroup>
+                  </FormGroup>
 
-              <FormGroup>
+                  <FormGroup>
                     <Label>Stripe Remediation Link (Required)</Label>
                     <TextArea
                       value={stripeRemediationLink}
@@ -902,22 +898,22 @@ const AdminHostApplicationsPanel = () => {
                       <br /><br />
                       <strong>Note:</strong> The user will need this link to complete their Stripe Connect account setup and start receiving payments.
                     </small>
-              </FormGroup>
+                  </FormGroup>
                 </div>
               )}
 
               {modalType === 'decline' && (
                 <div>
                   <p>Please provide a reason for declining this application:</p>
-                <FormGroup>
+                  <FormGroup>
                     <Label>Admin Note (Required)</Label>
-                  <TextArea
-                    value={adminNote}
+                    <TextArea
+                      value={adminNote}
                       onChange={(e) => setAdminNote(e.target.value)}
                       placeholder="Provide a reason for declining the application..."
                       required
-                  />
-                </FormGroup>
+                    />
+                  </FormGroup>
                 </div>
               )}
             </ModalBody>
@@ -956,4 +952,4 @@ const AdminHostApplicationsPanel = () => {
   );
 };
 
-export default AdminHostApplicationsPanel; 
+export default AdminHostApplicationsPanel;

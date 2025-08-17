@@ -20,21 +20,21 @@ require('./models/notification');
 require('./models/chat');
 require('./models/review');
 
-// Import payout scheduler
-const { startPayoutScheduler, runInitialPayoutCheck } = require('./services/payoutScheduler');
+// Import booking status scheduler
+const { startBookingStatusScheduler, runInitialStatusCheck } = require('./services/bookingStatusScheduler');
 
 dotenv.config({ path: './.env' });
 
 const app = express();
 connectDB();
 
-// Start payout scheduler after database connection
+// Start schedulers after database connection
 connectDB().then(() => {
-  console.log('🚀 Starting payout scheduler...');
-  startPayoutScheduler();
-  runInitialPayoutCheck();
+  console.log('🚀 Starting booking status scheduler...');
+  startBookingStatusScheduler();
+  runInitialStatusCheck();
 }).catch(err => {
-  console.error('❌ Failed to start payout scheduler:', err);
+  console.error('❌ Failed to start schedulers:', err);
 });
 
 // Passport configuration
@@ -119,9 +119,11 @@ app.post(
 
           console.log('✅ Found host application with Stripe Connect account:', hostApplication.stripeConnect.accountId);
 
-          // Update booking status to reserved
+          // Update booking status to reserved since payment is completed
+          // Also update paymentStatus to completed
           const updatedBooking = await Booking.findByIdAndUpdate(booking._id, {
             status: 'reserved',
+            paymentStatus: 'completed',
             updatedAt: new Date()
           }, { new: true });
 
@@ -130,73 +132,25 @@ app.post(
           // Find and update payment record
           const payment = await Payment.findOne({ stripeSessionId: session.id });
           if (payment) {
-            // Capture payment with transfer_data to enable automatic payout
-            try {
-              console.log('💳 Capturing payment with transfer_data for automatic payout...');
-              
-              const paymentIntent = await stripe.paymentIntents.capture(
-                session.payment_intent,
-                {
-                  stripeAccount: hostApplication.stripeConnect.accountId
-                }
-              );
+            // Payment is automatically captured and transferred to host
+            // Update payment status to completed
+            const updatedPayment = await Payment.findByIdAndUpdate(payment._id, {
+              status: 'completed',
+              transactionId: session.payment_intent,
+              stripePaymentIntentId: session.payment_intent,
+              payoutMethod: 'stripe_connect',
+              payoutStatus: 'completed',
+              payoutCompletedAt: new Date(),
+              completedAt: new Date(),
+              metadata: {
+                ...payment.metadata,
+                stripeSessionId: session.id,
+                paymentIntentId: session.payment_intent,
+                webhookProcessed: true
+              }
+            }, { new: true });
 
-              console.log('✅ Payment captured with transfer_data successfully:', paymentIntent.id);
-              console.log('💸 Transfer ID:', paymentIntent.latest_charge?.transfer);
-
-              // Update payment with transfer details
-              const updatedPayment = await Payment.findByIdAndUpdate(payment._id, {
-                status: 'completed',
-                transactionId: paymentIntent.id,
-                stripePaymentIntentId: session.payment_intent,
-                payoutMethod: 'stripe_connect',
-                payoutStatus: 'completed',
-                stripeTransferId: paymentIntent.latest_charge?.transfer,
-                payoutCompletedAt: new Date(),
-                completedAt: new Date(),
-                transferStatus: 'completed',
-                transferCompletedAt: new Date(),
-                metadata: {
-                  ...payment.metadata,
-                  stripeSessionId: session.id,
-                  paymentIntentId: session.payment_intent,
-                  webhookProcessed: true,
-                  transferProcessed: true,
-                  transferId: paymentIntent.latest_charge?.transfer
-                }
-              }, { new: true });
-
-              console.log('✅ Payment updated with transfer details:', updatedPayment._id);
-              console.log('💸 Automatic payout to host completed successfully');
-
-            } catch (captureError) {
-              console.error('❌ Error capturing payment with transfer_data:', captureError);
-              
-              // Update payment status to failed
-              await Payment.findByIdAndUpdate(payment._id, {
-                status: 'failed',
-                payoutStatus: 'failed',
-                payoutFailureReason: 'Transfer capture failed',
-                payoutFailureDetails: captureError.message,
-                failedAt: new Date(),
-                transferStatus: 'failed',
-                metadata: {
-                  ...payment.metadata,
-                  webhookProcessed: true,
-                  transferProcessed: false,
-                  transferError: captureError.message
-                }
-              });
-
-              // Update booking status to payment failed
-              await Booking.findByIdAndUpdate(booking._id, {
-                status: 'payment_failed',
-                paymentFailureReason: 'Transfer capture failed',
-                updatedAt: new Date()
-              });
-
-              console.error('❌ Payment capture failed, booking marked as payment_failed');
-            }
+            console.log('✅ Payment updated to completed status:', updatedPayment._id);
           }
 
           // Send notification to host about new booking
@@ -280,6 +234,7 @@ app.post(
             if (booking) {
               await Booking.findByIdAndUpdate(booking._id, {
                 status: 'cancelled',
+                paymentStatus: 'failed',
                 updatedAt: new Date()
               });
               console.log('✅ Booking status updated to cancelled due to payment failure');

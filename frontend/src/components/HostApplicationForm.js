@@ -2,30 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { hostApplicationsAPI } from '../services/api';
-import styled from 'styled-components';
-import { 
-  FaArrowLeft, 
-  FaUser, 
-  FaPhone, 
-  FaMapMarkerAlt, 
-  FaCalendarAlt,
-  FaIdCard,
-  FaHome,
-  FaCamera,
-  FaCheck,
-  FaSpinner,
-  FaInfoCircle,
-  FaFileAlt,
-  FaCreditCard,
-  FaBuilding,
-  FaCheckCircle,
-  FaEye,
-  FaStar,
-  FaEnvelope
-} from 'react-icons/fa';
-import { Spinner, Alert } from 'react-bootstrap';
+import styled, { keyframes } from 'styled-components';
+import { FaCheckCircle, FaEye, FaHome, FaIdCard, FaBuilding, FaCreditCard, FaCheck, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaFileAlt, FaStar, FaInfoCircle, FaCamera } from 'react-icons/fa';
 
-// Airbnb-style Container with clean background
+// Airbnb-style Host Application Form Components
 const Container = styled.div`
   min-height: 100vh;
   background: #ffffff;
@@ -33,205 +13,76 @@ const Container = styled.div`
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 `;
 
-// Airbnb-style Header with clean design
-const Header = styled.div`
+const AirbnbCard = styled.div`
   max-width: 1120px;
   margin: 0 auto;
-  padding: 24px 80px;
+  background: #ffffff;
+  border-radius: 0;
+`;
+
+const StickyStepper = styled.div`
+  position: sticky;
+  top: 0;
+  background: #ffffff;
+  z-index: 100;
   border-bottom: 1px solid #ebebeb;
+`;
+
+const StepperBar = styled.div`
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 24px;
-  
-  @media (max-width: 1024px) {
-    padding: 24px 40px;
-  }
-  
-  @media (max-width: 768px) {
-    padding: 20px 24px;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 16px 20px;
-    gap: 12px;
-  }
-`;
-
-// Airbnb-style Back Button
-const BackButton = styled.button`
-  background: transparent;
-  border: none;
-  color: #222222;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: color 0.2s ease;
-  
-  &:hover {
-    color: #717171;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 15px;
-  }
-`;
-
-// Airbnb-style Title
-const Title = styled.h1`
-  font-size: 32px;
-  font-weight: 600;
-  color: #222222;
-  margin: 0;
-  line-height: 1.2;
-  
-  @media (max-width: 768px) {
-    font-size: 28px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 24px;
-  }
-`;
-
-// Airbnb-style Form Card
-const FormCard = styled.div`
-  max-width: 1120px;
-  margin: 0 auto;
-  background: #ffffff;
-  padding: 0;
-`;
-
-// Airbnb-style Progress Bar
-const ProgressBar = styled.div`
-  display: flex;
-  background: #ffffff;
   padding: 32px 80px;
-  border-bottom: 1px solid #ebebeb;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #ebebeb;
+    z-index: 1;
+  }
   
   @media (max-width: 1024px) {
     padding: 32px 40px;
   }
-  
   @media (max-width: 768px) {
-    padding: 24px 24px;
-    overflow-x: auto;
+    padding: 32px 24px;
+    gap: 16px;
   }
-  
   @media (max-width: 480px) {
-    padding: 20px 20px;
+    padding: 32px 16px;
+    gap: 12px;
   }
 `;
 
-// Airbnb-style Step Indicator
-const StepIndicator = styled.div`
-  flex: 1;
-  text-align: center;
-  position: relative;
-  min-width: 140px;
-  
-  &:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 60%;
-    width: 80%;
-    height: 2px;
-    background: ${props => props.active ? '#222222' : '#ebebeb'};
-    transform: translateY(-50%);
-    z-index: 1;
-  }
-  
-  @media (max-width: 768px) {
-    min-width: 120px;
-    
-    &:not(:last-child)::after {
-      left: 55%;
-      width: 90%;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    min-width: 100px;
-    
-    &:not(:last-child)::after {
-      left: 50%;
-      width: 100%;
-    }
-  }
-`;
-
-// Airbnb-style Step Circle
-const StepCircle = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: ${props => props.active ? '#222222' : '#ffffff'};
-  color: ${props => props.active ? '#ffffff' : '#717171'};
-  border: 2px solid ${props => props.active ? '#222222' : '#ebebeb'};
+const StepperItem = styled.div`
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  margin: 0 auto 12px;
   position: relative;
   z-index: 2;
-  transition: all 0.2s ease;
-  
-  @media (max-width: 768px) {
-    width: 36px;
-    height: 36px;
-    margin-bottom: 10px;
-  }
-  
-  @media (max-width: 480px) {
-    width: 32px;
-    height: 32px;
-    margin-bottom: 8px;
-  }
+  opacity: ${props => props.active ? 1 : 0.6};
+  transition: opacity 0.2s ease;
 `;
 
-// Airbnb-style Step Label
-const StepLabel = styled.div`
-  font-size: 14px;
-  font-weight: 500;
-  color: ${props => props.active ? '#222222' : '#717171'};
-  transition: color 0.2s ease;
-  
-  @media (max-width: 768px) {
-    font-size: 13px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 12px;
-  }
-`;
-
-// Airbnb-style Form Content
-const FormContent = styled.div`
+const Section = styled.div`
   padding: 48px 80px;
-  
   @media (max-width: 1024px) {
-    padding: 40px 40px;
+    padding: 48px 40px;
   }
-  
   @media (max-width: 768px) {
     padding: 32px 24px;
   }
-  
   @media (max-width: 480px) {
-    padding: 24px 20px;
+    padding: 24px 16px;
   }
 `;
 
-// Airbnb-style Step Title
-const StepTitle = styled.h2`
+const SectionHeader = styled.h2`
   font-size: 26px;
   font-weight: 600;
   color: #222222;
@@ -239,367 +90,62 @@ const StepTitle = styled.h2`
   display: flex;
   align-items: center;
   gap: 12px;
-  
   @media (max-width: 768px) {
     font-size: 24px;
     gap: 10px;
   }
-  
   @media (max-width: 480px) {
     font-size: 22px;
     gap: 8px;
   }
 `;
 
-// Airbnb-style Step Subtitle
-const StepSubtitle = styled.p`
+const SectionSub = styled.p`
   font-size: 16px;
   color: #717171;
   margin-bottom: 40px;
   line-height: 1.5;
-  
   @media (max-width: 768px) {
     font-size: 15px;
     margin-bottom: 32px;
   }
-  
   @media (max-width: 480px) {
     font-size: 14px;
     margin-bottom: 24px;
   }
 `;
 
-// Airbnb-style Form Grid
-const FormGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
-  margin-bottom: 40px;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 20px;
-    margin-bottom: 32px;
-  }
-  
-  @media (max-width: 480px) {
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-`;
-
-// Airbnb-style Form Group
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-// Airbnb-style Label
-const Label = styled.label`
-  font-weight: 600;
-  color: #222222;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  
-  @media (max-width: 768px) {
-    font-size: 15px;
-    gap: 6px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 14px;
-    gap: 5px;
-  }
-`;
-
-// Airbnb-style Required Field indicator
-const RequiredField = styled.span`
-  color: #ff385c;
-  font-weight: 600;
-  font-size: 16px;
-  
-  @media (max-width: 480px) {
-    font-size: 15px;
-  }
-`;
-
-// Airbnb-style Input Fields
-const Input = styled.input`
-  padding: 16px 20px;
-  border: 1px solid #b0b0b0;
-  border-radius: 8px;
-  font-size: 16px;
-  transition: all 0.2s ease;
-  background: #ffffff;
-  color: #222222;
-  
-  &:focus {
-    outline: none;
-    border-color: #222222;
-    box-shadow: 0 0 0 2px rgba(34, 34, 34, 0.1);
-  }
-  
-  &:hover {
-    border-color: #717171;
-  }
-  
-  &::placeholder {
-    color: #b0b0b0;
-  }
-  
-  @media (max-width: 768px) {
-    padding: 14px 18px;
-    font-size: 15px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 12px 16px;
-    font-size: 14px;
-    border-radius: 6px;
-  }
-`;
-
-// Airbnb-style Select
-const Select = styled.select`
-  padding: 16px 20px;
-  border: 1px solid #b0b0b0;
-  border-radius: 8px;
-  font-size: 16px;
-  background: #ffffff;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: #222222;
-  
-  &:focus {
-    outline: none;
-    border-color: #222222;
-    box-shadow: 0 0 0 2px rgba(34, 34, 34, 0.1);
-  }
-  
-  &:hover {
-    border-color: #717171;
-  }
-  
-  @media (max-width: 768px) {
-    padding: 14px 18px;
-    font-size: 15px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 12px 16px;
-    font-size: 14px;
-    border-radius: 6px;
-  }
-`;
-
-// Airbnb-style TextArea
-const TextArea = styled.textarea`
-  padding: 16px 20px;
-  border: 1px solid #b0b0b0;
-  border-radius: 8px;
-  font-size: 16px;
-  resize: vertical;
-  min-height: 120px;
-  transition: all 0.2s ease;
-  background: #ffffff;
-  color: #222222;
-  font-family: inherit;
-  
-  &:focus {
-    outline: none;
-    border-color: #222222;
-    box-shadow: 0 0 0 2px rgba(34, 34, 34, 0.1);
-  }
-  
-  &:hover {
-    border-color: #717171;
-  }
-  
-  &::placeholder {
-    color: #b0b0b0;
-  }
-  
-  @media (max-width: 768px) {
-    padding: 14px 18px;
-    font-size: 15px;
-    min-height: 100px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 12px 16px;
-    font-size: 14px;
-    min-height: 80px;
-    border-radius: 6px;
-  }
-`;
-
-// Airbnb-style File Upload Area
-const FileUploadArea = styled.div`
-  border: 2px dashed #b0b0b0;
-  border-radius: 8px;
-  padding: 40px 24px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background: #fafafa;
-  
-  &:hover {
-    border-color: #222222;
-    background: #f5f5f5;
-  }
-  
-  &.has-file {
-    border-color: #00a699;
-    background: #f0f9f8;
-    border-style: solid;
-  }
-  
-  @media (max-width: 768px) {
-    padding: 32px 20px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 24px 16px;
-  }
-`;
-
-// Airbnb-style File Upload Icon
-const FileUploadIcon = styled(FaCamera)`
-  font-size: 32px;
-  color: #717171;
-  margin-bottom: 16px;
-  transition: color 0.2s ease;
-  
-  @media (max-width: 768px) {
-    font-size: 28px;
-    margin-bottom: 12px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 24px;
-    margin-bottom: 10px;
-  }
-`;
-
-// Airbnb-style File Upload Text
-const FileUploadText = styled.div`
-  font-weight: 600;
-  color: #222222;
-  margin-bottom: 8px;
-  font-size: 16px;
-  
-  @media (max-width: 768px) {
-    font-size: 15px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 14px;
-  }
-`;
-
-// Airbnb-style File Upload Hint
-const FileUploadHint = styled.div`
-  font-size: 14px;
-  color: #717171;
-  margin-top: 8px;
-  
-  @media (max-width: 768px) {
-    font-size: 13px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 12px;
-  }
-`;
-
-// Airbnb-style File Preview
-const FilePreview = styled.div`
-  margin-top: 16px;
-  padding: 16px;
-  background: #f0f9f8;
-  border-radius: 8px;
-  border: 1px solid #00a699;
-  
-  @media (max-width: 768px) {
-    padding: 14px;
-    margin-top: 14px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 12px;
-    margin-top: 12px;
-  }
-`;
-
-// Airbnb-style File Name
-const FileName = styled.div`
-  font-weight: 600;
-  color: #222222;
-  margin-bottom: 6px;
-  font-size: 14px;
-  
-  @media (max-width: 480px) {
-    font-size: 13px;
-  }
-`;
-
-// Airbnb-style File Size
-const FileSize = styled.div`
-  font-size: 13px;
-  color: #717171;
-  
-  @media (max-width: 480px) {
-    font-size: 12px;
-  }
-`;
-
-// Hidden File Input
-const HiddenFileInput = styled.input`
-  display: none;
-`;
-
-// Airbnb-style Step Navigation
-const StepNavigation = styled.div`
+const NavBar = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 32px 80px;
-  background: #ffffff;
+  margin-top: 48px;
+  padding-top: 32px;
   border-top: 1px solid #ebebeb;
-  
-  @media (max-width: 1024px) {
-    padding: 32px 40px;
-  }
-  
   @media (max-width: 768px) {
-    padding: 24px 24px;
     flex-direction: column;
     gap: 16px;
+    margin-top: 32px;
+    padding-top: 24px;
   }
-  
   @media (max-width: 480px) {
-    padding: 20px 20px;
     gap: 12px;
   }
 `;
 
-// Airbnb-style Step Button
-const StepButton = styled.button`
+const NavButton = styled.button`
   padding: 14px 24px;
   border: 1px solid #222222;
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
+  background: #ffffff;
+  color: #222222;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #ffffff;
-  color: #222222;
   
   &:hover {
     background: #222222;
@@ -608,40 +154,211 @@ const StepButton = styled.button`
   
   &:disabled {
     opacity: 0.5;
-    cursor: not-allowed;
     background: #f5f5f5;
     color: #b0b0b0;
     border-color: #ebebeb;
-  }
-  
-  @media (max-width: 768px) {
-    padding: 12px 20px;
-    font-size: 15px;
-    gap: 6px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 10px 18px;
-    font-size: 14px;
-    gap: 5px;
-    border-radius: 6px;
+    cursor: not-allowed;
   }
 `;
 
-// Airbnb-style Submit Button
-const SubmitButton = styled.button`
+const FieldsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+`;
+
+const FieldGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const Label = styled.label`
+  font-weight: 700;
+  color: #222;
+  font-size: 1rem;
+  margin-bottom: 2px;
+`;
+
+const RequiredField = styled.span`
+  color: #ff385c;
+  font-weight: 600;
+  font-size: 16px;
+`;
+
+const Input = styled.input`
+  padding: 14px 18px;
+  border: 1.5px solid #FFB800;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fff;
+  color: #222;
+  &:focus {
+    outline: none;
+    border-color: #FF385C;
+    box-shadow: 0 0 0 2px rgba(255,56,92,0.09);
+  }
+`;
+
+const Select = styled.select`
+  padding: 14px 18px;
+  border: 1.5px solid #FFB800;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fff;
+  color: #222;
+  &:focus {
+    outline: none;
+    border-color: #FF385C;
+    box-shadow: 0 0 0 2px rgba(255,56,92,0.09);
+  }
+`;
+
+const TextArea = styled.textarea`
+  padding: 14px 18px;
+  border: 1.5px solid #FFB800;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fff;
+  color: #222;
+  resize: vertical;
+  min-height: 100px;
+  &:focus {
+    outline: none;
+    border-color: #FF385C;
+    box-shadow: 0 0 0 2px rgba(255,56,92,0.09);
+  }
+`;
+
+const FileUploadArea = styled.div`
+  border: 2px dashed #b0b0b0;
+  border-radius: 8px;
+  padding: 40px 24px;
+  text-align: center;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: #222222;
+    background: #f5f5f5;
+  }
+  
+  ${props => props.hasFile && `
+    border-color: #00a699;
+    background: #f0f9f8;
+  `}
+`;
+
+const FileUploadIcon = styled.div`
+  font-size: 32px;
+  color: #717171;
+  margin-bottom: 16px;
+  transition: color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const FileUploadText = styled.div`
+  font-size: 16px;
+  font-weight: 600;
+  color: #222222;
+  margin-bottom: 8px;
+`;
+
+const FileUploadHint = styled.div`
+  font-size: 14px;
+  color: #717171;
+  margin-top: 8px;
+`;
+
+const FilePreview = styled.div`
+  margin-top: 16px;
+  padding: 16px;
+  background: #f0f9f8;
+  border-radius: 8px;
+  border: 1px solid #00a699;
+`;
+
+const FileName = styled.div`
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #222222;
+`;
+
+const FileSize = styled.div`
+  font-size: 13px;
+  color: #717171;
+`;
+
+const StepNavigation = styled.div`
+  padding: 32px 80px;
+  background: #ffffff;
+  border-top: 1px solid #ebebeb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  @media (max-width: 1024px) {
+    padding: 32px 40px;
+  }
+  @media (max-width: 768px) {
+    padding: 32px 24px;
+    flex-direction: column;
+    gap: 16px;
+  }
+  @media (max-width: 480px) {
+    padding: 24px 16px;
+  }
+`;
+
+const StepButton = styled.button`
   padding: 14px 24px;
-  border: none;
+  border: 1px solid #222222;
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
+  background: #ffffff;
+  color: #222222;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   gap: 8px;
+  
+  &:hover {
+    background: #222222;
+    color: #ffffff;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    background: #f5f5f5;
+    color: #b0b0b0;
+    border-color: #ebebeb;
+    cursor: not-allowed;
+  }
+`;
+
+const SubmitButton = styled.button`
+  padding: 14px 24px;
+  border: 1px solid #ff385c;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
   background: #ff385c;
   color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   
   &:hover {
     background: #e31c5f;
@@ -649,25 +366,13 @@ const SubmitButton = styled.button`
   
   &:disabled {
     opacity: 0.5;
+    background: #f5f5f5;
+    color: #b0b0b0;
+    border-color: #ebebeb;
     cursor: not-allowed;
-    background: #b0b0b0;
-  }
-  
-  @media (max-width: 768px) {
-    padding: 12px 20px;
-    font-size: 15px;
-    gap: 6px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 10px 18px;
-    font-size: 14px;
-    gap: 5px;
-    border-radius: 6px;
   }
 `;
 
-// Airbnb-style Info Box
 const InfoBox = styled.div`
   background: #f7f7f7;
   border: 1px solid #ebebeb;
@@ -677,139 +382,62 @@ const InfoBox = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  
-  @media (max-width: 768px) {
-    padding: 18px;
-    margin-bottom: 24px;
-    gap: 10px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 16px;
-    margin-bottom: 20px;
-    gap: 8px;
-    flex-direction: column;
-    text-align: center;
-  }
 `;
 
-// Airbnb-style Info Icon
-const InfoIcon = styled(FaInfoCircle)`
+const InfoIcon = styled.div`
   color: #717171;
   font-size: 18px;
   margin-top: 2px;
-  flex-shrink: 0;
-  
-  @media (max-width: 480px) {
-    margin-top: 0;
-    margin-bottom: 6px;
-  }
 `;
 
-// Airbnb-style Info Text
 const InfoText = styled.div`
   color: #717171;
   font-size: 14px;
   line-height: 1.5;
-  
-  @media (max-width: 768px) {
-    font-size: 13px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 12px;
-  }
 `;
 
-// Airbnb-style Success Container
+const HiddenFileInput = styled.input`
+  display: none;
+`;
+
 const SuccessContainer = styled.div`
-  text-align: center;
   padding: 80px 24px;
+  text-align: center;
   max-width: 600px;
   margin: 0 auto;
-  
-  @media (max-width: 768px) {
-    padding: 60px 20px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 40px 16px;
-  }
 `;
 
-// Airbnb-style Success Icon
 const SuccessIcon = styled.div`
   font-size: 64px;
   color: #00a699;
   margin-bottom: 32px;
-  
-  @media (max-width: 768px) {
-    font-size: 56px;
-    margin-bottom: 24px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 48px;
-    margin-bottom: 20px;
-  }
 `;
 
-// Airbnb-style Success Title
-const SuccessTitle = styled.h1`
+const SuccessTitle = styled.h2`
   font-size: 32px;
   font-weight: 600;
   color: #222222;
   margin: 0 0 16px 0;
   line-height: 1.2;
-  
-  @media (max-width: 768px) {
-    font-size: 28px;
-    margin-bottom: 14px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 24px;
-    margin-bottom: 12px;
-  }
 `;
 
-// Airbnb-style Success Message
 const SuccessMessage = styled.p`
   font-size: 16px;
   color: #717171;
   margin: 0 0 40px 0;
   line-height: 1.5;
-  
-  @media (max-width: 768px) {
-    font-size: 15px;
-    margin-bottom: 32px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 14px;
-    margin-bottom: 24px;
-  }
 `;
 
-// Airbnb-style Action Buttons
 const ActionButtons = styled.div`
   display: flex;
   gap: 16px;
   justify-content: center;
-  flex-wrap: wrap;
-  
-  @media (max-width: 768px) {
-    gap: 12px;
-  }
-  
   @media (max-width: 480px) {
-    gap: 10px;
     flex-direction: column;
     align-items: center;
   }
 `;
 
-// Airbnb-style Action Button
 const ActionButton = styled.button`
   display: flex;
   align-items: center;
@@ -819,53 +447,25 @@ const ActionButton = styled.button`
   border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
   background: #ffffff;
   color: #222222;
+  cursor: pointer;
+  transition: all 0.2s ease;
   
   &:hover {
     background: #222222;
     color: #ffffff;
   }
-  
-  @media (max-width: 768px) {
-    padding: 12px 20px;
-    font-size: 15px;
-    gap: 6px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 10px 18px;
-    font-size: 14px;
-    gap: 5px;
-    border-radius: 6px;
-    width: 100%;
-    max-width: 280px;
-    justify-content: center;
-  }
 `;
 
-// Airbnb-style Review Section
 const ReviewSection = styled.div`
   background: #f7f7f7;
   border-radius: 8px;
   padding: 32px;
   margin-bottom: 32px;
   border: 1px solid #ebebeb;
-  
-  @media (max-width: 768px) {
-    padding: 24px;
-    margin-bottom: 24px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 20px;
-    margin-bottom: 20px;
-  }
 `;
 
-// Airbnb-style Review Title
 const ReviewTitle = styled.h3`
   font-size: 20px;
   font-weight: 600;
@@ -874,87 +474,147 @@ const ReviewTitle = styled.h3`
   display: flex;
   align-items: center;
   gap: 10px;
-  
-  @media (max-width: 768px) {
-    font-size: 18px;
-    margin-bottom: 16px;
-    gap: 8px;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 16px;
-    margin-bottom: 14px;
-    gap: 6px;
-  }
 `;
 
-// Airbnb-style Review Grid
 const ReviewGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-  
-  @media (max-width: 480px) {
-    gap: 12px;
-  }
 `;
 
-// Airbnb-style Review Item
 const ReviewItem = styled.div`
   background: #ffffff;
   padding: 20px;
   border-radius: 8px;
   border: 1px solid #ebebeb;
-  
-  @media (max-width: 768px) {
-    padding: 16px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 14px;
-  }
 `;
 
-// Airbnb-style Review Label
 const ReviewLabel = styled.div`
+  font-size: 14px;
   font-weight: 600;
   color: #222222;
   margin-bottom: 8px;
-  font-size: 14px;
-  
-  @media (max-width: 480px) {
-    font-size: 13px;
-    margin-bottom: 6px;
-  }
 `;
 
-// Airbnb-style Review Value
 const ReviewValue = styled.div`
   color: #717171;
   font-size: 14px;
   line-height: 1.4;
-  
-  @media (max-width: 480px) {
-    font-size: 13px;
-  }
 `;
 
 // Animation keyframes
-const fadeIn = `
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 `;
 
-// Add animations to styled components
 const StyledComponents = styled.div`
-  ${fadeIn}
+  animation: ${fadeIn} 0.6s ease-out;
+`;
+
+
+const StepLabel = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+  color: ${props => props.active ? '#222222' : '#717171'};
+  text-align: center;
+  transition: color 0.2s ease;
+  
+  @media (max-width: 768px) {
+    font-size: 12px;
+  }
+  @media (max-width: 480px) {
+    font-size: 11px;
+    min-width: 60px;
+  }
+`;
+
+const StepCircle = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: ${props => props.active ? '#222222' : '#ffffff'};
+  color: ${props => props.active ? '#ffffff' : '#222222'};
+  border: 2px solid ${props => props.active ? '#222222' : '#ebebeb'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-bottom: 12px;
+  position: relative;
+  z-index: 2;
+  transition: all 0.2s ease;
+  
+  @media (max-width: 768px) {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+  @media (max-width: 480px) {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+    min-width: 32px;
+  }
+`;
+
+const StepTitle = styled.h2`
+  font-size: 26px;
+  font-weight: 600;
+  color: #222222;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  @media (max-width: 768px) {
+    font-size: 24px;
+    gap: 10px;
+  }
+  @media (max-width: 480px) {
+    font-size: 22px;
+    gap: 8px;
+  }
+`;
+
+const StepSubtitle = styled.p`
+  font-size: 16px;
+  color: #717171;
+  margin-bottom: 40px;
+  line-height: 1.5;
+  @media (max-width: 768px) {
+    font-size: 15px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 480px) {
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+`;
+
+const FormGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+  @media (max-width: 768px) {
+    gap: 20px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 480px) {
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+`;
+
+const FormGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 `;
 
 const steps = [
@@ -994,16 +654,6 @@ const HostApplicationForm = () => {
     idFrontImage: null,
     idBackImage: null,
     selfieImage: null,
-    // Business Information
-    businessName: '',
-    businessTaxId: '',
-    businessStreet: '',
-    businessCity: '',
-    businessState: '',
-    businessPostalCode: '',
-    businessCountry: '',
-    businessPhone: '',
-    businessStructure: 'individual',
     // Financial Information
     ssn: '',
     ssnLast4: '',
@@ -1044,16 +694,6 @@ const HostApplicationForm = () => {
         idFrontImage: null, // Files need to be re-uploaded
         idBackImage: null,
         selfieImage: null,
-        // Business Information
-        businessName: existingApplication.businessName || '',
-        businessTaxId: existingApplication.businessTaxId || '',
-        businessStreet: existingApplication.businessAddress?.street || '',
-        businessCity: existingApplication.businessAddress?.city || '',
-        businessState: existingApplication.businessAddress?.state || '',
-        businessPostalCode: existingApplication.businessAddress?.postalCode || '',
-        businessCountry: existingApplication.businessAddress?.country || '',
-        businessPhone: existingApplication.businessPhone || '',
-        businessStructure: existingApplication.businessStructure || 'individual',
         // Financial Information
         ssn: existingApplication.ssn || '',
         ssnLast4: existingApplication.ssnLast4 || '',
@@ -1155,17 +795,6 @@ const HostApplicationForm = () => {
       formDataToSend.append('state', formData.state);
       formDataToSend.append('postalCode', formData.postalCode);
       formDataToSend.append('country', formData.country);
-      
-      // Business Information
-      formDataToSend.append('businessName', formData.businessName);
-      formDataToSend.append('businessTaxId', formData.businessTaxId);
-      formDataToSend.append('businessStreet', formData.businessStreet);
-      formDataToSend.append('businessCity', formData.businessCity);
-      formDataToSend.append('businessState', formData.businessState);
-      formDataToSend.append('businessPostalCode', formData.businessPostalCode);
-      formDataToSend.append('businessCountry', formData.businessCountry);
-      formDataToSend.append('businessPhone', formData.businessPhone);
-      formDataToSend.append('businessStructure', formData.businessStructure);
       
       // Financial Information
       formDataToSend.append('ssn', formData.ssn);
@@ -1368,10 +997,12 @@ const HostApplicationForm = () => {
         <FormGroup>
           <Label><FaCamera /> ID Front Image <RequiredField>*</RequiredField></Label>
           <FileUploadArea
-            className={formData.idFrontImage ? 'has-file' : ''}
+            hasFile={formData.idFrontImage}
             onClick={() => document.getElementById('idFrontImage').click()}
           >
-            <FileUploadIcon />
+            <FileUploadIcon>
+              <FaCamera />
+            </FileUploadIcon>
             <FileUploadText>
               {formData.idFrontImage ? 'File Selected' : 'Click to Upload'}
             </FileUploadText>
@@ -1396,10 +1027,12 @@ const HostApplicationForm = () => {
         <FormGroup>
           <Label><FaCamera /> ID Back Image <RequiredField>*</RequiredField></Label>
           <FileUploadArea
-            className={formData.idBackImage ? 'has-file' : ''}
+            hasFile={formData.idBackImage}
             onClick={() => document.getElementById('idBackImage').click()}
           >
-            <FileUploadIcon />
+            <FileUploadIcon>
+              <FaCamera />
+            </FileUploadIcon>
             <FileUploadText>
               {formData.idBackImage ? 'File Selected' : 'Click to Upload'}
             </FileUploadText>
@@ -1424,10 +1057,12 @@ const HostApplicationForm = () => {
         <FormGroup>
           <Label><FaCamera /> Selfie Image <RequiredField>*</RequiredField></Label>
           <FileUploadArea
-            className={formData.selfieImage ? 'has-file' : ''}
+            hasFile={formData.selfieImage}
             onClick={() => document.getElementById('selfieImage').click()}
           >
-            <FileUploadIcon />
+            <FileUploadIcon>
+              <FaCamera />
+            </FileUploadIcon>
             <FileUploadText>
               {formData.selfieImage ? 'File Selected' : 'Click to Upload'}
             </FileUploadText>
@@ -1458,119 +1093,8 @@ const HostApplicationForm = () => {
         <FaBuilding /> Business & Financial Information
       </StepTitle>
       <StepSubtitle>
-        Please provide your business and financial details for Stripe integration.
+        Please provide your financial details for Stripe integration and payouts.
       </StepSubtitle>
-
-      <StepTitle style={{ marginTop: '32px', fontSize: '1.5rem' }}>
-        <FaBuilding /> Business Information
-      </StepTitle>
-      
-      <FormGrid>
-        <FormGroup>
-          <Label><FaBuilding /> Business Name (Optional)</Label>
-          <Input
-            type="text"
-            value={formData.businessName}
-            onChange={(e) => handleInputChange('businessName', e.target.value)}
-            placeholder="Your business name or leave blank for individual"
-          />
-        </FormGroup>
-        
-        <FormGroup>
-          <Label><FaBuilding /> Business Tax ID (EIN) - Optional</Label>
-          <Input
-            type="text"
-            value={formData.businessTaxId}
-            onChange={(e) => handleInputChange('businessTaxId', e.target.value)}
-            placeholder="12-3456789 (leave blank if individual)"
-          />
-        </FormGroup>
-
-        <FormGroup>
-          <Label><FaBuilding /> Business Structure <RequiredField>*</RequiredField></Label>
-          <Select
-            value={formData.businessStructure}
-            onChange={(e) => handleInputChange('businessStructure', e.target.value)}
-            required
-          >
-            <option value="">Select Business Structure</option>
-            <option value="individual">Individual (Sole Proprietor)</option>
-            <option value="single_member_llc">Single Member LLC</option>
-            <option value="multi_member_llc">Multi Member LLC</option>
-            <option value="private_partnership">Private Partnership</option>
-            <option value="private_corporation">Private Corporation</option>
-            <option value="public_corporation">Public Corporation</option>
-            <option value="incorporated_non_profit">Incorporated Non-Profit</option>
-            <option value="unincorporated_non_profit">Unincorporated Non-Profit</option>
-          </Select>
-        </FormGroup>
-      </FormGrid>
-
-      <StepTitle style={{ marginTop: '32px', fontSize: '1.5rem' }}>
-        <FaMapMarkerAlt /> Business Address (if different from personal)
-      </StepTitle>
-      
-      <FormGrid>
-        <FormGroup>
-          <Label><FaMapMarkerAlt /> Business Street Address</Label>
-          <Input
-            type="text"
-            value={formData.businessStreet}
-            onChange={(e) => handleInputChange('businessStreet', e.target.value)}
-            placeholder="Leave blank if same as personal address"
-          />
-        </FormGroup>
-        
-        <FormGroup>
-          <Label><FaMapMarkerAlt /> Business City</Label>
-          <Input
-            type="text"
-            value={formData.businessCity}
-            onChange={(e) => handleInputChange('businessCity', e.target.value)}
-            placeholder="Leave blank if same as personal address"
-          />
-        </FormGroup>
-        
-        <FormGroup>
-          <Label><FaMapMarkerAlt /> Business State</Label>
-          <Input
-            type="text"
-            value={formData.businessState}
-            onChange={(e) => handleInputChange('businessState', e.target.value)}
-            placeholder="Leave blank if same as personal address"
-          />
-        </FormGroup>
-        
-        <FormGroup>
-          <Label><FaMapMarkerAlt /> Business Postal Code</Label>
-          <Input
-            type="text"
-            value={formData.businessPostalCode}
-            onChange={(e) => handleInputChange('businessPostalCode', e.target.value)}
-            placeholder="Leave blank if same as personal address"
-          />
-        </FormGroup>
-        
-        <FormGroup>
-          <Label><FaMapMarkerAlt /> Business Country</Label>
-          <Input
-            type="text"
-            value={formData.businessCountry}
-            onChange={(e) => handleInputChange('businessCountry', e.target.value)}
-            placeholder="Leave blank if same as personal address"
-          />
-        </FormGroup>
-        
-        <FormGroup>
-          <Label><FaPhone /> Business Phone</Label>
-          <Input
-            type="tel"
-            value={formData.businessPhone}
-            onChange={(e) => handleInputChange('businessPhone', e.target.value)}
-            placeholder="Leave blank if same as personal phone"
-          />
-        </FormGroup>
-      </FormGrid>
 
       <StepTitle style={{ marginTop: '32px', fontSize: '1.5rem' }}>
         <FaCreditCard /> Financial Information for Payouts
@@ -1789,17 +1313,6 @@ const HostApplicationForm = () => {
 
         <ReviewGrid>
           <ReviewItem>
-            <ReviewLabel>Business Information</ReviewLabel>
-            <ReviewValue>Business Name: {formData.businessName || 'Individual (no business name)'}</ReviewValue>
-            <ReviewValue>Business Tax ID: {formData.businessTaxId || 'Not provided'}</ReviewValue>
-            <ReviewValue>Business Structure: {formData.businessStructure || 'Individual'}</ReviewValue>
-            <ReviewValue>Business Address: {formData.businessStreet ? `${formData.businessStreet}, ${formData.businessCity}, ${formData.businessState} ${formData.businessPostalCode}, ${formData.businessCountry}` : 'Same as personal address'}</ReviewValue>
-            <ReviewValue>Business Phone: {formData.businessPhone || 'Same as personal phone'}</ReviewValue>
-          </ReviewItem>
-        </ReviewGrid>
-
-        <ReviewGrid>
-          <ReviewItem>
             <ReviewLabel>Financial Information</ReviewLabel>
             <ReviewValue>SSN: {formData.ssn ? '****' : 'Not provided'}</ReviewValue>
             <ReviewValue>SSN Last 4: {formData.ssnLast4 ? '****' : 'Not provided'}</ReviewValue>
@@ -1894,84 +1407,56 @@ const HostApplicationForm = () => {
   }
 
   return (
-    <StyledComponents>
-      <Container>
-        <Header>
-          <BackButton onClick={() => navigate(-1)}>
-            <FaArrowLeft /> Back
-          </BackButton>
-          <Title>
-            {isEditMode ? 'Edit Host Application' : 'Become a Host'}
-          </Title>
-        </Header>
+    <AirbnbCard>
+      <StickyStepper>
+        <StepperBar>
+          {steps.map((step, idx) => (
+            <StepperItem key={step.id} active={idx === currentStep}>
+              <StepCircle active={idx === currentStep}>{idx + 1}</StepCircle>
+              <StepLabel>{step.label}</StepLabel>
+            </StepperItem>
+          ))}
+        </StepperBar>
+      </StickyStepper>
+      <Section>
+        <SectionHeader>{steps[currentStep].label}</SectionHeader>
+        <SectionSub>{/* Add a short description for each step here if desired */}</SectionSub>
+        {/* Render step content using FieldsGrid, FieldGroup, Label, Input, Select, TextArea, etc. Use your existing logic for fields and handlers. */}
+        {error && (
+          <div style={{ 
+            backgroundColor: '#fef2f2', 
+            border: '1px solid #fecaca', 
+            color: '#dc2626',
+            padding: '16px',
+            borderRadius: '8px',
+            marginBottom: '24px'
+          }}>
+            {error}
+          </div>
+        )}
 
-        <FormCard>
-          <ProgressBar>
-            {steps.map((step, index) => (
-              <StepIndicator key={step.id} active={index <= currentStep}>
-                <StepCircle active={index <= currentStep}>
-                  {index < currentStep ? <FaCheck /> : step.id + 1}
-                </StepCircle>
-                <StepLabel active={index <= currentStep}>{step.label}</StepLabel>
-              </StepIndicator>
-            ))}
-          </ProgressBar>
+        <InfoBox>
+          <InfoIcon>ℹ️</InfoIcon>
+          <InfoText>
+            <strong>Tip:</strong> You can navigate freely between steps using the Previous and Next buttons. Fill out the form at your own pace!
+          </InfoText>
+        </InfoBox>
 
-          <FormContent>
-            {error && (
-              <Alert variant="danger" style={{ marginBottom: '24px', borderRadius: '8px', border: 'none' }}>
-                {error}
-              </Alert>
-            )}
+        {renderStepContent()}
 
-            <InfoBox>
-              <InfoIcon />
-              <InfoText>
-                <strong>Tip:</strong> You can navigate freely between steps using the Previous and Next buttons. Fill out the form at your own pace!
-              </InfoText>
-            </InfoBox>
-
-            {renderStepContent()}
-          </FormContent>
-
-          <StepNavigation>
-            <StepButton
-              type="button"
-              onClick={handlePreviousStep}
-              disabled={currentStep === 0}
-            >
-              Previous
-            </StepButton>
-
-            {currentStep < steps.length - 1 ? (
-              <StepButton
-                type="button"
-                onClick={handleNextStep}
-              >
-                Next
-              </StepButton>
-            ) : (
-              <SubmitButton
-                type="button"
-                onClick={handleSubmit}
-                disabled={loading}
-              >
-                {loading ? (
-                  <>
-                    <FaSpinner className="fa-spin" /> Submitting...
-                  </>
-                ) : (
-                  <>
-                    <FaCheck /> {isEditMode ? 'Update Application' : 'Submit Application'}
-                  </>
-                )}
-              </SubmitButton>
-            )}
-          </StepNavigation>
-        </FormCard>
-      </Container>
-    </StyledComponents>
+        <NavBar>
+          <NavButton onClick={handlePreviousStep} disabled={currentStep === 0}>Previous</NavButton>
+          {currentStep < steps.length - 1 ? (
+            <NavButton onClick={handleNextStep}>Next</NavButton>
+          ) : (
+            <SubmitButton onClick={handleSubmit} disabled={loading}>
+              {loading ? 'Submitting...' : 'Submit Application'}
+            </SubmitButton>
+          )}
+        </NavBar>
+      </Section>
+    </AirbnbCard>
   );
 };
 
-export default HostApplicationForm; 
+export default HostApplicationForm;

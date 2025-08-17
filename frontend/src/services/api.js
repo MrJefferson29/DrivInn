@@ -121,7 +121,6 @@ export const notificationsAPI = {
 // Payments API calls
 export const paymentsAPI = {
   createPaymentIntent: (data) => api.post('/payments/create-payment-intent', data),
-  capturePayment: (data) => api.post('/payments/capture-payment', data),
   getPaymentStatus: (paymentId) => api.get(`/payments/status/${paymentId}`),
   getUserPayments: () => api.get('/payments/user-payments'),
   adminGetAllPayments: () => api.get('/payments/admin/all'),

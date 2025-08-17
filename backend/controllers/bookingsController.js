@@ -240,12 +240,10 @@ exports.createBooking = async (req, res) => {
       },
       // Configure transfer_data for automatic payouts to hosts
       payment_intent_data: {
-        capture_method: 'manual', // Capture manually after confirmation
         transfer_data: {
           destination: hostApplication.stripeConnect.accountId,
-          amount: Math.round(totalPrice * 0.90 * 100), // Host gets 90% (minus 10% platform fee)
         }
-        // Note: Platform fee is handled via transfer_data - the difference between totalPrice and transfer amount
+        // Note: Platform fee is handled via transfer_data - Stripe automatically calculates the transfer amount
       }
     };
     
@@ -546,12 +544,13 @@ exports.verifyPayment = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to view this booking' });
     }
 
-    // If Stripe confirms the payment is complete/paid, update booking and payment
+    // If Stripe confirms the payment is complete/paid, update booking status
     const isPaid = session && (session.payment_status === 'paid' || session.status === 'complete');
     if (isPaid && booking.status !== 'reserved') {
       booking.status = 'reserved';
+      booking.paymentStatus = 'completed';
       await booking.save();
-
+      
       // Update payment record if available
       try {
         let payment;
@@ -578,7 +577,7 @@ exports.verifyPayment = async (req, res) => {
       }
     }
 
-    res.json({ 
+    res.json({
       booking,
       paymentStatus: booking.status === 'reserved' ? 'completed' : 'pending'
     });
@@ -587,172 +586,14 @@ exports.verifyPayment = async (req, res) => {
     console.error('Verify payment error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
-}; 
-
-// Function to process automatic payouts when check-in date is reached
-exports.processAutomaticPayout = async (req, res) => {
-  try {
-    const { bookingId } = req.params;
-    
-    console.log('🔄 Processing automatic payout for booking:', bookingId);
-    
-    const booking = await Booking.findById(bookingId)
-      .populate('home')
-      .populate('user');
-    
-    if (!booking) {
-      return res.status(404).json({ 
-        message: 'Booking not found',
-        error: 'BOOKING_NOT_FOUND'
-      });
-    }
-    
-    // Check if it's time for payout (check-in date has arrived)
-    const now = new Date();
-    const checkInDate = new Date(booking.checkIn);
-    const timeUntilCheckIn = checkInDate.getTime() - now.getTime();
-    
-    if (timeUntilCheckIn > 0) {
-      return res.status(400).json({
-        message: 'Check-in date has not been reached yet',
-        error: 'CHECKIN_NOT_REACHED',
-        timeUntilCheckIn: Math.ceil(timeUntilCheckIn / (1000 * 60 * 60 * 24))
-      });
-    }
-    
-    // Get the payment record
-    const payment = await Payment.findOne({ booking: bookingId });
-    if (!payment) {
-      return res.status(404).json({
-        message: 'Payment record not found',
-        error: 'PAYMENT_NOT_FOUND'
-      });
-    }
-    
-    if (payment.status !== 'completed') {
-      return res.status(400).json({
-        message: 'Payment is not completed yet',
-        error: 'PAYMENT_NOT_COMPLETED'
-      });
-    }
-    
-    // Check if payout has already been processed
-    if (payment.payoutStatus === 'completed') {
-      return res.status(400).json({
-        message: 'Payout has already been processed',
-        error: 'PAYOUT_ALREADY_PROCESSED'
-      });
-    }
-    
-    // Get the listing and host application to check Stripe Connect status
-    const listing = await Listing.findById(booking.home);
-    if (!listing) {
-      return res.status(404).json({
-        message: 'Listing not found',
-        error: 'LISTING_NOT_FOUND'
-      });
-    }
-    
-    const hostApplication = await HostApplication.findOne({ 
-      user: listing.owner, 
-      status: 'approved' 
-    });
-    
-    // Process payout based on host's Stripe Connect status
-    let payoutResult;
-    
-    if (hostApplication?.stripeConnect?.accountId && 
-        hostApplication.stripeConnect.accountStatus === 'active') {
-      
-      // Automatic payout via Stripe Connect
-      console.log('💳 Processing Stripe Connect payout for host:', listing.owner);
-      
-      try {
-        // Capture the payment intent (this releases the funds to the host)
-        const paymentIntent = await stripe.paymentIntents.capture(
-          payment.stripePaymentIntentId,
-          {
-            transfer_data: {
-              destination: hostApplication.stripeConnect.accountId,
-            },
-            application_fee_amount: Math.round(booking.totalPrice * 0.10 * 100), // 10% platform fee
-          }
-        );
-        
-        console.log('✅ Stripe Connect payout successful:', paymentIntent.id);
-        
-        // Update payment record
-        payment.payoutStatus = 'completed';
-        payment.payoutDate = new Date();
-        payment.payoutMethod = 'stripe_connect';
-        payment.payoutTransactionId = paymentIntent.id;
-        payment.platformFee = Math.round(booking.totalPrice * 0.10 * 100) / 100;
-        await payment.save();
-        
-        // Update booking status
-        booking.payoutStatus = 'completed';
-        await booking.save();
-        
-        payoutResult = {
-          method: 'stripe_connect',
-          status: 'completed',
-          transactionId: paymentIntent.id,
-          amount: booking.totalPrice,
-          platformFee: Math.round(booking.totalPrice * 0.10 * 100) / 100
-        };
-        
-      } catch (stripeError) {
-        console.error('❌ Stripe Connect payout failed:', stripeError);
-        
-        // Fallback to manual payout
-        payment.payoutStatus = 'failed';
-        payment.payoutFailureReason = stripeError.message;
-        await payment.save();
-        booking.payoutStatus = 'failed';
-        await booking.save();
-        
-        return res.status(500).json({
-          message: 'Automatic payout failed, will process manually',
-          error: 'STRIPE_PAYOUT_FAILED',
-          fallback: 'manual'
-        });
-      }
-      
-    } else {
-      // With new policy, hosts must have Stripe Connect; treat as error
-      return res.status(400).json({
-        message: 'Host is not enabled for Stripe Connect payouts',
-        error: 'HOST_STRIPE_NOT_ENABLED'
-      });
-    }
-    
-    console.log('✅ Payout processing completed for booking:', bookingId);
-    
-    res.json({
-      message: 'Payout processed successfully',
-      payout: payoutResult,
-      booking: {
-        id: booking._id,
-        status: booking.status,
-        payoutStatus: booking.payoutStatus
-      }
-    });
-    
-  } catch (error) {
-    console.error('❌ Error processing automatic payout:', error);
-    res.status(500).json({
-      message: 'Error processing payout',
-      error: error.message
-    });
-  }
 };
 
-// Function to get all pending payouts for admin review
+
+// Function to get all failed payments for admin review
 exports.getPendingPayouts = async (req, res) => {
   try {
-    const pendingPayouts = await Payment.find({
-      status: 'completed',
-      payoutStatus: { $in: ['failed'] }
+    const failedPayments = await Payment.find({
+      status: 'failed'
     })
     .populate('booking')
     .populate('user')
@@ -765,163 +606,16 @@ exports.getPendingPayouts = async (req, res) => {
     })
     .sort({ createdAt: -1 });
     
-    res.json(pendingPayouts);
+    res.json(failedPayments);
   } catch (error) {
-    console.error('Error fetching pending payouts:', error);
+    console.error('Error fetching failed payments:', error);
     res.status(500).json({
-      message: 'Error fetching pending payouts',
+      message: 'Error fetching failed payments',
       error: error.message
     });
   }
-}; 
+};
 
-// Capture payment after successful checkout
-exports.capturePayment = async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    
-    if (!sessionId) {
-      return res.status(400).json({
-        message: 'Session ID is required',
-        error: 'MISSING_SESSION_ID'
-      });
-    }
-
-    console.log('💳 Capturing payment for session:', sessionId);
-
-    // Retrieve the checkout session
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
-    
-    if (!session) {
-      return res.status(404).json({
-        message: 'Checkout session not found',
-        error: 'SESSION_NOT_FOUND'
-      });
-    }
-
-    if (session.payment_status !== 'paid') {
-      return res.status(400).json({
-        message: 'Payment has not been completed',
-        error: 'PAYMENT_NOT_COMPLETED',
-        paymentStatus: session.payment_status
-      });
-    }
-
-    // Get the payment intent
-    const paymentIntent = await stripe.paymentIntents.retrieve(session.payment_intent);
-    
-    if (paymentIntent.status === 'requires_capture') {
-      // Find the booking and listing to get host information
-      const booking = await Booking.findOne({ paymentSessionId: sessionId });
-      if (!booking) {
-        return res.status(404).json({
-          message: 'Booking not found for this session',
-          error: 'BOOKING_NOT_FOUND'
-        });
-      }
-
-      const listing = await Listing.findById(booking.home).populate('owner');
-      if (!listing) {
-        return res.status(404).json({
-          message: 'Listing not found for this booking',
-          error: 'LISTING_NOT_FOUND'
-        });
-      }
-
-      // Find host application to get Stripe Connect account
-      const hostApplication = await HostApplication.findOne({ 
-        user: listing.owner._id, 
-        status: 'approved' 
-      });
-
-      if (!hostApplication || !hostApplication.stripeConnect?.accountId) {
-        return res.status(400).json({
-          message: 'Host account not configured for automatic payouts',
-          error: 'HOST_ACCOUNT_NOT_CONFIGURED',
-          details: 'The host must complete their Stripe Connect account setup to receive automatic payouts.'
-        });
-      }
-
-      // Capture the payment with transfer_data for automatic payout
-      let capturedPayment;
-      try {
-        capturedPayment = await stripe.paymentIntents.capture(session.payment_intent, {
-          stripeAccount: hostApplication.stripeConnect.accountId
-        });
-        console.log('✅ Payment captured with transfer_data successfully:', capturedPayment.id);
-        console.log('💸 Transfer ID:', capturedPayment.latest_charge?.transfer);
-      } catch (captureError) {
-        console.error('❌ Error capturing payment with transfer_data:', captureError);
-        return res.status(400).json({
-          message: 'Payment capture failed',
-          error: 'PAYMENT_CAPTURE_FAILED',
-          details: captureError.message
-        });
-      }
-      
-      // Update booking status
-      await Booking.findByIdAndUpdate(booking._id, {
-        status: 'reserved',
-        updatedAt: new Date()
-      });
-      console.log('✅ Booking status updated to reserved:', booking._id);
-
-      // Update payment record with transfer details
-      const payment = await Payment.findOne({ stripeSessionId: sessionId });
-      if (payment) {
-        await Payment.findByIdAndUpdate(payment._id, {
-          status: 'completed',
-          transactionId: capturedPayment.id,
-          stripePaymentIntentId: capturedPayment.id,
-          payoutStatus: 'completed',
-          stripeTransferId: capturedPayment.latest_charge?.transfer,
-          payoutCompletedAt: new Date(),
-          completedAt: new Date(),
-          transferStatus: 'completed',
-          transferCompletedAt: new Date(),
-          metadata: {
-            ...payment.metadata,
-            paymentCaptured: true,
-            captureTimestamp: new Date(),
-            transferProcessed: true,
-            transferId: capturedPayment.latest_charge?.transfer
-          }
-        });
-        console.log('✅ Payment record updated with transfer details:', payment._id);
-        console.log('💸 Automatic payout to host completed successfully');
-      }
-
-      res.json({
-        message: 'Payment captured successfully with automatic payout to host',
-        paymentIntent: capturedPayment.id,
-        status: 'reserved',
-        transferId: capturedPayment.latest_charge?.transfer
-      });
-    } else {
-      console.log('⚠️ Payment intent status:', paymentIntent.status);
-      res.json({
-        message: 'Payment already processed',
-        status: paymentIntent.status
-      });
-    }
-
-  } catch (error) {
-    console.error('Error capturing payment:', error);
-    
-    if (error.type === 'StripeInvalidRequestError') {
-      return res.status(400).json({
-        message: 'Payment capture failed',
-        error: 'PAYMENT_CAPTURE_FAILED',
-        details: error.message
-      });
-    }
-    
-    res.status(500).json({
-      message: 'Failed to capture payment',
-      error: 'INTERNAL_SERVER_ERROR'
-    });
-  }
-}; 
 
 // Handle payment cancellation
 exports.cancelPayment = async (req, res) => {
@@ -949,6 +643,7 @@ exports.cancelPayment = async (req, res) => {
     // Update booking status to cancelled
     await Booking.findByIdAndUpdate(booking._id, {
       status: 'cancelled',
+      paymentStatus: 'cancelled',
       updatedAt: new Date()
     });
 

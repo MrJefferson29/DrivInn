@@ -70,7 +70,7 @@ exports.createPaymentIntent = async (req, res) => {
     const paymentIntent = await stripe.paymentIntents.create({
       amount, // in cents
       currency,
-      capture_method: 'manual', // this is the hold/escrow
+      capture_method: 'automatic', // automatic capture
     });
     res.json({ clientSecret: paymentIntent.client_secret, paymentIntentId: paymentIntent.id });
   } catch (err) {
@@ -78,15 +78,6 @@ exports.createPaymentIntent = async (req, res) => {
   }
 };
 
-exports.capturePayment = async (req, res) => {
-  const { paymentIntentId } = req.body;
-  try {
-    const paymentIntent = await stripe.paymentIntents.capture(paymentIntentId);
-    res.json(paymentIntent);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
 
 // Get payment status
 exports.getPaymentStatus = async (req, res) => {
