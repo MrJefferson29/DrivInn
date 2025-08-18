@@ -25,7 +25,8 @@ import {
   FaHistory,
   FaUpload,
   FaTrash,
-  FaEye
+  FaEye,
+  FaRedo
 } from 'react-icons/fa';
 import { usersAPI } from '../../services/api';
 
@@ -357,16 +358,20 @@ const Profile = () => {
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (user && !authLoading) {
       fetchProfileData();
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, retryCount]);
 
   const fetchProfileData = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      console.log('🔍 Fetching profile data for user:', user._id);
       
       // Fetch detailed profile data and statistics
       const [profileResponse, statsResponse] = await Promise.all([
@@ -374,13 +379,17 @@ const Profile = () => {
         usersAPI.getUserStats()
       ]);
       
+      console.log('✅ Profile response:', profileResponse);
+      console.log('✅ Stats response:', statsResponse);
+      
       setProfileData(profileResponse.data);
       setStats(statsResponse.data);
       
       setLoading(false);
     } catch (err) {
-      console.error('Error fetching profile data:', err);
-      setError('Failed to load profile data');
+      console.error('❌ Error fetching profile data:', err);
+      console.error('❌ Error details:', err.response?.data || err.message);
+      setError(`Failed to load profile data: ${err.response?.data?.message || err.message}`);
       setLoading(false);
     }
   };
@@ -390,28 +399,74 @@ const Profile = () => {
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
+      console.log('📸 Uploading profile image:', file.name);
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image file size must be less than 5MB');
+        return;
+      }
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file');
+        return;
+      }
+      
       const formData = new FormData();
       formData.append('image', file);
       
       usersAPI.uploadProfileImage(user._id || user.id, formData)
         .then(response => {
+          console.log('✅ Image upload successful:', response);
           // Update the user context with new profile image
           window.location.reload(); // Simple refresh for now
         })
         .catch(err => {
-          console.error('Error uploading image:', err);
-          setError('Failed to upload image');
+          console.error('❌ Error uploading image:', err);
+          console.error('❌ Upload error details:', err.response?.data || err.message);
+          setError(`Failed to upload image: ${err.response?.data?.message || err.message}`);
         });
     }
   };
 
   if (authLoading || loading) return <Loading>Loading profile...</Loading>;
-  if (error) return <ErrorMsg>{error}</ErrorMsg>;
   if (!user) return <ErrorMsg>User not found.</ErrorMsg>;
+  
+  // Show error with retry option
+  if (error) {
+    return (
+      <ProfileContainer>
+        <ErrorMsg>
+          <div style={{ marginBottom: '16px' }}>{error}</div>
+          <ActionButton 
+            className="primary"
+            onClick={() => {
+              setError(null);
+              setRetryCount(prev => prev + 1);
+              fetchProfileData();
+            }}
+          >
+            <FaRedo />
+            Retry ({retryCount + 1})
+          </ActionButton>
+        </ErrorMsg>
+      </ProfileContainer>
+    );
+  }
 
   const isHost = user.role === 'host';
   const isAdmin = user.role === 'admin';
   const isGuest = user.role === 'guest';
+
+  // Debug information
+  console.log('🔍 Profile component render:', {
+    user: user ? { id: user._id, role: user.role, email: user.email } : null,
+    profileData: profileData ? 'loaded' : 'not loaded',
+    stats: stats ? Object.keys(stats) : 'not loaded',
+    loading,
+    error
+  });
 
   return (
     <ProfileContainer>
@@ -518,23 +573,29 @@ const Profile = () => {
               <FaChartBar />
               Statistics
             </SectionTitle>
+            {!stats || Object.keys(stats).length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                <FaChartBar size={24} style={{ marginBottom: '8px' }} />
+                <div>Loading statistics...</div>
+              </div>
+            ) : (
             <StatsGrid>
               {isHost && (
                 <>
                   <StatCard>
-                    <StatValue>{stats.totalListings || 0}</StatValue>
+                    <StatValue>{stats?.totalListings || 0}</StatValue>
                     <StatLabel>Listings</StatLabel>
                   </StatCard>
                   <StatCard>
-                    <StatValue>{stats.totalBookings || 0}</StatValue>
+                    <StatValue>{stats?.totalBookings || 0}</StatValue>
                     <StatLabel>Bookings</StatLabel>
                   </StatCard>
                   <StatCard>
-                    <StatValue>${(stats.totalRevenue || 0).toLocaleString()}</StatValue>
+                    <StatValue>${(stats?.totalRevenue || 0).toLocaleString()}</StatValue>
                     <StatLabel>Total Revenue</StatLabel>
                   </StatCard>
                   <StatCard>
-                    <StatValue>{stats.averageRating?.toFixed(1) || '0.0'}</StatValue>
+                    <StatValue>{stats?.averageRating ? stats.averageRating.toFixed(1) : '0.0'}</StatValue>
                     <StatLabel>Avg Rating</StatLabel>
                   </StatCard>
                 </>
@@ -543,15 +604,15 @@ const Profile = () => {
               {isGuest && (
                 <>
                   <StatCard>
-                    <StatValue>{stats.totalBookings || 0}</StatValue>
+                    <StatValue>{stats?.totalBookings || 0}</StatValue>
                     <StatLabel>Bookings</StatLabel>
                   </StatCard>
                   <StatCard>
-                    <StatValue>{stats.totalReviews || 0}</StatValue>
+                    <StatValue>{stats?.totalReviews || 0}</StatValue>
                     <StatLabel>Reviews</StatLabel>
                   </StatCard>
                   <StatCard>
-                    <StatValue>${(stats.totalSpent || 0).toLocaleString()}</StatValue>
+                    <StatValue>${(stats?.totalSpent || 0).toLocaleString()}</StatValue>
                     <StatLabel>Total Spent</StatLabel>
                   </StatCard>
                 </>
@@ -570,13 +631,15 @@ const Profile = () => {
                 </>
               )}
             </StatsGrid>
+            )}
           </ProfileSection>
         </div>
 
         {/* Right Column */}
         <div>
           {/* Role-Specific Information */}
-          {isHost && profileData?.hostProfile && (
+          {isHost && (
+            profileData?.hostProfile ? (
             <ProfileSection>
               <SectionTitle>
                 <FaHome />
@@ -658,6 +721,18 @@ const Profile = () => {
                 </ActionButton>
               </ActionButtons>
             </ProfileSection>
+            ) : (
+              <ProfileSection>
+                <SectionTitle>
+                  <FaHome />
+                  Host Profile
+                </SectionTitle>
+                <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
+                  <FaHome size={24} style={{ marginBottom: '8px' }} />
+                  <div>Loading host profile...</div>
+                </div>
+              </ProfileSection>
+            )
           )}
 
           {/* Permissions */}

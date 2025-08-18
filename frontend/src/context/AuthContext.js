@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
       setToken(data.token);
       
       // Fetch user data
-      const userResponse = await fetch('http://localhost:5000/api/auth/me', {
+      const userResponse = await fetch('http://localhost:5000/auth/me', {
         headers: {
           'Authorization': `Bearer ${data.token}`,
           'Content-Type': 'application/json'

@@ -8,7 +8,7 @@ import {
   FaStar, 
   FaHeart, 
   FaShare, 
-  FaUser, 
+  FaUser,
   FaPhone, 
   FaEnvelope,
   FaBed,
@@ -237,7 +237,7 @@ const MasonryImageGrid = styled.div`
     grid-column: 2;
     grid-row: 2;
   }
-  
+
   .bottom-left {
     grid-column: 3;
     grid-row: 1;
@@ -612,6 +612,11 @@ const ContentGrid = styled.div`
     gap: 24px;
     margin-bottom: 24px;
   }
+  
+  @media (max-width: 480px) {
+    gap: 16px;
+    margin-bottom: 120px; /* Add bottom margin to prevent content from being hidden behind fixed booking card */
+  }
 `;
 
 const MainContent = styled.div`
@@ -870,15 +875,24 @@ const BookingCard = styled.div`
     z-index: 1000;
     padding: 20px;
     margin-top: 0;
+    /* Ensure smooth animation and proper mobile behavior */
+    transform: translateY(0);
+    transition: transform 0.3s ease;
   }
   
   @media (max-width: 480px) {
     padding: 16px;
     border-radius: 12px 12px 0 0;
-  }
-  
-  @media (max-width: 480px) {
-    display: none;
+    /* Ensure it stays visible and sticks to bottom on small screens */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    /* Enhanced mobile styling */
+    background: white;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
+    border: none;
   }
 `;
 
@@ -929,8 +943,11 @@ const BookingButton = styled.button`
   }
   
   @media (max-width: 480px) {
-    padding: 10px;
-    font-size: 0.9rem;
+    padding: 12px;
+    font-size: 1rem;
+    /* Ensure button is prominent on small screens */
+    min-height: 48px;
+    font-weight: 700;
   }
 `;
 

@@ -17,7 +17,12 @@ const AirbnbCard = styled.div`
   max-width: 1120px;
   margin: 0 auto;
   background: #ffffff;
-  border-radius: 0;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #ebebeb;
+  margin-top: 32px;
+  margin-bottom: 32px;
+  overflow: hidden;
 `;
 
 const StickyStepper = styled.div`
@@ -237,39 +242,69 @@ const TextArea = styled.textarea`
 
 const FileUploadArea = styled.div`
   border: 2px dashed #b0b0b0;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 40px 24px;
   text-align: center;
   background: #fafafa;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
   
   &:hover {
-    border-color: #222222;
-    background: #f5f5f5;
+    border-color: #FF385C;
+    background: #fff5f7;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 56, 92, 0.1);
   }
   
   ${props => props.hasFile && `
     border-color: #00a699;
     background: #f0f9f8;
   `}
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 56, 92, 0.05);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  &:hover::before {
+    opacity: 1;
+  }
 `;
 
 const FileUploadIcon = styled.div`
-  font-size: 32px;
-  color: #717171;
+  font-size: 48px;
+  color: #FF385C;
   margin-bottom: 16px;
-  transition: color 0.2s ease;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  ${FileUploadArea}:hover & {
+    color: #e31c5f;
+    transform: scale(1.1);
+  }
 `;
 
 const FileUploadText = styled.div`
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: #222222;
   margin-bottom: 8px;
+  transition: color 0.3s ease;
+  
+  ${FileUploadArea}:hover & {
+    color: #FF385C;
+  }
 `;
 
 const FileUploadHint = styled.div`
@@ -524,6 +559,7 @@ const StepLabel = styled.div`
   color: ${props => props.active ? '#222222' : '#717171'};
   text-align: center;
   transition: color 0.2s ease;
+  // margin-top: 40px;
   
   @media (max-width: 768px) {
     font-size: 12px;
@@ -535,6 +571,7 @@ const StepLabel = styled.div`
 `;
 
 const StepCircle = styled.div`
+  margin-top: 40px;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -843,6 +880,12 @@ const HostApplicationForm = () => {
         Please provide your contact information and address details.
       </StepSubtitle>
 
+      <div style={{ marginBottom: '32px' }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#222222', marginBottom: '16px' }}>
+          Personal Details
+        </h3>
+      </div>
+
       <FormGrid>
         <FormGroup>
           <Label><FaUser /> First Name <RequiredField>*</RequiredField></Label>
@@ -964,6 +1007,12 @@ const HostApplicationForm = () => {
       <StepSubtitle>
         Please provide your identity verification documents.
       </StepSubtitle>
+
+      <div style={{ marginBottom: '32px' }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#222222', marginBottom: '16px' }}>
+          Document Information
+        </h3>
+      </div>
 
       <FormGrid>
         <FormGroup>
@@ -1100,6 +1149,12 @@ const HostApplicationForm = () => {
         <FaCreditCard /> Financial Information for Payouts
       </StepTitle>
       
+      <div style={{ marginBottom: '32px' }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#222222', marginBottom: '16px' }}>
+          Bank Account Information
+        </h3>
+      </div>
+
       <FormGrid>
         <FormGroup>
           <Label>Full Social Security Number (SSN) <RequiredField>*</RequiredField></Label>
@@ -1224,6 +1279,12 @@ const HostApplicationForm = () => {
       <StepSubtitle>
         Tell us about the property you want to list and your hosting experience.
       </StepSubtitle>
+
+      <div style={{ marginBottom: '32px' }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#222222', marginBottom: '16px' }}>
+          Property Details
+        </h3>
+      </div>
 
       <FormGrid>
         <FormGroup>
@@ -1438,7 +1499,8 @@ const HostApplicationForm = () => {
         <InfoBox>
           <InfoIcon>ℹ️</InfoIcon>
           <InfoText>
-            <strong>Tip:</strong> You can navigate freely between steps using the Previous and Next buttons. Fill out the form at your own pace!
+            <strong>Tip:</strong> The application process is designed to be straightforward. Some of the information collected here is used to verify your identity, set up your Stripe account to ensure a smooth hosting experience.
+            If you have any questions, please refer to our <a href="/help" style={{ color: '#007bff', textDecoration: 'underline' }}>Help Center</a> or contact our support team.
           </InfoText>
         </InfoBox>
 
