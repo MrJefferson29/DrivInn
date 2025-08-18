@@ -370,19 +370,48 @@ exports.getUserBookings = async (req, res) => {
       .populate('user', 'firstName lastName email')
       .sort({ createdAt: -1 });
       
-    console.log('✅ Found bookings:', bookings.length);
-    console.log('📋 First booking sample:', bookings[0] ? {
-      id: bookings[0]._id,
-      status: bookings[0].status,
-      checkIn: bookings[0].checkIn,
-      checkOut: bookings[0].checkOut,
-      home: bookings[0].home ? {
-        title: bookings[0].home.title,
-        city: bookings[0].home.city
+    // Get payment information for each booking
+    const Payment = require('../models/payment');
+    const bookingsWithPayments = await Promise.all(
+      bookings.map(async (booking) => {
+        try {
+          const payment = await Payment.findOne({ booking: booking._id })
+            .select('status paymentMethod payoutStatus platformFee');
+          
+          if (payment) {
+            // For guests, only show payment status, not payout status
+            // Payout status is only relevant to hosts
+            return {
+              ...booking.toObject(),
+              paymentStatus: payment.status,
+              paymentMethod: payment.paymentMethod,
+              // Don't include payoutStatus for guests - it's not relevant to them
+              platformFee: payment.platformFee
+            };
+          }
+          
+          return booking.toObject();
+        } catch (error) {
+          console.error(`Error fetching payment for booking ${booking._id}:`, error);
+          return booking.toObject();
+        }
+      })
+    );
+      
+    console.log('✅ Found bookings:', bookingsWithPayments.length);
+    console.log('📋 First booking sample:', bookingsWithPayments[0] ? {
+      id: bookingsWithPayments[0]._id,
+      status: bookingsWithPayments[0].status,
+      paymentStatus: bookingsWithPayments[0].paymentStatus,
+      checkIn: bookingsWithPayments[0].checkIn,
+      checkOut: bookingsWithPayments[0].checkOut,
+      home: bookingsWithPayments[0].home ? {
+        title: bookingsWithPayments[0].home.title,
+        city: bookingsWithPayments[0].home.city
       } : null
     } : 'No bookings');
       
-    res.json(bookings);
+    res.json(bookingsWithPayments);
   } catch (err) {
     console.error('Get bookings error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -411,23 +440,52 @@ exports.getHostBookings = async (req, res) => {
       .populate('user', 'firstName lastName email')
       .sort({ createdAt: -1 });
       
-    console.log('✅ Found host bookings:', bookings.length);
-    console.log('📋 First host booking sample:', bookings[0] ? {
-      id: bookings[0]._id,
-      status: bookings[0].status,
-      checkIn: bookings[0].checkIn,
-      checkOut: bookings[0].checkOut,
-      home: bookings[0].home ? {
-        title: bookings[0].home.title,
-        city: bookings[0].home.city
+    // Get payment information for each booking
+    const Payment = require('../models/payment');
+    const bookingsWithPayments = await Promise.all(
+      bookings.map(async (booking) => {
+        try {
+          const payment = await Payment.findOne({ booking: booking._id })
+            .select('status paymentMethod payoutStatus platformFee amount');
+          
+          if (payment) {
+            return {
+              ...booking.toObject(),
+              paymentStatus: payment.status,
+              paymentMethod: payment.paymentMethod,
+              payoutStatus: payment.payoutStatus,
+              platformFee: payment.platformFee,
+              paymentAmount: payment.amount
+            };
+          }
+          
+          return booking.toObject();
+        } catch (error) {
+          console.error(`Error fetching payment for host booking ${booking._id}:`, error);
+          return booking.toObject();
+        }
+      })
+    );
+      
+    console.log('✅ Found host bookings:', bookingsWithPayments.length);
+    console.log('📋 First host booking sample:', bookingsWithPayments[0] ? {
+      id: bookingsWithPayments[0]._id,
+      status: bookingsWithPayments[0].status,
+      paymentStatus: bookingsWithPayments[0].paymentStatus,
+      payoutStatus: bookingsWithPayments[0].payoutStatus,
+      checkIn: bookingsWithPayments[0].checkIn,
+      checkOut: bookingsWithPayments[0].checkOut,
+      home: bookingsWithPayments[0].home ? {
+        title: bookingsWithPayments[0].home.title,
+        city: bookingsWithPayments[0].home.city
       } : null,
-      guest: bookings[0].user ? {
-        firstName: bookings[0].user.firstName,
-        lastName: bookings[0].user.lastName
+      guest: bookingsWithPayments[0].user ? {
+        firstName: bookingsWithPayments[0].user.firstName,
+        lastName: bookingsWithPayments[0].user.lastName
       } : null
     } : 'No host bookings');
       
-    res.json(bookings);
+    res.json(bookingsWithPayments);
   } catch (err) {
     console.error('Get host bookings error:', err);
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -436,37 +494,220 @@ exports.getHostBookings = async (req, res) => {
 
 exports.cancelBooking = async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.id);
+    const { id } = req.params;
+    const { cancellationReason } = req.body;
+    
+    console.log('🔄 Processing cancellation for booking:', id);
+    
+    // Find booking with populated data
+    const booking = await Booking.findById(id)
+      .populate('home', 'title cancellationPolicy')
+      .populate('user', 'firstName lastName email');
+      
     if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+      return res.status(404).json({ 
+        message: 'Booking not found',
+        error: 'BOOKING_NOT_FOUND'
+      });
     }
 
     // Check if user is authorized to cancel this booking
-    if (booking.user.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Not authorized to cancel this booking' });
+    if (booking.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ 
+        message: 'Not authorized to cancel this booking',
+        error: 'UNAUTHORIZED'
+      });
     }
 
-    // Check if booking can be cancelled (not checked-in or checked-out)
-    if (booking.status === 'checked-in' || booking.status === 'checked-out') {
-      return res.status(400).json({ message: 'Cannot cancel a booking that has already been checked in or checked out' });
+    // Check if booking can be cancelled
+    if (['checked_in', 'checked_out', 'completed', 'cancelled'].includes(booking.status)) {
+      return res.status(400).json({ 
+        message: `Cannot cancel a booking with status: ${booking.status}`,
+        error: 'INVALID_STATUS'
+      });
     }
 
-    // Update booking status to cancelled
+    // Get associated payment record
+    const Payment = require('../models/payment');
+    const payment = await Payment.findOne({ booking: booking._id });
+    
+    if (!payment) {
+      return res.status(400).json({ 
+        message: 'No payment record found for this booking',
+        error: 'PAYMENT_NOT_FOUND'
+      });
+    }
+
+    // Check if payment was completed (only completed payments can be refunded)
+    if (payment.status !== 'completed') {
+      return res.status(400).json({ 
+        message: 'Cannot cancel booking with incomplete payment',
+        error: 'PAYMENT_INCOMPLETE'
+      });
+    }
+
+    // Calculate refund amount based on cancellation policy and timing
+    const refundInfo = calculateRefundAmount(booking, payment);
+    
+    console.log('💰 Refund calculation:', {
+      totalAmount: payment.amount,
+      refundAmount: refundInfo.refundAmount,
+      cancellationPolicy: booking.home.cancellationPolicy,
+      daysUntilCheckIn: refundInfo.daysUntilCheckIn,
+      refundPercentage: refundInfo.refundPercentage
+    });
+
+    // Process Stripe refund if refund amount > 0
+    let stripeRefund = null;
+    if (refundInfo.refundAmount > 0 && payment.stripePaymentIntentId) {
+      try {
+        console.log('💳 Processing Stripe refund for payment intent:', payment.stripePaymentIntentId);
+        
+        stripeRefund = await stripe.refunds.create({
+          payment_intent: payment.stripePaymentIntentId,
+          amount: Math.round(refundInfo.refundAmount * 100), // Convert to cents
+          reason: 'requested_by_customer',
+          metadata: {
+            bookingId: booking._id.toString(),
+            cancellationReason: cancellationReason || 'Guest cancelled',
+            cancellationPolicy: booking.home.cancellationPolicy,
+            refundPercentage: refundInfo.refundPercentage.toString(),
+            daysUntilCheckIn: refundInfo.daysUntilCheckIn.toString()
+          }
+        });
+        
+        console.log('✅ Stripe refund created:', stripeRefund.id);
+      } catch (stripeError) {
+        console.error('❌ Stripe refund error:', stripeError);
+        return res.status(500).json({ 
+          message: 'Failed to process refund. Please contact support.',
+          error: 'STRIPE_REFUND_FAILED',
+          details: stripeError.message
+        });
+      }
+    }
+
+    // Update payment record
+    payment.status = 'refunded';
+    payment.refundReason = cancellationReason || 'Guest cancelled';
+    payment.refundedAt = new Date();
+    payment.metadata = {
+      ...payment.metadata,
+      cancellationPolicy: booking.home.cancellationPolicy,
+      refundAmount: refundInfo.refundAmount,
+      refundPercentage: refundInfo.refundPercentage,
+      daysUntilCheckIn: refundInfo.daysUntilCheckIn,
+      stripeRefundId: stripeRefund?.id
+    };
+    await payment.save();
+
+    // Update booking record
     booking.status = 'cancelled';
+    booking.paymentStatus = 'refunded';
+    booking.updatedAt = new Date();
     await booking.save();
 
     // Create notifications for guest and host
     try {
-      await NotificationService.createBookingNotification(booking._id, 'booking');
+      const NotificationService = require('../services/notificationService');
+      await NotificationService.createBookingNotification(booking._id, 'cancellation');
     } catch (notificationError) {
-      console.error('Error creating cancellation notifications:', notificationError);
+      console.error('⚠️ Error creating cancellation notifications:', notificationError);
     }
 
-    res.json({ message: 'Booking cancelled successfully', booking });
+    // Prepare response
+    const response = {
+      message: 'Booking cancelled successfully',
+      booking: {
+        _id: booking._id,
+        status: booking.status,
+        paymentStatus: booking.paymentStatus
+      },
+      refund: {
+        amount: refundInfo.refundAmount,
+        percentage: refundInfo.refundPercentage,
+        policy: booking.home.cancellationPolicy,
+        daysUntilCheckIn: refundInfo.daysUntilCheckIn,
+        stripeRefundId: stripeRefund?.id
+      },
+      cancellationReason: cancellationReason || 'Guest cancelled'
+    };
+
+    console.log('✅ Booking cancellation completed:', response);
+    res.json(response);
+
   } catch (err) {
-    console.error('Cancel booking error:', err);
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error('❌ Cancel booking error:', err);
+    res.status(500).json({ 
+      message: 'Server error during cancellation',
+      error: err.message 
+    });
   }
+};
+
+// Helper function to calculate refund amount based on cancellation policy
+const calculateRefundAmount = (booking, payment) => {
+  const now = new Date();
+  const checkIn = new Date(booking.checkIn);
+  const daysUntilCheckIn = Math.ceil((checkIn - now) / (1000 * 60 * 60 * 24));
+  
+  let refundPercentage = 0;
+  const cancellationPolicy = booking.home.cancellationPolicy || 'Moderate';
+  
+  switch (cancellationPolicy) {
+    case 'Flexible':
+      // Full refund if cancelled 1 day before check-in
+      if (daysUntilCheckIn >= 1) {
+        refundPercentage = 100;
+      } else if (daysUntilCheckIn >= 0) {
+        refundPercentage = 50;
+      }
+      break;
+      
+    case 'Moderate':
+      // Full refund if cancelled 5 days before check-in
+      if (daysUntilCheckIn >= 5) {
+        refundPercentage = 100;
+      } else if (daysUntilCheckIn >= 1) {
+        refundPercentage = 50;
+      }
+      break;
+      
+    case 'Strict':
+      // Full refund if cancelled 7 days before check-in
+      if (daysUntilCheckIn >= 7) {
+        refundPercentage = 100;
+      } else if (daysUntilCheckIn >= 1) {
+        refundPercentage = 50;
+      }
+      break;
+      
+    case 'Super Strict':
+      // Full refund if cancelled 14 days before check-in
+      if (daysUntilCheckIn >= 14) {
+        refundPercentage = 100;
+      } else if (daysUntilCheckIn >= 7) {
+        refundPercentage = 50;
+      }
+      break;
+      
+    default:
+      // Default to Moderate policy
+      if (daysUntilCheckIn >= 5) {
+        refundPercentage = 100;
+      } else if (daysUntilCheckIn >= 1) {
+        refundPercentage = 50;
+      }
+  }
+  
+  const refundAmount = (payment.amount * refundPercentage) / 100;
+  
+  return {
+    refundAmount: Math.round(refundAmount * 100) / 100, // Round to 2 decimal places
+    refundPercentage,
+    daysUntilCheckIn,
+    cancellationPolicy
+  };
 };
 
 // Function to update all booking statuses (can be called by a cron job)

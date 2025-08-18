@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Badge, Button, Modal, Alert, Spinner } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import { 
   MdCalendarToday, 
   MdPerson, 
@@ -33,6 +34,7 @@ const UserBookings = () => {
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState(null);
+  const [cancelSuccess, setCancelSuccess] = useState(null);
   
   // Review-related state
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -41,10 +43,17 @@ const UserBookings = () => {
   const [reviewError, setReviewError] = useState(null);
 
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchBookings();
   }, []);
+
+  const handleImageClick = (listingId) => {
+    if (listingId) {
+      navigate(`/listing/${listingId}`);
+    }
+  };
 
   const fetchBookings = async () => {
     try {
@@ -73,19 +82,36 @@ const UserBookings = () => {
       setCancelling(true);
       setCancelError(null);
       
-      await bookingsAPI.cancelBooking(selectedBooking._id);
+      const response = await bookingsAPI.cancelBooking(selectedBooking._id);
       
-      // Update the bookings list
+      // Update the bookings list with cancellation details
       setBookings(prevBookings => 
         prevBookings.map(booking => 
           booking._id === selectedBooking._id 
-            ? { ...booking, status: 'cancelled' }
+            ? { 
+                ...booking, 
+                status: 'cancelled',
+                paymentStatus: 'refunded',
+                refundInfo: response.data.refund
+              }
             : booking
         )
       );
       
+      // Show success message with refund details
+      const refundInfo = response.data.refund;
+      const successMessage = `Booking cancelled successfully! ${
+        refundInfo.amount > 0 
+          ? `Refund of $${refundInfo.amount} (${refundInfo.percentage}%) will be processed according to the ${refundInfo.policy} cancellation policy.`
+          : 'No refund available for this cancellation.'
+      }`;
+      
+      setCancelSuccess(successMessage);
       setShowCancelModal(false);
       setSelectedBooking(null);
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => setCancelSuccess(null), 5000);
     } catch (err) {
       setCancelError(err.response?.data?.message || 'Failed to cancel booking. Please try again.');
       console.error('Error cancelling booking:', err);
@@ -140,8 +166,10 @@ const UserBookings = () => {
     const statusConfig = {
       pending: { variant: 'warning', icon: <MdPending />, text: 'Pending' },
       reserved: { variant: 'info', icon: <MdCheckCircle />, text: 'Reserved' },
-      'checked-in': { variant: 'success', icon: <MdCheckCircle />, text: 'Checked In' },
-      'checked-out': { variant: 'secondary', icon: <MdCheckCircle />, text: 'Checked Out' },
+      confirmed: { variant: 'primary', icon: <MdCheckCircle />, text: 'Confirmed' },
+      checked_in: { variant: 'success', icon: <MdCheckCircle />, text: 'Checked In' },
+      checked_out: { variant: 'secondary', icon: <MdCheckCircle />, text: 'Checked Out' },
+      completed: { variant: 'success', icon: <MdCheckCircleOutline />, text: 'Completed' },
       cancelled: { variant: 'danger', icon: <MdCancel />, text: 'Cancelled' }
     };
 
@@ -183,21 +211,69 @@ const UserBookings = () => {
     const daysUntilBooking = Math.ceil((startDate - now) / (1000 * 60 * 60 * 24));
     
     // Can cancel if booking is pending or reserved and more than 24 hours before start
-    // Cannot cancel if already checked-in, checked-out, or cancelled
+    // Cannot cancel if already checked_in, checked_out, or cancelled
     return (booking.status === 'pending' || booking.status === 'reserved') && 
            daysUntilBooking > 1 && 
-           booking.status !== 'checked-in' && 
-           booking.status !== 'checked-out' && 
+           booking.status !== 'checked_in' && 
+           booking.status !== 'checked_out' && 
            booking.status !== 'cancelled';
   };
 
   const canReviewBooking = (booking) => {
     // Can review if booking is completed and hasn't been reviewed yet
-    return booking.status === 'completed' && !booking.hasReview;
+    return (booking.status === 'completed' || booking.status === 'checked_out') && !booking.hasReview;
   };
 
   const hasReviewedBooking = (booking) => {
     return booking.hasReview;
+  };
+
+  // Helper function to get cancellation policy details
+  const getCancellationPolicyDetails = (policy, checkInDate) => {
+    const now = new Date();
+    const checkIn = new Date(checkInDate);
+    const daysUntilCheckIn = Math.ceil((checkIn - now) / (1000 * 60 * 60 * 24));
+    
+    switch (policy) {
+      case 'Flexible':
+        if (daysUntilCheckIn >= 1) {
+          return `Full refund if cancelled at least 1 day before check-in (${daysUntilCheckIn} days remaining)`;
+        } else if (daysUntilCheckIn >= 0) {
+          return `50% refund if cancelled same day (${daysUntilCheckIn} days remaining)`;
+        } else {
+          return 'No refund available - check-in has passed';
+        }
+        
+      case 'Moderate':
+        if (daysUntilCheckIn >= 5) {
+          return `Full refund if cancelled at least 5 days before check-in (${daysUntilCheckIn} days remaining)`;
+        } else if (daysUntilCheckIn >= 1) {
+          return `50% refund if cancelled at least 1 day before check-in (${daysUntilCheckIn} days remaining)`;
+        } else {
+          return 'No refund available - check-in is too close';
+        }
+        
+      case 'Strict':
+        if (daysUntilCheckIn >= 7) {
+          return `Full refund if cancelled at least 7 days before check-in (${daysUntilCheckIn} days remaining)`;
+        } else if (daysUntilCheckIn >= 1) {
+          return `50% refund if cancelled at least 1 day before check-in (${daysUntilCheckIn} days remaining)`;
+        } else {
+          return 'No refund available - check-in is too close';
+        }
+        
+      case 'Super Strict':
+        if (daysUntilCheckIn >= 14) {
+          return `Full refund if cancelled at least 14 days before check-in (${daysUntilCheckIn} days remaining)`;
+        } else if (daysUntilCheckIn >= 7) {
+          return `50% refund if cancelled at least 7 days before check-in (${daysUntilCheckIn} days remaining)`;
+        } else {
+          return 'No refund available - check-in is too close';
+        }
+        
+      default:
+        return 'Cancellation policy not specified';
+    }
   };
 
   if (loading) {
@@ -261,6 +337,14 @@ const UserBookings = () => {
               </div>
             ) : (
               <div className="bookings-content">
+                {/* Success Message */}
+                {cancelSuccess && (
+                  <Alert variant="success" className="mb-4" onClose={() => setCancelSuccess(null)} dismissible>
+                    <MdCheckCircle className="me-2" />
+                    {cancelSuccess}
+                  </Alert>
+                )}
+
                 <div className="bookings-stats">
                   <div className="stat-card">
                     <div className="stat-icon">
@@ -276,8 +360,8 @@ const UserBookings = () => {
                       <MdCheckCircle />
                     </div>
                     <div className="stat-info">
-                      <h4>{bookings.filter(b => b.status === 'reserved').length}</h4>
-                      <p>Reserved</p>
+                      <h4>{bookings.filter(b => b.status === 'reserved' || b.status === 'confirmed').length}</h4>
+                      <p>Active</p>
                     </div>
                   </div>
                   <div className="stat-card">
@@ -289,6 +373,15 @@ const UserBookings = () => {
                       <p>Pending</p>
                     </div>
                   </div>
+                  <div className="stat-card">
+                    <div className="stat-icon success">
+                      <MdCheckCircle />
+                    </div>
+                    <div className="stat-info">
+                      <h4>{bookings.filter(b => b.status === 'checked_in' || b.status === 'checked_out' || b.status === 'completed').length}</h4>
+                      <p>Completed</p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="bookings-grid">
@@ -297,6 +390,60 @@ const UserBookings = () => {
                       <div className="booking-header">
                         <div className="booking-status">
                           {getStatusBadge(booking.status)}
+                        </div>
+                        <div className="status-details">
+                          {booking.paymentStatus && (
+                            <small className="payment-status">
+                              Payment: {booking.paymentStatus === 'completed' ? '✅ Paid' : 
+                                       booking.paymentStatus === 'pending' ? '⏳ Pending' : 
+                                       booking.paymentStatus === 'failed' ? '❌ Failed' : 
+                                       booking.paymentStatus === 'refunded' ? '↩️ Refunded' : booking.paymentStatus}
+                            </small>
+                          )}
+                          {/* Show next steps or current state info */}
+                          {booking.status === 'pending' && (
+                            <small className="status-info pending">
+                              ⏳ Waiting for payment confirmation
+                            </small>
+                          )}
+                          {booking.status === 'reserved' && (
+                            <small className="status-info active">
+                              ✅ Payment confirmed - booking is reserved
+                            </small>
+                          )}
+                          {booking.status === 'confirmed' && (
+                            <small className="status-info active">
+                              ✅ Host has confirmed your booking
+                            </small>
+                          )}
+                          {booking.status === 'checked_in' && (
+                            <small className="status-info success">
+                              🏠 You're checked in - enjoy your stay!
+                            </small>
+                          )}
+                          {booking.status === 'checked_out' && (
+                            <small className="status-info success">
+                              🚪 Check-out completed - thanks for staying!
+                            </small>
+                          )}
+                          {booking.status === 'completed' && (
+                            <small className="status-info success">
+                              🎉 Stay completed - consider leaving a review!
+                            </small>
+                          )}
+                          {booking.status === 'cancelled' && (
+                            <small className="status-info cancelled">
+                              ❌ Booking was cancelled
+                              {booking.refundInfo && (
+                                <span className="refund-info">
+                                  {booking.refundInfo.amount > 0 
+                                    ? ` - Refund: $${booking.refundInfo.amount} (${booking.refundInfo.percentage}%)`
+                                    : ' - No refund available'
+                                  }
+                                </span>
+                              )}
+                            </small>
+                          )}
                         </div>
                         <div className="booking-dates">
                           <MdCalendarToday className="date-icon" />
@@ -307,8 +454,8 @@ const UserBookings = () => {
                       </div>
 
                       <div className="listing-info">
-                        {booking.home?.images?.[0] && (
-                          <div className="listing-image">
+                         {booking.home?.images?.[0] ? (
+                           <div className="listing-image" onClick={() => handleImageClick(booking.home._id)}>
                             <img 
                               src={booking.home.images[0]} 
                               alt={booking.home.title}
@@ -318,6 +465,15 @@ const UserBookings = () => {
                             />
                             <div className="image-overlay">
                               <MdHome className="overlay-icon" />
+                               <span className="overlay-text">Click to view details</span>
+                             </div>
+                           </div>
+                         ) : (
+                           <div className="listing-image placeholder" onClick={() => handleImageClick(booking.home._id)}>
+                             <div className="placeholder-content">
+                               <MdHome className="placeholder-icon" />
+                               <span className="placeholder-text">No Image</span>
+                               <span className="placeholder-subtext">Click to view details</span>
                             </div>
                           </div>
                         )}
@@ -351,7 +507,8 @@ const UserBookings = () => {
                                 booking.paymentMethod === 'cashapp' ? 'Cash App Pay'
                                 : booking.paymentMethod === 'bank_transfer' ? 'Bank Transfer'
                                 : booking.paymentMethod === 'samsung_pay' ? 'Samsung Pay'
-                                : 'Credit Card'
+                                : booking.paymentMethod === 'card' ? 'Credit Card'
+                                : 'Payment Method Not Available'
                               }</span>
                             </div>
                           </div>
@@ -439,6 +596,19 @@ const UserBookings = () => {
                  <MdAttachMoney className="detail-icon" />
                  {formatPrice(selectedBooking.totalPrice)} total
                </p>
+              
+              {/* Cancellation Policy Information */}
+              {selectedBooking.home?.cancellationPolicy && (
+                <div className="cancellation-policy-info">
+                  <h6 className="policy-title">
+                    <MdInfo className="policy-icon" />
+                    Cancellation Policy: {selectedBooking.home.cancellationPolicy}
+                  </h6>
+                  <div className="policy-details">
+                    {getCancellationPolicyDetails(selectedBooking.home.cancellationPolicy, selectedBooking.checkIn)}
+                  </div>
+                </div>
+              )}
              </div>
            )}
           
