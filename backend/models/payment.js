@@ -17,7 +17,7 @@ const paymentSchema = new mongoose.Schema({
   // Payout-related fields
   payoutStatus: {
     type: String,
-    enum: ['pending', 'processing', 'completed', 'failed'],
+    enum: ['pending', 'scheduled', 'processing', 'completed', 'failed'],
     default: 'pending'
   },
   payoutMethod: { type: String, enum: ['stripe_connect'], default: 'stripe_connect' },

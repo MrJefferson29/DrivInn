@@ -22,8 +22,7 @@ require('./models/review');
 
 // Import booking status scheduler
 const { startBookingStatusScheduler, runInitialStatusCheck } = require('./services/bookingStatusScheduler');
-// Import delayed payout processor
-const { startDelayedPayoutProcessor } = require('./services/delayedPayoutProcessor');
+const { startDailyPayoutProcessor } = require('./services/delayedPayoutProcessor');
 
 dotenv.config({ path: './.env' });
 
@@ -31,14 +30,16 @@ const app = express();
 connectDB();
 
 // Start schedulers after database connection
-connectDB().then(() => {
+connectDB().then(async () => {
   console.log('🚀 Starting booking status scheduler...');
   startBookingStatusScheduler();
-  runInitialStatusCheck();
+  await runInitialStatusCheck();
+  console.log('✅ Booking status scheduler started');
   
-  // Start delayed payout processor
-  console.log('🚀 Starting delayed payout processor...');
-  startDelayedPayoutProcessor();
+  // Start daily payout processor
+  console.log('🚀 Starting daily payout processor...');
+  startDailyPayoutProcessor();
+  console.log('✅ Daily payout processor started');
 }).catch(err => {
   console.error('❌ Failed to start schedulers:', err);
 });

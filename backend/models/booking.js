@@ -235,7 +235,7 @@ bookingSchema.statics.getBookingsNeedingStatusUpdate = function() {
         paymentStatus: 'completed'
       }
     ]
-  }).populate('home', 'checkIn checkOut');
+  }).populate('home', 'checkIn checkOut').populate('user', 'firstName lastName email').populate('home.owner');
 };
 
 module.exports = mongoose.model('Booking', bookingSchema);

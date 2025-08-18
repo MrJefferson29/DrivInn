@@ -5,7 +5,7 @@ const NotificationService = require('./notificationService');
 // Update booking statuses based on check-in/check-out times
 const updateBookingStatuses = async () => {
   try {
-    console.log('🔄 Starting automatic booking status updates...');
+    console.log('🔄 Starting automatic booking status updates at', new Date().toISOString());
     
     // Get all bookings that need status updates
     const bookingsToUpdate = await Booking.getBookingsNeedingStatusUpdate();
@@ -45,9 +45,9 @@ const updateBookingStatuses = async () => {
           // Send notifications based on status change
           await sendStatusChangeNotifications(booking, oldStatus, newStatus);
           
-          // Update payout status if check-in occurred
+          // Update payment status if check-in occurred
           if (newStatus === 'checked_in' && oldStatus === 'reserved') {
-            await updatePayoutStatus(booking);
+            await updatePaymentOnCheckIn(booking);
           }
         } else {
           console.log(`ℹ️ Booking ${booking._id} status unchanged: ${oldStatus}`);
@@ -63,7 +63,7 @@ const updateBookingStatuses = async () => {
     const pastBookings = await Booking.find({
       status: { $nin: ['completed', 'cancelled'] },
       checkOut: { $lt: new Date() }
-    });
+    }).populate('user', 'firstName lastName email').populate('home', 'title owner').populate('home.owner');
     
     if (pastBookings.length > 0) {
       console.log(`📋 Found ${pastBookings.length} past bookings that should be completed`);
@@ -82,6 +82,9 @@ const updateBookingStatuses = async () => {
             updatedCount++;
             
             console.log(`✅ Marked past booking ${booking._id} as completed (was: ${oldStatus})`);
+            
+            // Send notification for completion
+            await sendStatusChangeNotifications(booking, oldStatus, 'completed');
           }
         } catch (error) {
           errorCount++;
@@ -98,7 +101,7 @@ const updateBookingStatuses = async () => {
       paymentStatus: 'completed',
       checkedIn: false,
       checkIn: { $lte: now }
-    });
+    }).populate('user', 'firstName lastName email').populate('home', 'title owner').populate('home.owner');
     
     if (bookingsToCheckIn.length > 0) {
       console.log(`📋 Found ${bookingsToCheckIn.length} bookings that should be checked in`);
@@ -116,8 +119,19 @@ const updateBookingStatuses = async () => {
           
           console.log(`✅ Marked booking ${booking._id} as checked in (was: ${oldStatus})`);
           
+          // Update payment status since check-in occurred
+          try {
+            await updatePaymentOnCheckIn(booking);
+            console.log(`✅ Payment status update initiated for booking ${booking._id}`);
+          } catch (paymentError) {
+            console.error(`❌ Error updating payment status for booking ${booking._id}:`, paymentError.message);
+          }
+          
           // Send check-in notification
           await sendStatusChangeNotifications(booking, oldStatus, 'checked_in');
+          
+          // Update payment status since check-in occurred
+          await updatePaymentOnCheckIn(booking);
         } catch (error) {
           errorCount++;
           console.error(`❌ Error updating check-in for booking ${booking._id}:`, error.message);
@@ -142,54 +156,49 @@ const sendStatusChangeNotifications = async (booking, oldStatus, newStatus) => {
     if (newStatus === 'checked_in') {
       // Notify guest that they can now check in
       await NotificationService.createNotification({
-        user: booking.user,
-        type: 'booking_checkin_ready',
+        user: booking.user._id,
+        type: 'booking',
         title: 'Check-in Time!',
         message: `Your booking is ready for check-in. You can now access your accommodation.`,
-        relatedId: booking._id,
-        relatedType: 'booking'
+        booking: booking._id
       });
       
       // Notify host that guest is checking in
       await NotificationService.createNotification({
-        user: booking.home.owner,
-        type: 'guest_checking_in',
+        user: booking.home.owner._id,
+        type: 'booking',
         title: 'Guest Checking In',
         message: `A guest is checking in to your property.`,
-        relatedId: booking._id,
-        relatedType: 'booking'
+        booking: booking._id
       });
       
     } else if (newStatus === 'checked_out') {
       // Notify guest that check-out is complete
       await NotificationService.createNotification({
-        user: booking.user,
-        type: 'booking_checkout_complete',
+        user: booking.user._id,
+        type: 'booking',
         title: 'Check-out Complete',
         message: `You have successfully checked out. Thank you for staying with us!`,
-        relatedId: booking._id,
-        relatedType: 'booking'
+        booking: booking._id
       });
       
       // Notify host that guest has checked out
       await NotificationService.createNotification({
-        user: booking.home.owner,
-        type: 'guest_checked_out',
+        user: booking.home.owner._id,
+        type: 'booking',
         title: 'Guest Checked Out',
         message: `A guest has checked out of your property.`,
-        relatedId: booking._id,
-        relatedType: 'booking'
+        booking: booking._id
       });
       
     } else if (newStatus === 'completed') {
       // Notify guest that they can now leave a review
       await NotificationService.createNotification({
-        user: booking.user,
-        type: 'review_reminder',
+        user: booking.user._id,
+        type: 'review',
         title: 'Leave a Review',
         message: `Your stay is complete! Please leave a review to help other travelers.`,
-        relatedId: booking._id,
-        relatedType: 'booking'
+        booking: booking._id
       });
     }
   } catch (error) {
@@ -197,9 +206,12 @@ const sendStatusChangeNotifications = async (booking, oldStatus, newStatus) => {
   }
 };
 
-// Update payout status when check-in occurs
-const updatePayoutStatus = async (booking) => {
+// Update payment status when check-in occurs
+// Payments will be processed daily at 5 PM UTC by the daily payout processor
+const updatePaymentOnCheckIn = async (booking) => {
   try {
+    console.log(`🔍 Updating payment status for booking ${booking._id} after check-in`);
+    
     // Find the payment record for this booking
     const Payment = require('../models/payment');
     const payment = await Payment.findOne({
@@ -207,20 +219,29 @@ const updatePayoutStatus = async (booking) => {
       status: 'completed'
     });
     
-    if (payment && payment.payoutStatus === 'pending') {
-      // Schedule payout for 1 hour after check-in
-      const scheduledPayoutAt = new Date(booking.checkInDate.getTime() + 60 * 60 * 1000); // 1 hour later
+    console.log(`🔍 Payment lookup result for booking ${booking._id}:`, payment ? 'Found' : 'Not found');
+    
+    if (payment) {
+      console.log(`🔍 Payment details for booking ${booking._id}:`, {
+        id: payment._id,
+        status: payment.status,
+        payoutStatus: payment.payoutStatus
+      });
       
-      // Update payout status to scheduled
-      payment.payoutStatus = 'scheduled';
-      payment.scheduledPayoutAt = scheduledPayoutAt;
-      payment.payoutScheduled = true;
-      await payment.save();
-      
-      console.log(`💳 Scheduled payout for booking ${booking._id} at ${scheduledPayoutAt.toISOString()}`);
+      // Ensure payment payout status is pending for daily processing
+      if (payment.payoutStatus !== 'pending') {
+        payment.payoutStatus = 'pending';
+        await payment.save();
+        console.log(`✅ Payment payout status updated to pending for daily processing`);
+      } else {
+        console.log(`ℹ️ Payment already has pending payout status`);
+      }
+    } else {
+      console.log(`⚠️ No payment found for booking ${booking._id}`);
     }
   } catch (error) {
-    console.error('❌ Error updating payout status:', error);
+    console.error(`❌ Error updating payment status for booking ${booking._id}:`, error);
+    throw error; // Re-throw to be caught by caller
   }
 };
 
@@ -233,6 +254,9 @@ const startBookingStatusScheduler = () => {
     console.log('🔄 Running scheduled booking status update (every minute)...');
     await updateBookingStatuses();
   });
+  
+  // Log when scheduler starts
+  console.log('✅ Booking status scheduler cron jobs registered');
   
   // Also run every 5 minutes for more comprehensive updates
   cron.schedule('*/5 * * * *', async () => {
