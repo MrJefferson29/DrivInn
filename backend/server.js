@@ -316,6 +316,63 @@ app.post(
         }
       }
 
+      // Handle transfer completion events (when transfer is fully processed)
+      if (event.type === 'transfer.paid') {
+        const transfer = event.data.object;
+        console.log('✅ Transfer paid:', transfer.id);
+        console.log('📋 Transfer amount:', transfer.amount);
+        console.log('📋 Transfer destination:', transfer.destination);
+        
+        // Find payment by transfer ID
+        const Payment = require('./models/payment');
+        const Booking = require('./models/booking');
+        
+        try {
+          const payment = await Payment.findOne({ 
+            stripeTransferId: transfer.id 
+          });
+
+          if (payment) {
+            console.log('✅ Found payment for completed transfer:', payment._id);
+            
+            // Update payment payout status to completed
+            await Payment.findByIdAndUpdate(payment._id, {
+              payoutStatus: 'completed',
+              payoutCompletedAt: new Date(),
+              metadata: {
+                ...(payment.metadata || {}),
+                transferPaid: true,
+                transferPaidAt: new Date(),
+                webhookProcessed: true,
+                webhookEventId: event.id,
+                webhookProcessedAt: new Date()
+              }
+            });
+
+            console.log('✅ Payment payout status updated to completed');
+            
+            // Update corresponding booking payout status to keep in sync
+            try {
+              const updatedBooking = await Booking.findByIdAndUpdate(payment.booking, {
+                payoutStatus: 'completed',
+                updatedAt: new Date()
+              }, { new: true });
+              
+              if (updatedBooking) {
+                console.log(`✅ Booking ${payment.booking} payout status updated to completed via transfer webhook`);
+              }
+            } catch (bookingUpdateError) {
+              console.error(`⚠️ Error updating booking payout status for ${payment.booking}:`, bookingUpdateError.message);
+              // Don't fail the webhook processing if booking update fails
+            }
+          } else {
+            console.log('⚠️ No payment found for transfer:', transfer.id);
+          }
+        } catch (error) {
+          console.error('❌ Error updating payment with transfer completion:', error);
+        }
+      }
+
       res.json({ received: true });
     } catch (err) {
       console.error('❌ Webhook Error:', err.message);

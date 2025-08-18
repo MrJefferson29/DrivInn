@@ -104,6 +104,22 @@ const processDailyPayouts = async () => {
         };
         
         await payment.save();
+        
+        // Update booking record payout status to keep in sync
+        try {
+          const updatedBooking = await Booking.findByIdAndUpdate(booking._id, {
+            payoutStatus: 'completed',
+            updatedAt: new Date()
+          }, { new: true });
+          
+          if (updatedBooking) {
+            console.log(`✅ Booking ${booking._id} payout status updated to completed`);
+          }
+        } catch (bookingUpdateError) {
+          console.error(`⚠️ Error updating booking payout status for ${booking._id}:`, bookingUpdateError.message);
+          // Don't fail the entire payout process if booking update fails
+        }
+        
         console.log(`✅ Payout completed for payment ${payment._id}, transfer ID: ${transfer.id}`);
         processedCount++;
         
@@ -117,12 +133,81 @@ const processDailyPayouts = async () => {
         payment.payoutFailureReason = error.message;
         payment.payoutFailureDetails = error.stack;
         await payment.save();
+        
+        // Update booking record payout status to keep in sync
+        try {
+          const updatedBooking = await Booking.findByIdAndUpdate(booking._id, {
+            payoutStatus: 'failed',
+            updatedAt: new Date()
+          }, { new: true });
+          
+          if (updatedBooking) {
+            console.log(`✅ Booking ${booking._id} payout status updated to failed`);
+          }
+        } catch (bookingUpdateError) {
+          console.error(`⚠️ Error updating booking payout status for ${booking._id}:`, bookingUpdateError.message);
+          // Don't fail the entire error handling if booking update fails
+        }
       }
     }
     
     console.log(`✅ Daily payout processing completed - Processed: ${processedCount}, Errors: ${errorCount}`);
   } catch (error) {
     console.error('❌ Error in daily payout processing:', error);
+  }
+};
+
+// Utility function to sync existing bookings with their payment payout statuses
+// This can be used to fix existing data inconsistencies
+const syncBookingPayoutStatuses = async () => {
+  try {
+    console.log('🔄 Starting booking payout status synchronization...');
+    
+    // Find all payments that are completed but have pending payout status in bookings
+    const paymentsToSync = await Payment.find({
+      status: 'completed',
+      payoutStatus: 'completed'
+    }).populate('booking');
+    
+    console.log(`📋 Found ${paymentsToSync.length} completed payments to sync with bookings`);
+    
+    let syncedCount = 0;
+    let errorCount = 0;
+    
+    for (const payment of paymentsToSync) {
+      try {
+        if (!payment.booking) {
+          console.log(`⚠️ No booking found for payment ${payment._id}`);
+          continue;
+        }
+        
+        // Check if booking payout status needs updating
+        if (payment.booking.payoutStatus !== 'completed') {
+          const updatedBooking = await Booking.findByIdAndUpdate(payment.booking._id, {
+            payoutStatus: 'completed',
+            updatedAt: new Date()
+          }, { new: true });
+          
+          if (updatedBooking) {
+            console.log(`✅ Synced booking ${payment.booking._id} payout status to completed`);
+            syncedCount++;
+          }
+        } else {
+          console.log(`ℹ️ Booking ${payment.booking._id} already has correct payout status`);
+        }
+        
+      } catch (error) {
+        console.error(`❌ Error syncing booking ${payment.booking?._id}:`, error.message);
+        errorCount++;
+      }
+    }
+    
+    console.log(`✅ Booking payout status synchronization completed - Synced: ${syncedCount}, Errors: ${errorCount}`);
+    return { syncedCount, errorCount };
+    
+  } catch (error) {
+    console.error('❌ Error in booking payout status synchronization:', error);
+    throw error;
   }
 };
 
@@ -156,5 +241,6 @@ const startDailyPayoutProcessor = () => {
 
 module.exports = {
   startDailyPayoutProcessor,
-  processDailyPayouts
+  processDailyPayouts,
+  syncBookingPayoutStatuses
 };

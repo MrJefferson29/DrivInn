@@ -66,6 +66,7 @@ const AdminPaymentsDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [q, setQ] = useState('');
+  const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -80,6 +81,25 @@ const AdminPaymentsDashboard = () => {
     };
     load();
   }, []);
+
+  const handleSyncPayoutStatuses = async () => {
+    try {
+      setSyncing(true);
+      const res = await paymentsAPI.adminSyncPayoutStatuses();
+      console.log('Sync completed:', res.data);
+      
+      // Reload payments to show updated statuses
+      const updatedRes = await paymentsAPI.adminGetAllPayments();
+      setPayments(updatedRes.data.payments || []);
+      
+      alert(`Sync completed successfully! ${res.data.result.syncedCount} bookings updated.`);
+    } catch (err) {
+      console.error('Sync failed:', err);
+      alert('Sync failed: ' + (err.response?.data?.message || err.message || 'Unknown error'));
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const filtered = payments.filter(p => {
     const hay = [
@@ -101,6 +121,21 @@ const AdminPaymentsDashboard = () => {
       <Title>Payments & Payouts</Title>
       <Controls>
         <Input placeholder="Search by email, listing, or ID" value={q} onChange={e => setQ(e.target.value)} />
+        <button 
+          onClick={handleSyncPayoutStatuses} 
+          disabled={syncing}
+          style={{
+            padding: '10px 16px',
+            backgroundColor: syncing ? '#ccc' : '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: syncing ? 'not-allowed' : 'pointer',
+            fontSize: '14px'
+          }}
+        >
+          {syncing ? 'Syncing...' : 'Sync Payout Statuses'}
+        </button>
       </Controls>
       <Table>
         <thead>

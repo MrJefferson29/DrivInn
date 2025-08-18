@@ -116,3 +116,23 @@ exports.getUserPayments = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+// Admin: Sync booking payout statuses with payment payout statuses
+exports.syncBookingPayoutStatuses = async (req, res) => {
+  try {
+    const { syncBookingPayoutStatuses } = require('../services/delayedPayoutProcessor');
+    
+    console.log('🔄 Admin requested manual payout status synchronization...');
+    
+    const result = await syncBookingPayoutStatuses();
+    
+    res.json({
+      message: 'Payout status synchronization completed',
+      result,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error('❌ Error in admin payout status sync:', err);
+    res.status(500).json({ error: err.message });
+  }
+};
