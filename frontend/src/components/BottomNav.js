@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styled, { css } from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
-import { MdTravelExplore, MdEmojiEvents, MdChatBubble, MdCalendarMonth, MdInfo } from 'react-icons/md';
+import { HiOutlineHome, HiOutlineSparkles, HiOutlineChatBubbleLeftRight, HiOutlineCalendarDays, HiOutlineClipboardDocumentList, HiOutlineCreditCard } from 'react-icons/hi2';
+import { useAuth } from '../context/AuthContext';
 
 const BottomNavBar = styled.nav`
   position: fixed;
@@ -25,6 +26,7 @@ const BottomNavBar = styled.nav`
     display: none;
   }
 `;
+
 const NavItem = styled(Link)`
   flex: 1;
   text-align: center;
@@ -50,6 +52,7 @@ const NavItem = styled(Link)`
     font-weight: 700;
   `}
 `;
+
 const NavIcon = styled.div`
   font-size: 1.7rem;
   margin-bottom: 2px;
@@ -61,6 +64,7 @@ const NavIcon = styled.div`
     transform: scale(1.18);
   `}
 `;
+
 const ActiveIndicator = styled.div`
   position: absolute;
   left: 50%;
@@ -75,21 +79,35 @@ const ActiveIndicator = styled.div`
   transition: opacity 0.18s;
 `;
 
-const navItems = [
-  { to: '/', label: 'Explore', icon: <MdTravelExplore /> },
-  { to: '/experiences', label: 'Experiences', icon: <MdEmojiEvents /> },
-  { to: '/messages', label: 'Messages', icon: <MdChatBubble /> },
-  { to: '/about', label: 'About', icon: <MdInfo /> },
-  { to: '/bookings', label: 'Bookings', icon: <MdCalendarMonth /> },
-];
-
 // Routes where bottom nav should be visible
-const bottomNavRoutes = ['/', '/experiences', '/messages', '/about', '/bookings'];
+const bottomNavRoutes = ['/', '/experiences', '/messages', '/bookings'];
 
 const BottomNav = () => {
   const [visible, setVisible] = useState(true);
   const lastScrollY = useRef(window.scrollY);
   const location = useLocation();
+  const { user } = useAuth();
+
+  // Get the appropriate label and icon for the second nav item based on user role
+  const getSecondNavItem = () => {
+    if (user?.role === 'admin') {
+      return { label: 'Transactions', icon: <HiOutlineCreditCard /> };
+    } else if (user?.role === 'host') {
+      return { label: 'Listings', icon: <HiOutlineClipboardDocumentList /> };
+    } else {
+      // Default for guests and unauthenticated users
+      return { label: 'Experiences', icon: <HiOutlineSparkles /> };
+    }
+  };
+
+  const secondNavItem = getSecondNavItem();
+
+  const navItems = [
+    { to: '/', label: 'Explore', icon: <HiOutlineHome /> },
+    { to: '/experiences', label: secondNavItem.label, icon: secondNavItem.icon },
+    { to: '/messages', label: 'Messages', icon: <HiOutlineChatBubbleLeftRight /> },
+    { to: '/bookings', label: 'Bookings', icon: <HiOutlineCalendarDays /> },
+  ];
 
   // Check if current route should show bottom nav
   const shouldShowBottomNav = bottomNavRoutes.includes(location.pathname);
@@ -135,4 +153,4 @@ const BottomNav = () => {
   );
 };
 
-export default BottomNav; 
+export default BottomNav;

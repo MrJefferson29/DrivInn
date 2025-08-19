@@ -584,8 +584,44 @@ const ListingCard = ({ listing, onCardClick }) => {
   };
 
   const getAmenities = () => {
-    const amenities = listing.amenities || listing.carDetails?.features || [];
-    return amenities.slice(0, 3);
+    if (listing.type === 'apartment') {
+      const amenities = listing.amenities || [];
+      return amenities.slice(0, 3);
+    } else {
+      // For cars, show car-specific amenities or fallback to common features
+      const carFeatures = listing.carDetails?.features || [];
+      if (carFeatures.length > 0) {
+        return carFeatures.slice(0, 3);
+      } else {
+        // Fallback amenities for cars when no specific features are available
+        const fallbackAmenities = [];
+        
+        if (listing.carDetails?.transmission) {
+          fallbackAmenities.push(listing.carDetails.transmission);
+        }
+        if (listing.carDetails?.fuelType) {
+          fallbackAmenities.push(listing.carDetails.fuelType);
+        }
+        if (listing.carDetails?.seats) {
+          fallbackAmenities.push(`${listing.carDetails.seats} Seats`);
+        }
+        if (listing.carDetails?.year) {
+          fallbackAmenities.push(`${listing.carDetails.year} Model`);
+        }
+        if (listing.carDetails?.mileage) {
+          fallbackAmenities.push(`${Math.round(listing.carDetails.mileage / 1000)}k Miles`);
+        }
+        
+        // If we still don't have enough, add some generic car amenities
+        while (fallbackAmenities.length < 3) {
+          if (fallbackAmenities.length === 0) fallbackAmenities.push('Air Conditioning');
+          else if (fallbackAmenities.length === 1) fallbackAmenities.push('Bluetooth');
+          else if (fallbackAmenities.length === 2) fallbackAmenities.push('GPS Navigation');
+        }
+        
+        return fallbackAmenities.slice(0, 3);
+      }
+    }
   };
 
   const getAvailability = () => {

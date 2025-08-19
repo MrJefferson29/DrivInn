@@ -5,23 +5,23 @@ import { useAuth } from '../context/AuthContext';
 import { likeListing, unlikeListing, checkIfLiked } from '../services/likesService';
 
 const LikeButtonContainer = styled.button`
-  background: ${props => props.isLiked ? '#FF385C' : 'rgba(255, 255, 255, 0.9)'};
+  background: ${props => props.isLiked ? '#FF385C' : 'rgba(255, 255, 255, 0.95)'};
   border: 1px solid ${props => props.isLiked ? '#FF385C' : '#DDDDDD'};
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   backdrop-filter: blur(10px);
   
   &:hover {
-    transform: scale(1.1);
+    transform: scale(1.15);
     background: ${props => props.isLiked ? '#e31c5f' : 'white'};
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
   
   &:active {
@@ -35,18 +35,35 @@ const LikeButtonContainer = styled.button`
   }
   
   @media (max-width: 768px) {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
+    
+    &:hover {
+      transform: scale(1.1);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    width: 28px;
+    height: 28px;
+    
+    &:hover {
+      transform: scale(1.05);
+    }
   }
 `;
 
 const HeartIcon = styled(FaHeart)`
   color: ${props => props.isLiked ? 'white' : '#222222'};
-  font-size: 1.1rem;
-  transition: all 0.2s ease;
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   
   @media (max-width: 768px) {
-    font-size: 1rem;
+    font-size: 13px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 12px;
   }
 `;
 

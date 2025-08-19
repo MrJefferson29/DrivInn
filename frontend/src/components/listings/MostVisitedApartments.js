@@ -25,12 +25,13 @@ const SectionHeader = styled.div`
   @media (max-width: 480px) { padding: 0 12px; margin-bottom: 16px; }
 `;
 const SectionTitle = styled.h2`
-  font-size: 2.2rem;
-  font-weight: 600;
+  font-size: 1.6rem;
+  font-weight: 300;
   color: ${airbnbDark};
   margin-bottom: 10px;
-  letter-spacing: -0.02em;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
+  letter-spacing: 0.05em;
+  display: flex; align-items: center; justify-content: left; gap: 10px;
+  margin-left: 5px;
   @media (max-width: 768px) { font-size: 1.5rem; }
   @media (max-width: 480px) { font-size: 1.1rem; }
 `;
@@ -72,6 +73,17 @@ const ResponsiveListingsGrid = styled.div`
   @media (max-width: 700px) {
     display: flex; flex-direction: row; overflow-x: auto; gap: 12px; padding: 0 8px 6px 8px; scroll-snap-type: x mandatory;
     & > div { scroll-snap-align: start; }
+    
+    /* Hide scrollbar for webkit browsers */
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    
+    /* Hide scrollbar for Firefox */
+    scrollbar-width: none;
+    
+    /* Hide scrollbar for IE/Edge */
+    -ms-overflow-style: none;
   }
 `;
 const LoadingContainer = styled.div`
@@ -178,15 +190,12 @@ const MostVisitedApartments = () => {
   return (
     <Container>
       <SectionHeader>
-        <SectionTitle onClick={handleTitleClick}>
-          <FaStar /> Most Visited Apartments <FaChevronRight />
-        </SectionTitle>
-        <SectionSubtitle>These apartments have the highest number of bookings.</SectionSubtitle>
+    
       </SectionHeader>
       <ResultsInfo>
-        <div className="results-count">
-          {displayedApartments.length} of {apartments.length} {apartments.length === 1 ? 'apartment' : 'apartments'} shown
-        </div>
+        <SectionTitle onClick={handleTitleClick}>
+          Most Visited Apartments <FaChevronRight />
+        </SectionTitle>
         <div className="results-summary">
           Based on booking popularity
         </div>

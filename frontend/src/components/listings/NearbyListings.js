@@ -27,14 +27,15 @@ const SectionHeader = styled.div`
   @media (max-width: 480px) { padding: 0 12px; margin-bottom: 16px; }
 `;
 const SectionTitle = styled.h2`
-  font-size: 2.2rem;
-  font-weight: 600;
+  font-size: 1.6rem;
+  font-weight: 300;
   color: ${airbnbDark};
   margin-bottom: 10px;
+  margin-left: 5px;
   letter-spacing: -0.02em;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: left;
   gap: 12px;
   cursor: pointer;
   transition: color 0.2s ease;
@@ -96,8 +97,20 @@ const ResponsiveListingsGrid = styled.div`
   @media (max-width: 1200px) { grid-template-columns: repeat(3, 1fr); gap: 18px; padding: 0 20px 8px 20px; }
   @media (max-width: 900px) { grid-template-columns: repeat(2, 1fr); gap: 14px; padding: 0 10px 8px 10px; }
   @media (max-width: 700px) {
+    margin-left: 5px;
     display: flex; flex-direction: row; overflow-x: auto; gap: 12px; padding: 0 8px 6px 8px; scroll-snap-type: x mandatory;
     & > div { scroll-snap-align: start; }
+    
+    /* Hide scrollbar for webkit browsers */
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    
+    /* Hide scrollbar for Firefox */
+    scrollbar-width: none;
+    
+    /* Hide scrollbar for IE/Edge */
+    -ms-overflow-style: none;
   }
 `;
 const LoadingContainer = styled.div`
@@ -226,7 +239,7 @@ const NearbyListings = () => {
     <Container>
         <SectionHeader>
         <SectionTitle onClick={handleTitleClick}>
-          Nearby Listings <FaChevronRight />
+          Listings in {userCity} <FaChevronRight />
         </SectionTitle>
         <SectionSubtitle>Find amazing stays and experiences close to your location</SectionSubtitle>
         {(userCity || userCountry) && (
@@ -259,7 +272,7 @@ const NearbyListings = () => {
       ) : filtered.length === 0 ? (
         <EmptyState>
           <div className="empty-icon">🏠</div>
-          <h3>No listings found nearby</h3>
+          <h3>No listings found in {userCity} {userCountry}</h3>
           <p>We couldn't find any listings in your city or country. Try another location.</p>
           <RetryButton onClick={() => { setManualMode(true); setError(''); }}>Change Location</RetryButton>
         </EmptyState>
@@ -268,9 +281,6 @@ const NearbyListings = () => {
           <ResultsInfo>
             <div className="results-count">
               {displayedListings.length} of {filtered.length} {filtered.length === 1 ? 'listing' : 'listings'} shown nearby
-            </div>
-            <div className="results-summary">
-              Based on your current location
             </div>
           </ResultsInfo>
           <ResponsiveListingsGrid>

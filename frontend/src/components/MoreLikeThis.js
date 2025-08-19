@@ -164,6 +164,7 @@ const ResponsiveListingsGrid = styled.div`
   padding: 0 40px 8px 40px;
   max-width: 1400px;
   margin: 0 auto;
+  margin-left: 5px;
   
   @media (max-width: 1200px) {
     grid-template-columns: repeat(3, 1fr);
@@ -546,9 +547,6 @@ const MoreLikeThis = () => {
         <BackButton onClick={() => navigate('/')}>
           <FaArrowLeft /> Back to Home
         </BackButton>
-        <PageTitle>
-          {categoryInfo.icon} {categoryInfo.title}
-        </PageTitle>
         <PageSubtitle>{categoryInfo.subtitle}</PageSubtitle>
       </Header>
 

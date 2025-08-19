@@ -59,14 +59,14 @@ const SectionHeader = styled.div`
 `;
 
 const SectionTitle = styled.h2`
-  font-size: 2.5rem;
-  font-weight: 600;
+  font-size: 1.6rem;
+  font-weight: 300;
   color: ${airbnbDark};
   margin-bottom: 16px;
-  letter-spacing: -0.02em;
+  letter-spacing: 0.05em;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: left;
   gap: 12px;
   cursor: pointer;
   transition: color 0.2s ease;
@@ -336,6 +336,18 @@ const ResponsiveListingsGrid = styled.div`
     padding: 0 8px 6px 8px;
     scroll-snap-type: x mandatory;
     & > div { scroll-snap-align: start; }
+    margin-left: 5px;
+    
+    /* Hide scrollbar for webkit browsers */
+    &::-webkit-scrollbar {
+      display: none;
+    }
+    
+    /* Hide scrollbar for Firefox */
+    scrollbar-width: none;
+    
+    /* Hide scrollbar for IE/Edge */
+    -ms-overflow-style: none;
   }
 `;
 
@@ -382,12 +394,6 @@ const LatestListings = () => {
   if (loading) {
     return (
       <LatestContainer>
-        <SectionHeader>
-          <SectionTitle onClick={handleTitleClick}>
-            Latest Listings <FaChevronRight />
-          </SectionTitle>
-          <SectionSubtitle>Discover the newest places added to our platform</SectionSubtitle>
-        </SectionHeader>
         <LoadingContainer>
           <LoadingSpinner>
             <Spinner animation="border" />
@@ -437,17 +443,11 @@ const LatestListings = () => {
 
   return (
     <LatestContainer>
-      <SectionHeader>
-        <SectionTitle onClick={handleTitleClick}>
-          Latest Listings <FaChevronRight />
-        </SectionTitle>
-        <SectionSubtitle>Discover the newest places added to our platform</SectionSubtitle>
-      </SectionHeader>
 
       <ResultsInfo>
-        <div className="results-count">
-          {displayedListings.length} of {allLatestListings.length} {allLatestListings.length === 1 ? 'listing' : 'listings'} shown
-        </div>
+      <SectionTitle onClick={handleTitleClick}>
+            Latest Listings <FaChevronRight />
+          </SectionTitle>
         <div className="results-summary">
           Added in the last 30 days
         </div>
