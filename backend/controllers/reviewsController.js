@@ -37,12 +37,12 @@ exports.createReview = async (req, res) => {
       });
     }
 
-    // Check if booking is completed and can be reviewed
-    if (booking.status !== 'completed') {
+    // Check if booking can be reviewed (checked in, checked out, or completed)
+    if (!['checked_in', 'checked_out', 'completed'].includes(booking.status)) {
       return res.status(400).json({
-        message: 'Can only review completed bookings',
+        message: 'Can only review bookings that are checked in, checked out, or completed',
         error: 'INVALID_BOOKING_STATUS',
-        details: `Booking status is ${booking.status}, must be 'completed'`
+        details: `Booking status is ${booking.status}, must be 'checked_in', 'checked_out', or 'completed'`
       });
     }
 

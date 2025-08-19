@@ -83,12 +83,15 @@ const NavbarComponent = () => {
       setIsLoadingStripeAccount(true);
       hostApplicationsAPI.getStripeSetupStatus()
         .then(res => {
-          if (res.data && res.data.accountId && (res.data.onboardingUrl || res.data.dashboardUrl)) {
-            // Prefer onboarding URL over dashboard URL for better user experience
+          if (res.data && res.data.accountId) {
+            // Construct the correct Stripe Connect dashboard URL format
+            // Format: https://connect.stripe.com/express/acct_{ACCOUNT_ID}/bKsxnuQI7PAK
+            const stripeDashboardUrl = `https://connect.stripe.com/express/acct_${res.data.accountId}/bKsxnuQI7PAK`;
+            
             setStripeConnectAccount({
               accountId: res.data.accountId,
-              dashboardUrl: res.data.onboardingUrl || res.data.dashboardUrl,
-              isOnboardingLink: !!res.data.onboardingUrl
+              dashboardUrl: stripeDashboardUrl,
+              isOnboardingLink: false
             });
           } else {
             console.log('Stripe Connect account not fully configured');

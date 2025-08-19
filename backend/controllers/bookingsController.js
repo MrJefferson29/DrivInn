@@ -6,9 +6,9 @@ const Listing = require('../models/listing');
 const HostApplication = require('../models/HostApplication');
 
 // Helper function to generate Stripe Connect dashboard URL
+// Format: https://connect.stripe.com/express/acct_{ACCOUNT_ID}/bKsxnuQI7PAK
 const generateStripeDashboardUrl = (accountId) => {
-  const environment = process.env.NODE_ENV === 'production' ? 'live' : 'test';
-  return `https://dashboard.stripe.com/${accountId}/${environment}/dashboard`;
+  return `https://connect.stripe.com/express/acct_${accountId}/bKsxnuQI7PAK`;
 };
 
 // Helper function to check for date overlaps
@@ -495,9 +495,12 @@ exports.getHostBookings = async (req, res) => {
 exports.cancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
-    const { cancellationReason } = req.body;
+    // Handle case where req.body might be undefined (DELETE requests)
+    const cancellationReason = req.body?.cancellationReason || 'Guest cancelled';
     
     console.log('🔄 Processing cancellation for booking:', id);
+    console.log('📝 Request body:', req.body);
+    console.log('📝 Cancellation reason:', cancellationReason);
     
     // Find booking with populated data
     const booking = await Booking.findById(id)
@@ -559,9 +562,18 @@ exports.cancelBooking = async (req, res) => {
 
     // Process Stripe refund if refund amount > 0
     let stripeRefund = null;
+    let refundStatus = 'pending';
+    let refundError = null;
+    
     if (refundInfo.refundAmount > 0 && payment.stripePaymentIntentId) {
       try {
         console.log('💳 Processing Stripe refund for payment intent:', payment.stripePaymentIntentId);
+        
+        // Set a shorter timeout for Stripe requests
+        const stripeOptions = {
+          timeout: 30000, // 30 seconds instead of 80
+          retries: 2
+        };
         
         stripeRefund = await stripe.refunds.create({
           payment_intent: payment.stripePaymentIntentId,
@@ -574,21 +586,34 @@ exports.cancelBooking = async (req, res) => {
             refundPercentage: refundInfo.refundPercentage.toString(),
             daysUntilCheckIn: refundInfo.daysUntilCheckIn.toString()
           }
-        });
+        }, stripeOptions);
         
         console.log('✅ Stripe refund created:', stripeRefund.id);
+        refundStatus = 'completed';
+        
       } catch (stripeError) {
         console.error('❌ Stripe refund error:', stripeError);
-        return res.status(500).json({ 
-          message: 'Failed to process refund. Please contact support.',
-          error: 'STRIPE_REFUND_FAILED',
-          details: stripeError.message
-        });
+        refundError = stripeError.message;
+        
+        // Handle different types of Stripe errors
+        if (stripeError.type === 'StripeConnectionError' || stripeError.code === 'ETIMEDOUT') {
+          console.log('⚠️ Stripe connection timeout - marking refund as pending for manual processing');
+          refundStatus = 'pending_manual';
+        } else if (stripeError.type === 'StripeInvalidRequestError') {
+          console.log('⚠️ Invalid Stripe request - marking refund as failed');
+          refundStatus = 'failed';
+        } else {
+          console.log('⚠️ Other Stripe error - marking refund as pending for manual processing');
+          refundStatus = 'pending_manual';
+        }
+        
+        // Don't fail the entire cancellation - continue with booking cancellation
+        // The refund can be processed manually later
       }
     }
 
     // Update payment record
-    payment.status = 'refunded';
+    payment.status = refundStatus === 'completed' ? 'refunded' : 'refund_pending';
     payment.refundReason = cancellationReason || 'Guest cancelled';
     payment.refundedAt = new Date();
     payment.metadata = {
@@ -597,7 +622,10 @@ exports.cancelBooking = async (req, res) => {
       refundAmount: refundInfo.refundAmount,
       refundPercentage: refundInfo.refundPercentage,
       daysUntilCheckIn: refundInfo.daysUntilCheckIn,
-      stripeRefundId: stripeRefund?.id
+      stripeRefundId: stripeRefund?.id,
+      refundStatus: refundStatus,
+      refundError: refundError,
+      refundProcessedAt: new Date().toISOString()
     };
     await payment.save();
 
@@ -611,13 +639,34 @@ exports.cancelBooking = async (req, res) => {
     try {
       const NotificationService = require('../services/notificationService');
       await NotificationService.createBookingNotification(booking._id, 'cancellation');
+      
+      // If refund needs manual processing, create admin notification
+      if (refundStatus === 'pending_manual') {
+        try {
+          await NotificationService.createAdminNotification({
+            type: 'manual_refund_required',
+            title: 'Manual Refund Required',
+            message: `Booking ${booking._id} was cancelled but Stripe refund failed. Manual processing required.`,
+            data: {
+              bookingId: booking._id,
+              paymentId: payment._id,
+              refundAmount: refundInfo.refundAmount,
+              error: refundError
+            }
+          });
+        } catch (adminNotificationError) {
+          console.error('⚠️ Error creating admin notification for manual refund:', adminNotificationError);
+        }
+      }
     } catch (notificationError) {
       console.error('⚠️ Error creating cancellation notifications:', notificationError);
     }
 
     // Prepare response
     const response = {
-      message: 'Booking cancelled successfully',
+      message: refundStatus === 'completed' 
+        ? 'Booking cancelled successfully with immediate refund' 
+        : 'Booking cancelled successfully - refund will be processed manually',
       booking: {
         _id: booking._id,
         status: booking.status,
@@ -628,9 +677,12 @@ exports.cancelBooking = async (req, res) => {
         percentage: refundInfo.refundPercentage,
         policy: booking.home.cancellationPolicy,
         daysUntilCheckIn: refundInfo.daysUntilCheckIn,
-        stripeRefundId: stripeRefund?.id
+        stripeRefundId: stripeRefund?.id,
+        status: refundStatus,
+        error: refundError
       },
-      cancellationReason: cancellationReason || 'Guest cancelled'
+      cancellationReason: cancellationReason || 'Guest cancelled',
+      refundStatus: refundStatus
     };
 
     console.log('✅ Booking cancellation completed:', response);
@@ -638,9 +690,23 @@ exports.cancelBooking = async (req, res) => {
 
   } catch (err) {
     console.error('❌ Cancel booking error:', err);
-    res.status(500).json({ 
-      message: 'Server error during cancellation',
-      error: err.message 
+    
+    // Provide more specific error messages
+    let errorMessage = 'Server error during cancellation';
+    let statusCode = 500;
+    
+    if (err.name === 'ValidationError') {
+      errorMessage = 'Invalid booking data';
+      statusCode = 400;
+    } else if (err.name === 'CastError') {
+      errorMessage = 'Invalid booking ID';
+      statusCode = 400;
+    }
+    
+    res.status(statusCode).json({ 
+      message: errorMessage,
+      error: err.message,
+      timestamp: new Date().toISOString()
     });
   }
 };
@@ -656,45 +722,45 @@ const calculateRefundAmount = (booking, payment) => {
   
   switch (cancellationPolicy) {
     case 'Flexible':
-      // Full refund if cancelled 1 day before check-in
+      // 87% refund if cancelled 1 day before check-in (capped at 87%)
       if (daysUntilCheckIn >= 1) {
-        refundPercentage = 100;
+        refundPercentage = 87;
       } else if (daysUntilCheckIn >= 0) {
         refundPercentage = 50;
       }
       break;
       
     case 'Moderate':
-      // Full refund if cancelled 5 days before check-in
+      // 87% refund if cancelled 5 days before check-in (capped at 87%)
       if (daysUntilCheckIn >= 5) {
-        refundPercentage = 100;
+        refundPercentage = 87;
       } else if (daysUntilCheckIn >= 1) {
         refundPercentage = 50;
       }
       break;
       
     case 'Strict':
-      // Full refund if cancelled 7 days before check-in
+      // 87% refund if cancelled 7 days before check-in (capped at 87%)
       if (daysUntilCheckIn >= 7) {
-        refundPercentage = 100;
+        refundPercentage = 87;
       } else if (daysUntilCheckIn >= 1) {
         refundPercentage = 50;
       }
       break;
       
     case 'Super Strict':
-      // Full refund if cancelled 14 days before check-in
+      // 87% refund if cancelled 14 days before check-in (capped at 87%)
       if (daysUntilCheckIn >= 14) {
-        refundPercentage = 100;
+        refundPercentage = 87;
       } else if (daysUntilCheckIn >= 7) {
         refundPercentage = 50;
       }
       break;
       
     default:
-      // Default to Moderate policy
+      // Default to Moderate policy (capped at 87%)
       if (daysUntilCheckIn >= 5) {
-        refundPercentage = 100;
+        refundPercentage = 87;
       } else if (daysUntilCheckIn >= 1) {
         refundPercentage = 50;
       }

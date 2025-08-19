@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styled, { css } from 'styled-components';
 import { Link, useLocation } from 'react-router-dom';
-import { MdTravelExplore, MdEmojiEvents, MdChatBubble, MdCalendarMonth } from 'react-icons/md';
+import { MdTravelExplore, MdEmojiEvents, MdChatBubble, MdCalendarMonth, MdInfo } from 'react-icons/md';
 
 const BottomNavBar = styled.nav`
   position: fixed;
@@ -79,11 +79,12 @@ const navItems = [
   { to: '/', label: 'Explore', icon: <MdTravelExplore /> },
   { to: '/experiences', label: 'Experiences', icon: <MdEmojiEvents /> },
   { to: '/messages', label: 'Messages', icon: <MdChatBubble /> },
+  { to: '/about', label: 'About', icon: <MdInfo /> },
   { to: '/bookings', label: 'Bookings', icon: <MdCalendarMonth /> },
 ];
 
 // Routes where bottom nav should be visible
-const bottomNavRoutes = ['/', '/experiences', '/messages', '/bookings'];
+const bottomNavRoutes = ['/', '/experiences', '/messages', '/about', '/bookings'];
 
 const BottomNav = () => {
   const [visible, setVisible] = useState(true);

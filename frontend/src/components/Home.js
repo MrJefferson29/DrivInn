@@ -287,7 +287,7 @@ const Home = () => {
             <Col lg={3} md={6}>
               <h4>About</h4>
               <ul>
-                <li><FaGlobe /> About Us</li>
+                <li><a href="/about"><FaGlobe /> About Us</a></li>
                 <li><FaStar /> Press</li>
                 <li><FaUsers /> Careers</li>
                 <li><FaAward /> Awards</li>

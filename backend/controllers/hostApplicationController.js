@@ -12,8 +12,9 @@ cloudinary.config({
 });
 
 // Helper function to generate Stripe Connect Express dashboard URL
+// Format: https://connect.stripe.com/express/acct_{ACCOUNT_ID}/bKsxnuQI7PAK
 const generateStripeDashboardUrl = (accountId) => {
-  return `https://connect.stripe.com/app/express#${accountId}/overview`;
+  return `https://connect.stripe.com/express/acct_${accountId}/bKsxnuQI7PAK`;
 };
 
 // Helper function to upload file to Stripe and get file ID

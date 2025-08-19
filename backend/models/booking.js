@@ -159,6 +159,7 @@ bookingSchema.methods.updateStatusBasedOnTime = async function() {
         this.status = 'completed';
         this.checkedOut = true;
         this.checkOutDate = checkOutDateTime;
+        this.canReview = true; // Enable review after completion
         console.log(`✅ Marking past booking ${this._id} as completed at ${now.toISOString()}`);
         return 'completed';
       }
@@ -183,6 +184,7 @@ bookingSchema.methods.updateStatusBasedOnTime = async function() {
         this.status = 'checked_out';
         this.checkedOut = true;
         this.checkOutDate = now;
+        this.canReview = true; // Enable review after check-out
         console.log(`✅ Automatic check-out for booking ${this._id} at ${now.toISOString()}`);
         return 'checked_out';
       }

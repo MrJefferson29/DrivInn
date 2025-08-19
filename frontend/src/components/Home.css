@@ -1535,6 +1535,21 @@
   box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
 }
 
+/* Footer Links */
+footer ul li a {
+  color: #717171;
+  text-decoration: none;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+footer ul li a:hover {
+  color: #FF385C;
+  text-decoration: none;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .inspiration-grid {

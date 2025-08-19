@@ -154,12 +154,12 @@ const updateBookingStatuses = async () => {
 const sendStatusChangeNotifications = async (booking, oldStatus, newStatus) => {
   try {
     if (newStatus === 'checked_in') {
-      // Notify guest that they can now check in
+      // Notify guest that they can now check in and leave reviews
       await NotificationService.createNotification({
         user: booking.user._id,
         type: 'booking',
         title: 'Check-in Time!',
-        message: `Your booking is ready for check-in. You can now access your accommodation.`,
+        message: `Your booking is ready for check-in. You can now access your accommodation and start leaving reviews about your experience!`,
         booking: booking._id
       });
       
@@ -173,12 +173,12 @@ const sendStatusChangeNotifications = async (booking, oldStatus, newStatus) => {
       });
       
     } else if (newStatus === 'checked_out') {
-      // Notify guest that check-out is complete
+      // Notify guest that check-out is complete and they can still review
       await NotificationService.createNotification({
         user: booking.user._id,
         type: 'booking',
         title: 'Check-out Complete',
-        message: `You have successfully checked out. Thank you for staying with us!`,
+        message: `You have successfully checked out. Thank you for staying with us! You can still leave a review about your experience.`,
         booking: booking._id
       });
       
