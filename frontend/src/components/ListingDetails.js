@@ -1607,7 +1607,7 @@ const ListingDetails = () => {
     setLoading(true);
     setError('');
     
-    fetch(`http://localhost:5000/listings/${id}`)
+          fetch(`https://drivinn.onrender.com/listings/${id}`)
       .then(async res => {
         if (!res.ok) {
           let message = res.statusText;
@@ -1767,7 +1767,7 @@ const ListingDetails = () => {
 
     try {
       // Create or get chat room
-      const response = await fetch('http://localhost:5000/chat/room', {
+      const response = await fetch('https://drivinn.onrender.com/chat/room', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1863,7 +1863,7 @@ const ListingDetails = () => {
 
   const createChatRoom = async (booking) => {
     try {
-      const response = await fetch('http://localhost:5000/chat/room', {
+      const response = await fetch('https://drivinn.onrender.com/chat/room', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -2383,7 +2383,7 @@ const highlightIcons = {
                   return;
                 }
                 try {
-                  const response = await fetch('http://localhost:5000/chat/room', {
+                  const response = await fetch('https://drivinn.onrender.com/chat/room', {
                     method: 'POST',
                     headers: {
                       'Content-Type': 'application/json',

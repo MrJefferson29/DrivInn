@@ -379,7 +379,7 @@ const Experience = () => {
     try {
       console.log('🔄 Fetching user bookings for Experience screen...');
       
-      const response = await fetch('http://localhost:5000/bookings/user', {
+      const response = await fetch('https://drivinn.onrender.com/bookings/user', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'

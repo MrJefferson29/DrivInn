@@ -50,7 +50,7 @@ export default function ChatRoomsList() {
 
   useEffect(() => {
     if (!token) return;
-    fetch('http://localhost:5000/chat/rooms', {
+          fetch('https://drivinn.onrender.com/chat/rooms', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())

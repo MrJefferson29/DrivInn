@@ -856,7 +856,7 @@ const EditListing = () => {
   // Load listing data
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:5000/listings/${id}`)
+          fetch(`https://drivinn.onrender.com/listings/${id}`)
       .then(async res => {
         if (!res.ok) {
           throw new Error('Failed to load listing');
@@ -1089,7 +1089,7 @@ const EditListing = () => {
       }
       newImages.forEach(img => data.append('images', img));
       
-      const response = await fetch(`http://localhost:5000/listings/${id}`, {
+      const response = await fetch(`https://drivinn.onrender.com/listings/${id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

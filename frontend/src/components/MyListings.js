@@ -294,7 +294,7 @@ const MyListings = () => {
     const fetchMyListings = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`http://localhost:5000/listings?owner=${user.id || user._id}`, {
+        const response = await fetch(`https://drivinn.onrender.com/listings?owner=${user.id || user._id}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }

@@ -589,7 +589,7 @@ const MobileToggle = styled.button`
   }
 `;
 
-const socket = io('http://localhost:5000');
+    const socket = io('https://drivinn.onrender.com');
 
 export default function ChatScreen(props) {
   const { roomId } = useParams();
@@ -615,7 +615,7 @@ export default function ChatScreen(props) {
   // Fetch chat rooms
   useEffect(() => {
     if (!token) return;
-    fetch('http://localhost:5000/chat/rooms', {
+          fetch('https://drivinn.onrender.com/chat/rooms', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
@@ -634,7 +634,7 @@ export default function ChatScreen(props) {
     if (!chatRoomId) return;
     setLoading(true);
     setError('');
-    fetch(`http://localhost:5000/chat/messages/${chatRoomId}`, {
+    fetch(`https://drivinn.onrender.com/chat/messages/${chatRoomId}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => {
@@ -680,7 +680,7 @@ export default function ChatScreen(props) {
     
     if (showMapInput && mapCoords.lat && mapCoords.lng) {
       try {
-        const response = await fetch('http://localhost:5000/chat/message', {
+        const response = await fetch('https://drivinn.onrender.com/chat/message', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -713,13 +713,13 @@ export default function ChatScreen(props) {
       formData.append('chatRoomId', chatRoomId);
       formData.append('type', 'image');
       formData.append('image', image);
-      await fetch('http://localhost:5000/chat/message', {
+      await fetch('https://drivinn.onrender.com/chat/message', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData
       });
       setImage(null);
-      fetch(`http://localhost:5000/chat/messages/${chatRoomId}`, {
+      fetch(`https://drivinn.onrender.com/chat/messages/${chatRoomId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
         .then(res => res.json())
@@ -730,7 +730,7 @@ export default function ChatScreen(props) {
     
     if (text.trim()) {
       try {
-        const response = await fetch('http://localhost:5000/chat/message', {
+        const response = await fetch('https://drivinn.onrender.com/chat/message', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

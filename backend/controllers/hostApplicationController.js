@@ -1124,7 +1124,7 @@ exports.submitApplication = async (req, res) => {
       // Create account link for onboarding
       console.log('Creating account link for onboarding...');
       
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const frontendUrl = process.env.FRONTEND_URL || 'https://driv-inn.vercel.app';
       console.log('Using frontend URL for redirects:', frontendUrl);
       
       const accountLink = await stripe.accountLinks.create({
@@ -1334,8 +1334,8 @@ exports.approveApplication = async (req, res) => {
           try {
             const accountLink = await stripe.accountLinks.create({
               account: application.stripeConnect.accountId,
-              refresh_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/host-application-status`,
-              return_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/host-application-status`,
+                      refresh_url: `${process.env.FRONTEND_URL || 'https://driv-inn.vercel.app'}/host-application-status`,
+        return_url: `${process.env.FRONTEND_URL || 'https://driv-inn.vercel.app'}/host-application-status`,
               type: 'account_onboarding',
             });
             return accountLink.url;
@@ -1462,8 +1462,8 @@ exports.getStripeSetupStatus = async (req, res) => {
     try {
       const accountLink = await stripe.accountLinks.create({
         account: application.stripeConnect.accountId,
-        refresh_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/host-application-status`,
-        return_url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/host-application-status`,
+        refresh_url: `${process.env.FRONTEND_URL || 'https://driv-inn.vercel.app'}/host-application-status`,
+        return_url: `${process.env.FRONTEND_URL || 'https://driv-inn.vercel.app'}/host-application-status`,
         type: 'account_onboarding',
       });
       onboardingUrl = accountLink.url;

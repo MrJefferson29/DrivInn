@@ -41,7 +41,7 @@ const ForgotPassword = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/auth/forgot-password', {
+      const response = await fetch('https://drivinn.onrender.com/auth/forgot-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

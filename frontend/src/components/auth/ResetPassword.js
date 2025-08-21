@@ -47,7 +47,7 @@ const ResetPassword = () => {
 
   const verifyToken = async (tokenToVerify) => {
     try {
-      const response = await fetch(`http://localhost:5000/auth/verify-reset-token/${tokenToVerify}`);
+      const response = await fetch(`https://drivinn.onrender.com/auth/verify-reset-token/${tokenToVerify}`);
       const data = await response.json();
 
       if (response.ok) {
@@ -118,7 +118,7 @@ const ResetPassword = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/auth/reset-password', {
+      const response = await fetch('https://drivinn.onrender.com/auth/reset-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

@@ -446,13 +446,13 @@ const MoreLikeThis = () => {
             break;
 
           case 'most-visited-apartments':
-            const apartmentsRes = await fetch('http://localhost:5000/listings/most-visited-apartments');
+            const apartmentsRes = await fetch('https://drivinn.onrender.com/listings/most-visited-apartments');
             if (!apartmentsRes.ok) throw new Error('Failed to fetch most visited apartments');
             categoryListings = await apartmentsRes.json();
             break;
 
           case 'most-booked-cars':
-            const carsRes = await fetch('http://localhost:5000/listings/most-booked-cars');
+            const carsRes = await fetch('https://drivinn.onrender.com/listings/most-booked-cars');
             if (!carsRes.ok) throw new Error('Failed to fetch most booked cars');
             categoryListings = await carsRes.json();
             break;

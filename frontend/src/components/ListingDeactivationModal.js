@@ -280,7 +280,7 @@ const ListingDeactivationModal = ({
     try {
       if (isDeactivated) {
         // Activate listing
-        const response = await fetch(`http://localhost:5000/listings/${listing._id}/activate`, {
+        const response = await fetch(`https://drivinn.onrender.com/listings/${listing._id}/activate`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -303,7 +303,7 @@ const ListingDeactivationModal = ({
           deactivationReason: deactivationReason || 'Host deactivated listing'
         };
 
-        const response = await fetch(`http://localhost:5000/listings/${listing._id}/deactivate`, {
+        const response = await fetch(`https://drivinn.onrender.com/listings/${listing._id}/deactivate`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

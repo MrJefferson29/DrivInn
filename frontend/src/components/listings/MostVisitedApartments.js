@@ -118,7 +118,7 @@ const MostVisitedApartments = () => {
   useEffect(() => {
     setLoading(true);
     setError('');
-    fetch('http://localhost:5000/listings/most-visited-apartments')
+          fetch('https://drivinn.onrender.com/listings/most-visited-apartments')
       .then(async res => {
         if (!res.ok) throw new Error('Failed to fetch most visited apartments');
         return await res.json();

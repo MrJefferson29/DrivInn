@@ -1892,7 +1892,7 @@ const CreateListing = () => {
       }
       
       const res = await axios.post(
-        'http://localhost:5000/listings',
+        'https://drivinn.onrender.com/listings',
         data,
         {
           headers: {

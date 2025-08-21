@@ -20,7 +20,7 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       if (token) {
         try {
-          const response = await fetch('http://localhost:5000/auth/me', {
+          const response = await fetch('https://drivinn.onrender.com/auth/me', {
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/auth/login', {
+      const response = await fetch('https://drivinn.onrender.com/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
       setToken(data.token);
       
       // Fetch user data
-      const userResponse = await fetch('http://localhost:5000/auth/me', {
+      const userResponse = await fetch('https://drivinn.onrender.com/auth/me', {
         headers: {
           'Authorization': `Bearer ${data.token}`,
           'Content-Type': 'application/json'
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }) => {
   // Register function
   const register = async (firstName, lastName, email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/auth/register', {
+      const response = await fetch('https://drivinn.onrender.com/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

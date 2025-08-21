@@ -41,7 +41,7 @@ const SocialLoginSuccess = () => {
         localStorage.setItem('token', token);
 
         // Fetch user data
-        const response = await fetch('http://localhost:5000/auth/me', {
+        const response = await fetch('https://drivinn.onrender.com/auth/me', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'

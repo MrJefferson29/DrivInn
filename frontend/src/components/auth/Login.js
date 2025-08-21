@@ -198,7 +198,7 @@ const Login = () => {
                     <Button 
                       variant="outline-dark" 
                       className="social-button"
-                      onClick={() => window.location.href = 'http://localhost:5000/auth/google'}
+                      onClick={() => window.location.href = 'https://drivinn.onrender.com/auth/google'}
                     >
                       <FaGoogle className="social-icon" />
                       Continue with Google

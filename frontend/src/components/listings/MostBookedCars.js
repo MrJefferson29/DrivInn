@@ -118,7 +118,7 @@ const MostBookedCars = () => {
   useEffect(() => {
     setLoading(true);
     setError('');
-    fetch('http://localhost:5000/listings/most-booked-cars')
+          fetch('https://drivinn.onrender.com/listings/most-booked-cars')
       .then(async res => {
         if (!res.ok) throw new Error('Failed to fetch most booked cars');
         return await res.json();
