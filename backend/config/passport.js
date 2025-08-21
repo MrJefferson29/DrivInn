@@ -22,7 +22,7 @@ passport.deserializeUser(async (id, done) => {
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${process.env.BACKEND_URL || 'https://drivinn.onrender.com'}/auth/google/callback`,
+  callbackURL: 'https://drivinn.onrender.com/auth/google/callback',
   scope: ['profile', 'email']
 }, async (accessToken, refreshToken, profile, done) => {
   try {

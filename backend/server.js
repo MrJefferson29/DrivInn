@@ -397,12 +397,11 @@ app.get('/webhook-health', (req, res) => {
 // JSON parser for all other routes
 app.use(express.json());
 app.use(morgan('dev'));
-app.use(
-  cors({
-          origin: process.env.FRONTEND_URL || 'https://driv-inn.vercel.app',
-    credentials: true,
-  })
-);
+// CORS configuration
+app.use(cors({
+  origin: ['https://driv-inn.vercel.app', 'http://localhost:3000'],
+  credentials: true
+}));
 
 // Session configuration for OAuth
 app.use(
