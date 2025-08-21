@@ -153,7 +153,7 @@ const About = () => {
                     {stats.map((stat, index) => (
                       <Col key={index} md={3} sm={6}>
                         <div className="stat-item">
-                          <div className="stat-icon" style={{ color: features[index]?.color }}>
+                          <div className="stat-icon" style={{ color: 'white' }}>
                             {stat.icon}
                           </div>
                           <div className="stat-number">{stat.number}</div>

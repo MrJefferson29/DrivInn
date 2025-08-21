@@ -48,18 +48,10 @@ const testBookingStatusUpdate = async () => {
     
     console.log('\n📊 Current Time Analysis:');
     const now = new Date();
-    const checkInDate = new Date(booking.checkIn);
-    const checkOutDate = new Date(booking.checkOut);
     
-    // Parse listing times
-    const [checkInHour, checkInMinute] = booking.home.checkIn.split(':').map(Number);
-    const [checkOutHour, checkOutMinute] = booking.home.checkOut.split(':').map(Number);
-    
-    const checkInDateTime = new Date(checkInDate);
-    const checkOutDateTime = new Date(checkOutDate);
-    
-    checkInDateTime.setHours(checkInHour, checkInMinute, 0, 0);
-    checkOutDateTime.setHours(checkOutHour, checkOutMinute, 0, 0);
+    // The booking now stores full datetime objects (user date + host time)
+    const checkInDateTime = new Date(booking.checkIn);
+    const checkOutDateTime = new Date(booking.checkOut);
     
     console.log(`  - Current Time: ${now.toISOString()}`);
     console.log(`  - Check-in DateTime: ${checkInDateTime.toISOString()}`);

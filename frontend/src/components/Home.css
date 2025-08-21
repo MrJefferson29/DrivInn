@@ -295,11 +295,17 @@
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  user-select: none;
 }
 
 .inspiration-item:hover {
   transform: scale(1.03) translateY(-8px);
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.2);
+}
+
+.inspiration-item:active {
+  transform: scale(1.01) translateY(-4px);
+  transition: transform 0.1s ease;
 }
 
 .inspiration-item.large {
@@ -330,8 +336,28 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.inspiration-content::after {
+  content: 'Click to explore';
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
 .inspiration-item:hover .inspiration-content {
   transform: translateY(0);
+  opacity: 1;
+}
+
+.inspiration-item:hover .inspiration-content::after {
   opacity: 1;
 }
 

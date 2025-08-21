@@ -1,481 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
+import { Container, Row, Col, Card, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 import { hostApplicationsAPI } from '../services/api';
+import './AdminHostApplicationsPanel.css';
 import { 
-  FaArrowLeft, 
-  FaEye, 
-  FaCheck, 
-  FaTimes, 
-  FaClock, 
-  FaCheckCircle, 
-  FaTimesCircle,
-  FaUser,
-  FaEnvelope,
-  FaCalendar,
-  FaFileAlt,
-  FaComments,
-  FaSpinner,
-  FaFilter,
-  FaSearch,
-  FaIdCard,
-  FaCreditCard,
-  FaHome,
-  FaMapMarkerAlt,
-  FaPhone,
-  FaImage,
-  FaExpand,
-  FaTimes as FaClose,
-  FaPaypal
-} from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-import { Spinner, Alert, Badge } from 'react-bootstrap';
-
-const Container = styled.div`
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 40px 20px;
-  
-  @media (max-width: 768px) {
-    padding: 20px 16px;
-  }
-`;
-
-const Header = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 32px;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 24px;
-  }
-`;
-
-const HeaderLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-`;
-
-const BackButton = styled.button`
-  background: none;
-  border: none;
-  color: #222222;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  
-  &:hover {
-    background: #f7f7f7;
-    color: #FF385C;
-  }
-`;
-
-const Title = styled.h1`
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #222222;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  
-  @media (max-width: 768px) {
-    font-size: 2rem;
-  }
-  
-  @media (max-width: 480px) {
-    font-size: 1.75rem;
-  }
-`;
-
-const StatsContainer = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
-`;
-
-const StatCard = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #DDDDDD;
-  text-align: center;
-`;
-
-const StatNumber = styled.div`
-  font-size: 2rem;
-  font-weight: 700;
-  color: #FF385C;
-  margin-bottom: 8px;
-`;
-
-const StatLabel = styled.div`
-  color: #6c757d;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-`;
-
-const ControlsContainer = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #DDDDDD;
-  margin-bottom: 24px;
-`;
-
-const ControlsTitle = styled.h3`
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #222222;
-  margin: 0 0 16px 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const ControlsRow = styled.div`
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
-`;
-
-const FilterSelect = styled.select`
-  padding: 8px 12px;
-  border: 1px solid #DDDDDD;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  background: white;
-  cursor: pointer;
-  
-  &:focus {
-    outline: none;
-    border-color: #FF385C;
-  }
-`;
-
-const SearchInput = styled.input`
-  padding: 8px 12px;
-  border: 1px solid #DDDDDD;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  min-width: 200px;
-  
-  &:focus {
-    outline: none;
-    border-color: #FF385C;
-  }
-`;
-
-const TableHeader = styled.div`
-  background: white;
-  border-radius: 12px 12px 0 0;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #DDDDDD;
-  border-bottom: none;
-`;
-
-const TableTitle = styled.h3`
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #222222;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const ApplicationsTable = styled.div`
-  background: white;
-  border-radius: 0 0 12px 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #DDDDDD;
-  border-top: none;
-  overflow: hidden;
-`;
-
-const TableRow = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
-  gap: 16px;
-  padding: 16px 20px;
-  align-items: center;
-  border-bottom: 1px solid #DDDDDD;
-  transition: background-color 0.2s ease;
-  
-  &:hover {
-    background-color: #f8f9fa;
-  }
-  
-  &:last-child {
-    border-bottom: none;
-  }
-  
-  @media (max-width: 1200px) {
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
-  }
-  
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    padding: 12px 16px;
-  }
-`;
-
-const TableHeaderRow = styled(TableRow)`
-  background: #f8f9fa;
-  font-weight: 600;
-  color: #6c757d;
-  font-size: 0.9rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  
-  &:hover {
-    background-color: #f8f9fa;
-  }
-`;
-
-const TableCell = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  
-  @media (max-width: 768px) {
-    font-size: 0.8rem;
-  }
-`;
-
-const StatusBadge = styled(Badge)`
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  
-  &.pending {
-    background: #ffc107 !important;
-    color: #212529 !important;
-  }
-  
-  &.approved {
-    background: #28a745 !important;
-    color: white !important;
-  }
-  
-  &.declined {
-    background: #dc3545 !important;
-    color: white !important;
-  }
-`;
-
-const ActionButton = styled.button`
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  
-  &.approve {
-    background: #28a745;
-    color: white;
-    
-    &:hover:not(:disabled) {
-      background: #218838;
-    }
-  }
-  
-  &.decline {
-    background: #dc3545;
-    color: white;
-    
-    &:hover:not(:disabled) {
-      background: #c82333;
-    }
-  }
-  
-  &.view {
-    background: #6c757d;
-    color: white;
-    
-    &:hover:not(:disabled) {
-      background: #5a6268;
-    }
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-const Modal = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-`;
-
-const ModalContent = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  max-width: 600px;
-  width: 100%;
-  max-height: 80vh;
-  overflow-y: auto;
-`;
-
-const ModalHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-`;
-
-const ModalTitle = styled.h3`
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #222222;
-  margin: 0;
-`;
-
-const ModalClose = styled.button`
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: #6c757d;
-  
-  &:hover {
-    color: #222222;
-  }
-`;
-
-const ModalBody = styled.div`
-  margin-bottom: 20px;
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: 16px;
-`;
-
-const Label = styled.label`
-  display: block;
-  font-weight: 600;
-  color: #222222;
-  margin-bottom: 6px;
-`;
-
-const TextArea = styled.textarea`
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #DDDDDD;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  resize: vertical;
-  min-height: 100px;
-  
-  &:focus {
-    outline: none;
-    border-color: #FF385C;
-  }
-`;
-
-const ModalActions = styled.div`
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-`;
-
-const Button = styled.button`
-  padding: 10px 20px;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  
-  &.primary {
-    background: #FF385C;
-    color: white;
-    
-    &:hover:not(:disabled) {
-      background: #e31c5f;
-    }
-  }
-  
-  &.secondary {
-    background: #6c757d;
-  color: white;
-    
-    &:hover:not(:disabled) {
-      background: #5a6268;
-    }
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-const LoadingContainer = styled.div`
-  text-align: center;
-  padding: 60px 20px;
-`;
-
-const EmptyState = styled.div`
-  text-align: center;
-  padding: 60px 20px;
-  color: #6c757d;
-`;
-
-const EmptyIcon = styled(FaFileAlt)`
-  font-size: 3rem;
-  margin-bottom: 16px;
-  opacity: 0.5;
-`;
-
-const EmptyTitle = styled.h3`
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #6c757d;
-`;
-
-const EmptyText = styled.p`
-  font-size: 1rem;
-  color: #6c757d;
-`;
+  Eye, 
+  Check, 
+  X, 
+  Clock, 
+  CheckCircle, 
+  XCircle,
+  User,
+  Mail,
+  Calendar,
+  FileText,
+  RefreshCw,
+  Filter,
+  Search,
+  CreditCard,
+  Home,
+  MapPin,
+  Phone,
+  Image,
+  AlertCircle,
+  DollarSign,
+  Shield
+} from 'lucide-react';
 
 const AdminHostApplicationsPanel = () => {
   const [applications, setApplications] = useState([]);
@@ -489,7 +38,6 @@ const AdminHostApplicationsPanel = () => {
   const [adminNote, setAdminNote] = useState('');
   const [stripeRemediationLink, setStripeRemediationLink] = useState('');
   const [processing, setProcessing] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchApplications();
@@ -586,102 +134,82 @@ const AdminHostApplicationsPanel = () => {
     return matchesStatus && matchesSearch;
   });
 
-  const stats = {
-    total: applications.length,
-    pending: applications.filter(app => app.status === 'pending').length,
-    approved: applications.filter(app => app.status === 'approved').length,
-    declined: applications.filter(app => app.status === 'declined').length
-  };
 
+
+  // Loading State
   if (loading) {
     return (
+      <div className="admin-applications-container">
       <Container>
-        <LoadingContainer>
-          <FaSpinner className="fa-spin" style={{ fontSize: '2rem', color: '#FF385C' }} />
-          <p style={{ marginTop: '16px', color: '#6c757d' }}>Loading applications...</p>
-        </LoadingContainer>
+          <div className="admin-loading-container">
+            <div className="admin-loading-spinner">
+              <RefreshCw size={48} />
+            </div>
+            <div className="admin-loading-text">
+              Loading applications...
+            </div>
+          </div>
       </Container>
+      </div>
     );
   }
 
+  // Empty State
   if (filteredApplications.length === 0 && !loading) {
   return (
+      <div className="admin-applications-container">
     <Container>
-      <Header>
-        <HeaderLeft>
-          <BackButton onClick={() => navigate(-1)}>
-            <FaArrowLeft /> Back
-          </BackButton>
-          <Title>
-            <FaFileAlt /> Host Applications
-          </Title>
-        </HeaderLeft>
-      </Header>
 
+          {/* Error Display */}
         {error && (
-          <Alert variant="danger" style={{ marginBottom: '24px' }}>
+            <div className="admin-error-container">
+              <AlertCircle size={20} />
             {error}
-          </Alert>
-        )}
+            </div>
+          )}
 
-        <EmptyState>
-          <EmptyIcon />
-          <EmptyTitle>No Applications Found</EmptyTitle>
-          <EmptyText>
+          {/* Empty State */}
+          <Card className="admin-empty-state">
+            <div className="admin-empty-icon">
+              <FileText size={48} />
+            </div>
+            <h3 className="admin-empty-title">
+              No Applications Found
+            </h3>
+            <p className="admin-empty-message">
             {statusFilter || searchTerm 
               ? 'No applications match your current filters. Try adjusting your search criteria.'
               : 'There are no host applications to review at this time.'
             }
-          </EmptyText>
-        </EmptyState>
+            </p>
+          </Card>
       </Container>
+      </div>
     );
   }
 
   return (
+    <div className="admin-applications-container">
     <Container>
-      <Header>
-        <HeaderLeft>
-          <BackButton onClick={() => navigate(-1)}>
-            <FaArrowLeft /> Back
-          </BackButton>
-          <Title>
-            <FaFileAlt /> Host Applications
-          </Title>
-        </HeaderLeft>
-      </Header>
 
+
+        {/* Error Display */}
       {error && (
-        <Alert variant="danger" style={{ marginBottom: '24px' }}>
+          <Alert variant="danger" style={{ marginBottom: '32px' }}>
+            <AlertCircle size={20} style={{ marginRight: '8px' }} />
           {error}
         </Alert>
       )}
 
-      <StatsContainer>
-        <StatCard>
-          <StatNumber>{stats.total}</StatNumber>
-          <StatLabel>Total Applications</StatLabel>
-        </StatCard>
-        <StatCard>
-          <StatNumber>{stats.pending}</StatNumber>
-          <StatLabel>Pending Review</StatLabel>
-        </StatCard>
-        <StatCard>
-          <StatNumber>{stats.approved}</StatNumber>
-          <StatLabel>Approved</StatLabel>
-        </StatCard>
-        <StatCard>
-          <StatNumber>{stats.declined}</StatNumber>
-          <StatLabel>Declined</StatLabel>
-        </StatCard>
-      </StatsContainer>
-
-      <ControlsContainer>
-        <ControlsTitle>
-          <FaFilter /> Filters
-        </ControlsTitle>
-        <ControlsRow>
-          <FilterSelect 
+        {/* Controls Section */}
+        <Card className="admin-controls-container">
+          <Card.Body>
+            <h3 className="admin-controls-title">
+              <Filter size={20} /> Search & Filters
+            </h3>
+            <div className="admin-controls-row">
+              <select 
+                className="admin-filter-select"
             value={statusFilter} 
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -689,149 +217,212 @@ const AdminHostApplicationsPanel = () => {
             <option value="pending">Pending</option>
             <option value="approved">Approved</option>
             <option value="declined">Declined</option>
-        </FilterSelect>
+              </select>
           
-        <SearchInput
+              <input
+                className="admin-search-input"
           type="text"
           placeholder="Search by name or email..."
           value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
         />
-        </ControlsRow>
-      </ControlsContainer>
+            </div>
+          </Card.Body>
+        </Card>
 
-        <TableHeader>
-        <TableTitle>
-          <FaFileAlt /> Applications Overview
-        </TableTitle>
-        </TableHeader>
-
-      <ApplicationsTable>
-        <TableHeaderRow>
-          <TableCell>Applicant</TableCell>
-          <TableCell>Contact</TableCell>
-          <TableCell>Property</TableCell>
-          <TableCell>Business Info</TableCell>
-          <TableCell>Payment Method</TableCell>
-          <TableCell>Documents</TableCell>
-          <TableCell>Status</TableCell>
-          <TableCell>Actions</TableCell>
-        </TableHeaderRow>
-        
+        {/* Applications Table */}
+        <Card className="admin-table-container">
+          <div className="admin-table-header">
+            <h3 className="admin-table-title">
+              <FileText size={20} /> Applications Overview
+            </h3>
+          </div>
+          
+          {/* Table Header Row */}
+          <div className="admin-table-header-row">
+            <div className="admin-table-cell">Applicant</div>
+            <div className="admin-table-cell">Contact</div>
+            <div className="admin-table-cell">Property</div>
+            <div className="admin-table-cell">Business Info</div>
+            <div className="admin-table-cell">Payment Method</div>
+            <div className="admin-table-cell">Documents</div>
+            <div className="admin-table-cell">Status</div>
+            <div className="admin-table-cell">Actions</div>
+          </div>
+          
+          {/* Table Data Rows */}
         {filteredApplications.map((application) => (
-          <TableRow key={application._id}>
-            <TableCell>
-              <FaUser />
-              {application.firstName} {application.lastName}
-            </TableCell>
-            
-            <TableCell>
-              <div>
-                <div><FaEnvelope /> {application.email}</div>
-                <div><FaPhone /> {application.phoneNumber}</div>
-                <div><FaCalendar /> {new Date(application.dateOfBirth).toLocaleDateString()}</div>
+            <div key={application._id} className="admin-table-row">
+              {/* Applicant Column */}
+              <div className="admin-table-cell">
+                <User size={18} />
+                <strong>{application.firstName} {application.lastName}</strong>
               </div>
-            </TableCell>
-            
-            <TableCell>
-              <div>
-                <div><FaHome /> {application.propertyType}</div>
-                <div><FaMapMarkerAlt /> {application.postalAddress?.city}, {application.postalAddress?.state}</div>
+              
+              {/* Contact Column */}
+              <div className="admin-table-cell">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Mail size={16} />
+                    {application.email}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Phone size={16} />
+                    {application.phoneNumber || 'N/A'}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Calendar size={16} />
+                    {new Date(application.dateOfBirth).toLocaleDateString()}
+                  </div>
+                </div>
               </div>
-            </TableCell>
+              
+              {/* Property Column */}
+              <div className="admin-table-cell">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Home size={16} />
+                    {application.propertyType || 'N/A'}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <MapPin size={16} />
+                    {application.postalAddress?.city && application.postalAddress?.state 
+                      ? `${application.postalAddress.city}, ${application.postalAddress.state}`
+                      : 'N/A'
+                    }
+                  </div>
+                </div>
+              </div>
             
-            <TableCell>
-              <div>
+              {/* Business Info Column */}
+              <div className="admin-table-cell">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <div><strong>Account Type:</strong> Individual</div>
                 <div><strong>Structure:</strong> Individual</div>
+                </div>
               </div>
-            </TableCell>
             
-            <TableCell>
-              <div>
+              {/* Payment Method Column */}
+              <div className="admin-table-cell">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {application.stripeConnect?.accountId ? (
-                  <div><FaPaypal /> Stripe Account: {application.stripeConnect.accountId.substring(0, 8)}...</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <DollarSign size={16} />
+                      Stripe Account: {application.stripeConnect.accountId.substring(0, 8)}...
+                    </div>
                 ) : application.paymentMethods?.stripeAccountId ? (
-                  <div><FaPaypal /> Stripe: {application.paymentMethods.stripeAccountId.substring(0, 8)}...</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <DollarSign size={16} />
+                      Stripe: {application.paymentMethods.stripeAccountId.substring(0, 8)}...
+                    </div>
                 ) : application.paymentMethods?.creditCard?.last4 ? (
-                  <div><FaCreditCard /> Card: ****{application.paymentMethods.creditCard.last4}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <CreditCard size={16} />
+                      Card: ****{application.paymentMethods.creditCard.last4}
+                    </div>
                 ) : (
                   <div>No payment method</div>
                 )}
+                </div>
               </div>
-            </TableCell>
-            
-            <TableCell>
-              <div>
-                <div><FaIdCard /> Front: {application.identityDocuments?.idFrontImage ? '✓' : '✗'}</div>
-                <div><FaIdCard /> Back: {application.identityDocuments?.idBackImage ? '✓' : '✗'}</div>
-                <div><FaImage /> Selfie: {application.identityDocuments?.selfieImage ? '✓' : '✗'}</div>
+              
+              {/* Documents Column */}
+              <div className="admin-table-cell">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Shield size={16} />
+                    Front: {application.identityDocuments?.idFrontImage ? '✓' : '✗'}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Shield size={16} />
+                    Back: {application.identityDocuments?.idBackImage ? '✓' : '✗'}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Image size={16} />
+                    Selfie: {application.identityDocuments?.selfieImage ? '✓' : '✗'}
+                  </div>
+                </div>
               </div>
-            </TableCell>
-            
-            <TableCell>
-              <StatusBadge className={application.status}>
+              
+              {/* Status Column */}
+              <div className="admin-table-cell">
+                <span className={`admin-status-badge ${application.status}`}>
+                  {application.status === 'pending' && <Clock size={14} />}
+                  {application.status === 'approved' && <CheckCircle size={14} />}
+                  {application.status === 'declined' && <XCircle size={14} />}
                 {application.status}
-                </StatusBadge>
-            </TableCell>
+                </span>
+              </div>
             
-            <TableCell>
+              {/* Actions Column */}
+              <div className="admin-table-cell">
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <ActionButton
-                  className="view"
+                  <button
+                    className="admin-action-button view"
                   onClick={() => openModal('view', application)}
                 >
-                  <FaEye /> View
-                </ActionButton>
+                    <Eye size={16} /> View
+                  </button>
                 
                 {application.status === 'pending' && (
                   <>
-                    <ActionButton
-                      className="approve"
+                      <button
+                        className="admin-action-button approve"
                       onClick={() => openModal('approve', application)}
                     >
-                      <FaCheck /> Approve
-                    </ActionButton>
+                        <Check size={16} /> Approve
+                      </button>
                     
-                    <ActionButton
-                      className="decline"
+                      <button
+                        className="admin-action-button decline"
                       onClick={() => openModal('decline', application)}
                     >
-                      <FaTimes /> Decline
-                    </ActionButton>
+                        <X size={16} /> Decline
+                      </button>
                   </>
                 )}
+                </div>
               </div>
-            </TableCell>
-          </TableRow>
+            </div>
         ))}
-      </ApplicationsTable>
+        </Card>
 
+        {/* Application Details Modal */}
       {showModal && (
-        <Modal>
-          <ModalContent>
-            <ModalHeader>
-              <ModalTitle>
+          <div className="admin-modal">
+            <div className="admin-modal-content">
+              <div className="admin-modal-header">
+                <h3 className="admin-modal-title">
                 {modalType === 'approve' && 'Approve Application'}
                 {modalType === 'decline' && 'Decline Application'}
                 {modalType === 'view' && 'Application Details'}
-              </ModalTitle>
-              <ModalClose onClick={closeModal}>
-                <FaClose />
-              </ModalClose>
-            </ModalHeader>
-            
-            <ModalBody>
+                </h3>
+                <button className="admin-modal-close" onClick={closeModal}>
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="admin-modal-body">
+                {/* View Application Details */}
               {modalType === 'view' && selectedApplication && (
                 <div>
                   <h4>Personal Information</h4>
                   <p><strong>Name:</strong> {selectedApplication.firstName} {selectedApplication.lastName}</p>
                   <p><strong>Email:</strong> {selectedApplication.email}</p>
-                  <p><strong>Phone:</strong> {selectedApplication.phoneNumber}</p>
+                    <p><strong>Phone:</strong> {selectedApplication.phoneNumber || 'N/A'}</p>
                   <p><strong>Date of Birth:</strong> {new Date(selectedApplication.dateOfBirth).toLocaleDateString()}</p>
                   
                   <h4>Address</h4>
-                  <p>{selectedApplication.postalAddress?.street}, {selectedApplication.postalAddress?.city}, {selectedApplication.postalAddress?.state} {selectedApplication.postalAddress?.postalCode}, {selectedApplication.postalAddress?.country}</p>
+                    <p>
+                      {selectedApplication.postalAddress?.street && 
+                       selectedApplication.postalAddress?.city && 
+                       selectedApplication.postalAddress?.state && 
+                       selectedApplication.postalAddress?.postalCode && 
+                       selectedApplication.postalAddress?.country
+                        ? `${selectedApplication.postalAddress.street}, ${selectedApplication.postalAddress.city}, ${selectedApplication.postalAddress.state} ${selectedApplication.postalAddress.postalCode}, ${selectedApplication.postalAddress.country}`
+                        : 'Address not provided'
+                      }
+                    </p>
                   
                   <h4>Business Information</h4>
                   <p><strong>Account Type:</strong> Individual</p>
@@ -845,9 +436,9 @@ const AdminHostApplicationsPanel = () => {
                   <p><strong>Bank Account Number:</strong> {selectedApplication.bankAccount?.accountNumber ? '****' : 'Not provided'}</p>
                   
                   <h4>Property Information</h4>
-                  <p><strong>Type:</strong> {selectedApplication.propertyType}</p>
-                  <p><strong>Description:</strong> {selectedApplication.propertyDescription}</p>
-                  <p><strong>Experience:</strong> {selectedApplication.hostingExperience || 'Not provided'}</p>
+                    <p><strong>Type:</strong> {selectedApplication.propertyType || 'N/A'}</p>
+                    <p><strong>Description:</strong> {selectedApplication.propertyDescription || 'N/A'}</p>
+                    <p><strong>Experience:</strong> {selectedApplication.hostingExperience || 'N/A'}</p>
                   
                   <h4>Payment Methods</h4>
                   <p><strong>Stripe Account:</strong> {selectedApplication.stripeConnect?.accountId || selectedApplication.paymentMethods?.stripeAccountId || 'Not provided'}</p>
@@ -856,13 +447,14 @@ const AdminHostApplicationsPanel = () => {
                   {selectedApplication.stripeConnect && (
                     <>
                       <h4>Stripe Connect Status</h4>
-                      <p><strong>Account Status:</strong> {selectedApplication.stripeConnect.accountStatus}</p>
+                        <p><strong>Account Status:</strong> {selectedApplication.stripeConnect.accountStatus || 'N/A'}</p>
                       <p><strong>Onboarding Completed:</strong> {selectedApplication.stripeConnect.onboardingCompleted ? 'Yes' : 'No'}</p>
                     </>
                   )}
                 </div>
               )}
               
+                {/* Approve Application Form */}
               {modalType === 'approve' && (
                 <div>
                   <p>Are you sure you want to approve this application?</p>
@@ -870,9 +462,10 @@ const AdminHostApplicationsPanel = () => {
                   <p>This will grant the user host privileges and allow them to create listings.</p>
                   <p><strong>Note:</strong> You must provide a Stripe remediation link for the user to complete their account setup.</p>
                   
-                  <FormGroup>
-                    <Label>Admin Note (Optional)</Label>
-                    <TextArea
+                    <div className="admin-form-group">
+                      <label className="admin-label">Admin Note (Optional)</label>
+                      <textarea
+                        className="admin-textarea"
                       value={adminNote}
                       onChange={(e) => setAdminNote(e.target.value)}
                       placeholder="Add any notes about this application..."
@@ -880,11 +473,12 @@ const AdminHostApplicationsPanel = () => {
                     <small style={{ color: '#6c757d', fontSize: '0.85rem' }}>
                       Note: Stripe Connect account is created when the user submits their application. You can find the account in your Stripe dashboard.
                     </small>
-                  </FormGroup>
+                    </div>
 
-                  <FormGroup>
-                    <Label>Stripe Remediation Link (Required)</Label>
-                    <TextArea
+                    <div className="admin-form-group">
+                      <label className="admin-label">Stripe Remediation Link (Required)</label>
+                      <textarea
+                        className="admin-textarea"
                       value={stripeRemediationLink}
                       onChange={(e) => setStripeRemediationLink(e.target.value)}
                       placeholder="Paste the remediation link from Stripe dashboard..."
@@ -898,57 +492,63 @@ const AdminHostApplicationsPanel = () => {
                       <br /><br />
                       <strong>Note:</strong> The user will need this link to complete their Stripe Connect account setup and start receiving payments.
                     </small>
-                  </FormGroup>
+                    </div>
                 </div>
               )}
 
+                {/* Decline Application Form */}
               {modalType === 'decline' && (
                 <div>
                   <p>Please provide a reason for declining this application:</p>
-                  <FormGroup>
-                    <Label>Admin Note (Required)</Label>
-                    <TextArea
+                    <div className="admin-form-group">
+                      <label className="admin-label">Admin Note (Required)</label>
+                      <textarea
+                        className="admin-textarea"
                       value={adminNote}
                       onChange={(e) => setAdminNote(e.target.value)}
                       placeholder="Provide a reason for declining the application..."
                       required
                     />
-                  </FormGroup>
+                    </div>
                 </div>
               )}
-            </ModalBody>
+              </div>
 
-            <ModalActions>
+              {/* Modal Actions */}
+              <div className="admin-modal-actions">
               {modalType === 'approve' && (
                 <Button
-                  className="primary"
+                    variant="danger"
                   onClick={() => handleApprove(selectedApplication._id)}
                   disabled={processing || !adminNote.trim() || !stripeRemediationLink.trim()}
+                    style={{ backgroundColor: '#FF385C', borderColor: '#FF385C' }}
                 >
-                  {processing ? <FaSpinner className="fa-spin" /> : <FaCheck />}
+                    {processing ? <RefreshCw size={16} className="fa-spin" /> : <Check size={16} />}
                   {processing ? 'Approving...' : 'Approve'}
                 </Button>
               )}
               
               {modalType === 'decline' && (
                 <Button
-                  className="primary"
+                    variant="danger"
                   onClick={() => handleDecline(selectedApplication._id)}
                   disabled={processing || !adminNote.trim()}
+                    style={{ backgroundColor: '#FF385C', borderColor: '#FF385C' }}
                 >
-                  {processing ? <FaSpinner className="fa-spin" /> : <FaTimes />}
+                    {processing ? <RefreshCw size={16} className="fa-spin" /> : <X size={16} />}
                   {processing ? 'Declining...' : 'Decline'}
                 </Button>
               )}
               
-              <Button className="secondary" onClick={closeModal}>
+                <Button variant="secondary" onClick={closeModal}>
                 Cancel
               </Button>
-            </ModalActions>
-          </ModalContent>
-        </Modal>
+              </div>
+            </div>
+          </div>
       )}
     </Container>
+    </div>
   );
 };
 

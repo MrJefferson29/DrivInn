@@ -6,12 +6,8 @@ import { Alert, Spinner } from 'react-bootstrap';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import citiesList from 'cities-list';
 import Fuse from 'fuse.js';
-import worldCitiesAsia from '../data/worldCitiesAsia.json';
-import worldCitiesEurope from '../data/worldCitiesEurope.json';
-import worldCitiesAfricaMiddleEast from '../data/worldCitiesAfricaMiddleEast.json';
-import worldCitiesAmericasOceania from '../data/worldCities.json';
+import usaCities from '../data/usaCities.json';
 import { 
   FaPlus, FaTrash, FaChevronLeft, FaChevronRight, FaCheckCircle, 
   FaHome, FaMapMarkerAlt, FaCog, FaStar, FaCamera, FaEdit, 
@@ -829,24 +825,8 @@ const fuseOptions = {
   includeMatches: true
 };
 
-// Combine all city data
-const allCities = [
-  ...Object.values(citiesList)
-    .filter(city => city && city.name && city.country)
-    .map(city => ({
-      name: city.name,
-      country: city.country,
-      lat: parseFloat(city.lat) || 0,
-      lng: parseFloat(city.lng) || 0,
-      population: city.population || 0,
-      timezone: city.timezone || null,
-      altName: city.altName || null
-    })),
-  ...worldCitiesAsia,
-  ...worldCitiesEurope,
-  ...worldCitiesAfricaMiddleEast,
-  ...worldCitiesAmericasOceania
-];
+// Use only US cities data
+const allCities = usaCities;
 
 // Remove duplicates based on name and country
 const uniqueCities = allCities.filter((city, index, self) => 
@@ -1281,7 +1261,7 @@ const CreateListing = () => {
                     setHighlightedIndex(-1);
                   }}
                   onKeyDown={handleKeyDown}
-                  placeholder="Search for any city worldwide..."
+                  placeholder="Search for US cities..."
                   autoComplete="off"
                   required
                 />

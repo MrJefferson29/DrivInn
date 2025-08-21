@@ -198,7 +198,7 @@ const StatusCard = styled.div`
 const StatusHeader = styled.div`
   padding: 48px 40px;
   background: ${props => {
-    if (props.status === 'approved') return 'linear-gradient(135deg, #28a745 0%, #20c997 100%)';
+    if (props.status === 'approved') return 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
     if (props.status === 'declined') return 'linear-gradient(135deg, #dc3545 0%, #fd7e14 100%)';
     return 'linear-gradient(135deg, #ffc107 0%, #ffca2c 100%)';
   }};

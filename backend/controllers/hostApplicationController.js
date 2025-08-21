@@ -1298,8 +1298,10 @@ exports.approveApplication = async (req, res) => {
     // Update user profile with host application information
     const userUpdateData = {
       role: 'host',
+      phoneNumber: application.phoneNumber, // Set main user phone number
       hostProfile: {
         businessStructure: 'individual', // Hardcoded - all users have individual accounts
+        phoneNumber: application.phoneNumber, // Add phone number from application
         ssnLast4: application.ssnLast4,
         bankAccount: application.bankAccount,
         stripeConnectAccountId: application.stripeConnect.accountId,

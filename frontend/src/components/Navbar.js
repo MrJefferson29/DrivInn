@@ -1,32 +1,26 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Navbar, Nav, Container, Button, Dropdown, Badge, Modal } from 'react-bootstrap';
 import { 
-  MdTravelExplore,
-  MdEmojiEvents,
-  MdHome,
-  MdFavorite,
-  MdMenu,
-  MdPerson,
-  MdLogin,
-  MdPersonAdd,
-  MdSettings,
-  MdLogout,
-  MdNotifications,
-  MdCalendarMonth,
-  MdCardGiftcard,
-  MdHelp,
-  MdBookmark,
-  MdAdminPanelSettings,
-  MdAddCircle,
-  MdExplore,
-  MdShield,
-  MdInfo,
-  MdPhone,
-  MdEmail,
-  MdLanguage,
-  MdMessage,
-  MdDashboard
-} from 'react-icons/md';
+  Search,
+  Trophy,
+  Home,
+  Heart,
+  Menu,
+  User,
+  LogIn,
+  UserPlus,
+  Settings,
+  LogOut,
+  Bell,
+  Calendar,
+  HelpCircle,
+  Shield,
+  Plus,
+  Info,
+  Phone,
+  MessageSquare,
+  BarChart3
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useListings } from '../context/ListingsContext';
 import { Link, useNavigate } from 'react-router-dom';
@@ -185,7 +179,7 @@ const NavbarComponent = () => {
     if (!isAuthenticated) {
       return (
         <Nav.Link as={Link} to="/login" className="host-link desktop-only">
-          <MdLogin /> Log in
+          <LogIn /> Log in
         </Nav.Link>
       );
     }
@@ -193,7 +187,7 @@ const NavbarComponent = () => {
     if (user?.role === 'admin') {
       return (
         <Nav.Link as={Link} to="/admin/host-applications" className="host-link desktop-only">
-          <MdAdminPanelSettings /> Admin Panel
+          <Shield /> Admin Panel
           {pendingHostApps > 0 && (
             <Badge bg="danger" className="notification-badge" style={{ marginLeft: '8px' }}>
               {pendingHostApps}
@@ -207,7 +201,7 @@ const NavbarComponent = () => {
       if (isLoadingStripeAccount) {
         return (
           <Nav.Link className="host-link desktop-only" style={{ opacity: 0.7 }}>
-            <MdDashboard /> Loading...
+            <BarChart3 /> Loading...
           </Nav.Link>
         );
              } else if (stripeConnectAccount?.dashboardUrl) {
@@ -217,14 +211,14 @@ const NavbarComponent = () => {
                 onClick={(e) => handleDashboardClick(e, stripeConnectAccount.dashboardUrl)}
                 className="host-link desktop-only dashboard-link"
               >
-                                 <MdDashboard /> Dashboard
+                                 <BarChart3 /> Dashboard
               </Nav.Link>
          );
              } else {
          return (
            <div className="host-link desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
              <Nav.Link as={Link} to="/listings" style={{ margin: 0 }}>
-               <MdHome /> My Listings
+               <Home /> My Listings
              </Nav.Link>
                            <span 
                 className="setup-required"
@@ -240,7 +234,7 @@ const NavbarComponent = () => {
     // Default for guests
     return (
       <Nav.Link as={Link} to="/become-a-host-info" className="host-link desktop-only">
-        <MdAddCircle /> Become a Host
+        <Plus /> Become a Host
       </Nav.Link>
     );
   };
@@ -277,19 +271,19 @@ const NavbarComponent = () => {
             {/* Navigation Links */}
             <Nav className="navbar-nav me-auto">
               <Nav.Link as={Link} to="/" className="nav-link">
-                <MdTravelExplore /> Explore
+                <Search /> Explore
               </Nav.Link>
               <Nav.Link as={Link} to="/messages" className="nav-link">
-                <MdMessage /> Messages
+                <MessageSquare /> Messages
               </Nav.Link>
               <Nav.Link as={Link} to="/experiences" className="nav-link">
-                <MdEmojiEvents /> Experiences
+                <Trophy /> Experiences
               </Nav.Link>
               <Nav.Link as={Link} to="/about" className="nav-link">
-                <MdInfo /> About
+                <Info /> About
               </Nav.Link>
               <Nav.Link as={Link} to="/contact" className="nav-link">
-                <MdPhone /> Contact
+                <Phone /> Contact
               </Nav.Link>
             </Nav>
 
@@ -298,7 +292,7 @@ const NavbarComponent = () => {
               {/* Favorites - Only show for authenticated users */}
               {isAuthenticated && (
                 <Nav.Link as={Link} to="/liked-listings" className="favorites-link">
-                  <MdFavorite />
+                  <Heart />
                   {getFavoritesCount() > 0 && (
                     <Badge bg="danger" className="favorites-badge">
                       {getFavoritesCount()}
@@ -310,15 +304,12 @@ const NavbarComponent = () => {
               {/* Main Action Button - Dynamic based on user status and role (desktop only) */}
               {renderMainActionButton()}
 
-              {/* Language/Globe */}
-              <div className="globe-container">
-                <MdLanguage className="globe-icon" />
-              </div>
+              {/* Language selector removed */}
 
               {/* Notifications (if logged in) */}
               {isAuthenticated && (
                 <div className="notifications-container" onClick={handleNotificationsClick} style={{ cursor: isAdmin ? 'pointer' : 'default', position: 'relative' }}>
-                  <MdNotifications className="notifications-icon" />
+                  <Bell className="notifications-icon" />
                   {isAdmin && pendingHostApps > 0 && (
                     <Badge bg="danger" className="notification-badge" style={{ position: 'absolute', top: -6, right: -6 }}>{pendingHostApps}</Badge>
                   )}
@@ -336,12 +327,12 @@ const NavbarComponent = () => {
                   <Dropdown align="end">
                     <Dropdown.Toggle variant="light" className="user-menu-toggle">
                       <div className="user-menu-content">
-                        <MdMenu className="menu-icon" />
+                        <Menu className="menu-icon" />
                         <div className="user-avatar">
                           {user?.profileImage ? (
                             <img src={user.profileImage} alt={`${user.firstName} ${user.lastName}`} />
                           ) : (
-                            <MdPerson />
+                            <User />
                           )}
                         </div>
                       </div>
@@ -349,42 +340,42 @@ const NavbarComponent = () => {
 
                     <Dropdown.Menu container={document.body} className="user-dropdown-menu">
                       <Dropdown.Item as={Link} to="/profile">
-                        <MdPerson /> Profile
+                        <User /> Profile
                       </Dropdown.Item>
                       <Dropdown.Item as={Link} to="/bookings">
-                        <MdCalendarMonth /> My Bookings
+                        <Calendar /> My Bookings
                       </Dropdown.Item>
                       {user?.role === 'host' && (
                         isLoadingStripeAccount ? (
                           <Dropdown.Item disabled>
-                            <MdDashboard /> Loading Dashboard...
+                            <BarChart3 /> Loading Dashboard...
                           </Dropdown.Item>
                                                  ) : stripeConnectAccount?.dashboardUrl ? (
                                                        <Dropdown.Item 
                               href={stripeConnectAccount.dashboardUrl} 
                               onClick={(e) => handleDashboardClick(e, stripeConnectAccount.dashboardUrl)}
                             >
-                              <MdDashboard /> Dashboard
+                              <BarChart3 /> Dashboard
                             </Dropdown.Item>
                                                  ) : (
                            <>
                              <Dropdown.Item as={Link} to="/listings">
-                               <MdHome /> My Listings
+                               <Home /> My Listings
                              </Dropdown.Item>
                              <Dropdown.Item as={Link} to="/become-a-host-info" style={{ fontSize: '0.9rem', color: '#666' }}>
-                               <MdInfo /> Complete Stripe Setup
+                               <Info /> Complete Stripe Setup
                              </Dropdown.Item>
                            </>
                          )
                       )}
-                      {(user?.role === 'host' || user?.role === 'admin') && (
+                      {user?.role === 'host' && (
                         <Dropdown.Item as={Link} to="/create-listing">
-                          <MdAddCircle /> Create Listing
+                          <Plus /> Create Listing
                         </Dropdown.Item>
                       )}
                       {user?.role === 'admin' && (
                         <Dropdown.Item as={Link} to="/admin/host-applications" className="admin-panel-link">
-                          <MdAdminPanelSettings /> Admin Panel
+                          <Shield /> Admin Panel
                           {pendingHostApps > 0 && (
                             <Badge bg="danger" className="dropdown-badge">
                               {pendingHostApps}
@@ -392,24 +383,33 @@ const NavbarComponent = () => {
                           )}
                         </Dropdown.Item>
                       )}
-                      {!isAuthenticated && (
-                        <Dropdown.Item as={Link} to="/login">
-                          <MdLogin /> Log in
-                        </Dropdown.Item>
-                      )}
+                      {/* This condition should never be true for authenticated users, removing this item */}
                       {user?.role === 'guest' && (
                         <Dropdown.Item as={Link} to="/become-a-host-info">
-                          <MdAddCircle /> Become a Host
+                          <Plus /> Become a Host
                         </Dropdown.Item>
                       )}
                       <Dropdown.Item as={Link} to="/settings">
-                        <MdSettings /> Settings
+                        <Settings /> Settings
                       </Dropdown.Item>
                       <Dropdown.Item as={Link} to="/help">
-                        <MdHelp /> Help
+                        <HelpCircle /> Help
                       </Dropdown.Item>
+                      
+                      <Dropdown.Divider />
+                      
+                      {/* About and Contact - Available in dropdown for smaller screens */}
+                      <Dropdown.Item as={Link} to="/about">
+                        <Info /> About
+                      </Dropdown.Item>
+                      <Dropdown.Item as={Link} to="/contact">
+                        <Phone /> Contact
+                      </Dropdown.Item>
+                      
+                      <Dropdown.Divider />
+                      
                       <Dropdown.Item onClick={handleLogout}>
-                        <MdLogout /> Logout
+                        <LogOut /> Logout
                       </Dropdown.Item>
                     </Dropdown.Menu>
                   </Dropdown>
@@ -417,27 +417,31 @@ const NavbarComponent = () => {
                   <Dropdown align="end">
                     <Dropdown.Toggle variant="light" className="user-menu-toggle">
                       <div className="user-menu-content">
-                        <MdMenu className="menu-icon" />
-                        <MdPerson className="user-icon" />
+                        <Menu className="menu-icon" />
+                        <User className="user-icon" />
                       </div>
                     </Dropdown.Toggle>
 
                     <Dropdown.Menu container={document.body} className="user-dropdown-menu">
                       <Dropdown.Item as={Link} to="/login">
-                        <MdLogin /> Sign in
+                        <LogIn /> Sign in
                       </Dropdown.Item>
                       <Dropdown.Item as={Link} to="/register">
-                        <MdPersonAdd /> Sign up
+                        <UserPlus /> Sign up
                       </Dropdown.Item>
                       <Dropdown.Divider />
-                      <Dropdown.Item as={Link} to="/host">
-                        <MdHome /> Host your home
+                      <Dropdown.Item as={Link} to="/become-a-host-info">
+                        <Home /> Host your home
                       </Dropdown.Item>
                       <Dropdown.Item as={Link} to="/help">
-                        <MdHelp /> Help
+                        <HelpCircle /> Help
                       </Dropdown.Item>
-                      <Dropdown.Item as={Link} to="/gift">
-                        <MdCardGiftcard /> Gift cards
+                      
+                      <Dropdown.Divider />
+                      
+                      {/* Main Action Button - Available in dropdown for smaller screens */}
+                      <Dropdown.Item as={Link} to="/become-a-host-info" className="main-action-dropdown-item">
+                        <Plus /> Become a Host
                       </Dropdown.Item>
                     </Dropdown.Menu>
                   </Dropdown>
@@ -452,7 +456,7 @@ const NavbarComponent = () => {
         <Modal show={showDashboardModal} onHide={() => setShowDashboardModal(false)} centered>
           <Modal.Header closeButton>
             <Modal.Title>
-              <MdDashboard style={{ marginRight: '8px' }} />
+              <BarChart3 style={{ marginRight: '8px' }} />
                              Dashboard Access
             </Modal.Title>
           </Modal.Header>
@@ -467,7 +471,7 @@ const NavbarComponent = () => {
                onClick={() => window.open(dashboardModalUrl, '_blank', 'noopener,noreferrer')}
                style={{ marginRight: '10px' }}
              >
-               <MdDashboard /> Try Opening Again
+               <BarChart3 /> Try Opening Again
              </Button>
              
              <Button 

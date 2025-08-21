@@ -16,6 +16,22 @@ const processDailyPayouts = async () => {
     
     console.log(`📋 Found ${paymentsToProcess.length} payments ready for payout`);
     
+    // Log the breakdown of payments by booking status
+    const statusBreakdown = {};
+    paymentsToProcess.forEach(payment => {
+      if (payment.booking) {
+        const status = payment.booking.status;
+        statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
+      }
+    });
+    
+    console.log('📊 Payment Status Breakdown:');
+    Object.entries(statusBreakdown).forEach(([status, count]) => {
+      const eligible = (status === 'checked_in' || status === 'completed') ? '✅' : '❌';
+      console.log(`  - ${status}: ${count} payments ${eligible}`);
+    });
+    console.log('');
+    
     let processedCount = 0;
     let errorCount = 0;
     
@@ -29,11 +45,15 @@ const processDailyPayouts = async () => {
           continue;
         }
         
-        // Only process payouts for bookings that have been checked in
-        if (booking.status !== 'checked_in') {
-          console.log(`ℹ️ Skipping payment ${payment._id} for booking ${booking._id} - not checked in yet`);
+        // Process payouts for bookings that have been checked in OR completed
+        // This ensures hosts get paid for their services regardless of the exact status
+        if (booking.status !== 'checked_in' && booking.status !== 'completed') {
+          console.log(`ℹ️ Skipping payment ${payment._id} for booking ${booking._id} - status is ${booking.status}, must be 'checked_in' or 'completed'`);
           continue;
         }
+        
+        // Log which status we're processing for payout
+        console.log(`✅ Processing payout for booking ${booking._id} with status: ${booking.status}`);
         
         // Get listing and host application
         const Listing = require('../models/listing');
@@ -151,7 +171,12 @@ const processDailyPayouts = async () => {
       }
     }
     
-    console.log(`✅ Daily payout processing completed - Processed: ${processedCount}, Errors: ${errorCount}`);
+    console.log(`\n📊 Daily Payout Processing Summary:`);
+    console.log(`  - Total Payments Found: ${paymentsToProcess.length}`);
+    console.log(`  - Successfully Processed: ${processedCount}`);
+    console.log(`  - Errors: ${errorCount}`);
+    console.log(`  - Skipped (wrong status): ${paymentsToProcess.length - processedCount - errorCount}`);
+    console.log(`✅ Daily payout processing completed`);
   } catch (error) {
     console.error('❌ Error in daily payout processing:', error);
   }

@@ -138,9 +138,21 @@ exports.createBooking = async (req, res) => {
 
     // Check if host account has transfers enabled
     let hostAccount;
+    let hasTransfersEnabled = false;
+    
     try {
-      hostAccount = await stripe.accounts.retrieve(hostApplication.stripeConnect.accountId);
-      const hasTransfersEnabled = hostAccount.capabilities?.transfers === 'active';
+      // Set a shorter timeout for Stripe account retrieval
+      const stripeOptions = {
+        timeout: 30000, // 30 seconds instead of default 80 seconds
+        retries: 1
+      };
+      
+      hostAccount = await stripe.accounts.retrieve(
+        hostApplication.stripeConnect.accountId,
+        undefined,
+        stripeOptions
+      );
+      hasTransfersEnabled = hostAccount.capabilities?.transfers === 'active';
       
       if (!hasTransfersEnabled) {
         // Reject booking if host account doesn't support automatic payouts
@@ -173,7 +185,19 @@ exports.createBooking = async (req, res) => {
     } catch (accountError) {
       console.error('❌ Error checking host Stripe account capabilities:', accountError);
       
-      // Reject booking if we can't verify host account capabilities
+      // Handle specific Stripe error types
+      if (accountError.type === 'StripeConnectionError' || accountError.code === 'ETIMEDOUT') {
+        console.log('⚠️ Stripe connection timeout - proceeding with booking creation but logging warning');
+        
+        // For timeout errors, we'll proceed with the booking but log a warning
+        // The host will need to complete their setup before payouts can be processed
+        hasTransfersEnabled = false; // Assume transfers are not enabled until verified
+        
+        // Don't reject the booking, but warn that payouts may be delayed
+        console.log('⚠️ Proceeding with booking creation despite Stripe validation timeout');
+        console.log('⚠️ Host will need to complete Stripe setup before payouts can be processed');
+      } else {
+        // For other types of errors, reject the booking
       return res.status(400).json({
         message: 'Unable to verify host payment account capabilities. Please try again or contact support.',
         error: 'HOST_ACCOUNT_VERIFICATION_FAILED',
@@ -184,6 +208,7 @@ exports.createBooking = async (req, res) => {
           'Ensure host has completed their Stripe account setup'
         ]
       });
+      }
     }
 
     // 1️⃣ Create Stripe Checkout session FIRST (before creating booking)
@@ -246,11 +271,27 @@ exports.createBooking = async (req, res) => {
     console.log('✅ Stripe Checkout session created:', session.id);
 
     // 2️⃣ Create booking in DB with "pending" status AFTER payment session is created
+    // Combine user's selected dates with host's set times
+    const hostCheckInTime = listingDoc.checkIn || '14:00'; // Default to 2:00 PM if not set
+    const hostCheckOutTime = listingDoc.checkOut || '11:00'; // Default to 11:00 AM if not set
+    
+    // Create full datetime objects by combining dates with times
+    const checkInDateTime = new Date(`${startDate}T${hostCheckInTime}:00`);
+    const checkOutDateTime = new Date(`${endDate}T${hostCheckOutTime}:00`);
+    
+    console.log('🕐 Creating booking with combined date and time:');
+    console.log(`  - User selected check-in date: ${startDate}`);
+    console.log(`  - User selected check-out date: ${endDate}`);
+    console.log(`  - Host check-in time: ${hostCheckInTime}`);
+    console.log(`  - Host check-out time: ${hostCheckOutTime}`);
+    console.log(`  - Final check-in datetime: ${checkInDateTime.toISOString()}`);
+    console.log(`  - Final check-out datetime: ${checkOutDateTime.toISOString()}`);
+    
     const booking = await Booking.create({
       user: userId,
       home: listing, // Map listing to home
-      checkIn: startDate, // Map startDate to checkIn
-      checkOut: endDate, // Map endDate to checkOut
+      checkIn: checkInDateTime, // Full datetime: user date + host time
+      checkOut: checkOutDateTime, // Full datetime: user date + host time
       guests,
       totalPrice,
       status: 'pending', // Will be updated to 'reserved' when payment completes
@@ -271,7 +312,9 @@ exports.createBooking = async (req, res) => {
       metadata: {
         paymentMethod: paymentMethod,
         hasTransferData: false, // Not using transfer_data - funds will be held in platform account and transferred later
-        stripePaymentIntentId: session.payment_intent // Store payment intent ID for webhook handling
+        stripePaymentIntentId: session.payment_intent, // Store payment intent ID for webhook handling
+        stripeValidationStatus: hasTransfersEnabled ? 'verified' : 'timeout_skipped', // Track if Stripe validation was completed
+        hostStripeAccountId: hostApplication.stripeConnect.accountId
       }
     });
 
@@ -291,7 +334,11 @@ exports.createBooking = async (req, res) => {
         method: paymentMethod
       },
       checkoutUrl: session.url,
-      message: 'Payment session created successfully. Please complete payment to confirm your booking.'
+      message: 'Payment session created successfully. Please complete payment to confirm your booking.',
+      stripeValidation: {
+        status: hasTransfersEnabled ? 'verified' : 'timeout_skipped',
+        note: hasTransfersEnabled ? 'Host account verified for automatic payouts' : 'Host account validation skipped due to timeout - payouts may be delayed until setup is completed'
+      }
     });
 
   } catch (error) {
@@ -366,8 +413,9 @@ exports.getUserBookings = async (req, res) => {
     console.log('📋 Fetching bookings for user:', req.user._id);
     
     const bookings = await Booking.find(query)
-      .populate('home', 'title images price city country rating checkIn checkOut')
+      .populate('home', 'title images price city country rating checkIn checkOut type location')
       .populate('user', 'firstName lastName email')
+      .populate('reviewId', 'rating content title createdAt')
       .sort({ createdAt: -1 });
       
     // Get payment information for each booking

@@ -117,14 +117,7 @@
   transition: transform 0.1s ease !important;
 }
 
-.nav-link svg {
-  font-size: 16px;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.nav-link:hover svg {
-  transform: scale(1.1);
-}
+/* Icon transitions handled by the new professional icon styling above */
 
 /* Right Side Menu */
 .navbar-right {
@@ -177,16 +170,7 @@
   transform: translateY(0) scale(1) !important;
 }
 
-.favorites-link svg {
-  font-size: 20px !important;
-  position: relative;
-  z-index: 1;
-  transition: transform 0.3s ease;
-}
-
-.favorites-link:hover svg {
-  transform: scale(1.1);
-}
+/* Icon styling handled by the new professional icon styling above */
 
 .favorites-badge {
   position: absolute !important;
@@ -245,48 +229,7 @@
   transition: transform 0.1s ease !important;
 }
 
-.globe-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.globe-container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(34, 34, 34, 0.1), transparent);
-  transition: left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.globe-container:hover::before {
-  left: 100%;
-}
-
-.globe-container:hover {
-  background: #F7F7F7;
-  transform: translateY(-2px) scale(1.05);
-}
-
-.globe-icon {
-  font-size: 18px;
-  color: #222222;
-  transition: transform 0.3s ease;
-}
-
-.globe-container:hover .globe-icon {
-  transform: rotate(15deg);
-}
+/* Globe container removed */
 
 .notifications-container {
   position: relative;
@@ -322,7 +265,6 @@
 }
 
 .notifications-icon {
-  font-size: 18px;
   color: #222222;
   transition: transform 0.3s ease;
 }
@@ -413,7 +355,6 @@
 }
 
 .menu-icon {
-  font-size: 16px;
   color: #222222;
   transition: transform 0.3s ease;
 }
@@ -467,7 +408,6 @@
 }
 
 .user-icon {
-  font-size: 16px;
   color: #717171;
   transition: transform 0.3s ease;
 }
@@ -534,14 +474,7 @@
   transform: translateX(4px) !important;
 }
 
-.user-dropdown-menu .dropdown-item svg {
-  font-size: 16px;
-  transition: transform 0.3s ease;
-}
-
-.user-dropdown-menu .dropdown-item:hover svg {
-  transform: scale(1.1);
-}
+/* Icon styling handled by the new professional icon styling above */
 
 .user-dropdown-menu .dropdown-divider {
   margin: 8px 0 !important;
@@ -564,6 +497,100 @@
   box-shadow: 0 1px 3px rgba(220, 53, 69, 0.3) !important;
 }
 
+/* Main action dropdown item styling */
+.main-action-dropdown-item {
+  background: linear-gradient(135deg, #FF385C 0%, #FF5A5F 100%) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  margin: 4px 8px !important;
+  transition: all 0.3s ease !important;
+}
+
+.main-action-dropdown-item:hover {
+  background: linear-gradient(135deg, #E31C5F 0%, #D70466 100%) !important;
+  color: white !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(255, 56, 92, 0.3) !important;
+}
+
+.main-action-dropdown-item svg {
+  color: white !important;
+}
+
+/* Professional icon styling for Lucide React icons */
+.nav-link svg,
+.favorites-link svg,
+.host-link svg,
+.notifications-container svg,
+.user-menu-toggle svg,
+.user-dropdown-menu .dropdown-item svg {
+  stroke-width: 1.5px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Icon hover effects */
+.nav-link:hover svg,
+.favorites-link:hover svg,
+.host-link:hover svg,
+.notifications-container:hover svg,
+.user-menu-toggle:hover svg {
+  transform: scale(1.1);
+  stroke-width: 2px;
+}
+
+/* Specific icon sizing for consistency */
+.nav-link svg {
+  width: 18px;
+  height: 18px;
+}
+
+.favorites-link svg,
+.notifications-container svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Heart icon specific styling to match other icons */
+.favorites-link svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.favorites-link:hover svg {
+  stroke-width: 2px;
+  transform: scale(1.1);
+}
+
+.user-menu-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.user-dropdown-menu .dropdown-item svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Host-specific dropdown items styling */
+.user-dropdown-menu .dropdown-item[href*="create-listing"] {
+  background: linear-gradient(135deg, rgba(255, 56, 92, 0.1) 0%, rgba(255, 90, 95, 0.1) 100%) !important;
+  border-left: 3px solid #FF385C !important;
+  font-weight: 600 !important;
+  color: #FF385C !important;
+}
+
+.user-dropdown-menu .dropdown-item[href*="create-listing"]:hover {
+  background: linear-gradient(135deg, rgba(255, 56, 92, 0.15) 0%, rgba(255, 90, 95, 0.15) 100%) !important;
+  transform: translateX(4px) !important;
+}
+
+.user-dropdown-menu .dropdown-item[href*="create-listing"] svg {
+  color: #FF385C !important;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .airbnb-navbar {
@@ -580,6 +607,25 @@
   }
 }
 
+/* Ensure About and Contact are visible in dropdown on smaller screens */
+@media (max-width: 992px) {
+  .user-dropdown-menu .dropdown-item {
+    padding: 14px 16px !important;
+    font-size: 15px !important;
+  }
+  
+  .user-dropdown-menu .dropdown-divider {
+    margin: 12px 0 !important;
+  }
+  
+  /* Make the main action button more prominent on mobile */
+  .main-action-dropdown-item {
+    margin: 8px 12px !important;
+    padding: 16px 20px !important;
+    font-size: 16px !important;
+  }
+}
+
 @media (max-width: 992px) {
   .airbnb-navbar {
     padding: 0 24px;
@@ -593,9 +639,7 @@
     display: none !important;
   }
   
-  .globe-container {
-    display: none !important;
-  }
+  /* Globe container removed */
   
   .notifications-container {
     display: none !important;

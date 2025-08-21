@@ -197,7 +197,7 @@ exports.getUserStats = async (req, res) => {
     };
     
     try {
-      // Import models dynamically to avoid circular dependencies
+      // Import models at the top level to avoid circular dependencies
       const Booking = require('../models/booking');
       const Listing = require('../models/listing');
       const Review = require('../models/review');
@@ -205,40 +205,51 @@ exports.getUserStats = async (req, res) => {
       if (user.role === 'host') {
         // Get host statistics
         const [bookings, listings] = await Promise.all([
-          Booking.find({ host: user._id }),
-          Listing.find({ owner: user._id })
+          Booking.find({ host: user._id }).lean(),
+          Listing.find({ owner: user._id }).lean()
         ]);
         
         stats.totalBookings = bookings.length;
         stats.totalListings = listings.length;
         stats.totalRevenue = bookings.reduce((sum, booking) => 
-          sum + (booking.totalPrice || 0), 0
+          sum + (parseFloat(booking.totalPrice) || 0), 0
         );
         
         // Get average rating from listings
         if (listings.length > 0) {
           const totalRating = listings.reduce((sum, listing) => 
-            sum + (listing.averageRating || 0), 0
+            sum + (parseFloat(listing.averageRating) || 0), 0
           );
           stats.averageRating = totalRating / listings.length;
         }
       } else if (user.role === 'guest') {
         // Get guest statistics
         const [bookings, reviews] = await Promise.all([
-          Booking.find({ user: user._id }),
-          Review.find({ user: user._id, status: 'published' })
+          Booking.find({ user: user._id }).lean(),
+          Review.find({ user: user._id, status: 'published' }).lean()
         ]);
         
         stats.totalBookings = bookings.length;
         stats.totalReviews = reviews.length;
         stats.totalSpent = bookings.reduce((sum, booking) => 
-          sum + (booking.totalPrice || 0), 0
+          sum + (parseFloat(booking.totalPrice) || 0), 0
         );
       }
+      
+      // Ensure all numeric values are properly formatted
+      stats.totalRevenue = parseFloat(stats.totalRevenue.toFixed(2));
+      stats.totalSpent = parseFloat(stats.totalSpent.toFixed(2));
+      stats.averageRating = parseFloat(stats.averageRating.toFixed(1));
+      
+      console.log(`✅ Stats calculated for user ${user._id} (${user.role}):`, stats);
+      
     } catch (modelError) {
-      console.error('Error loading models:', modelError);
+      console.error('❌ Error loading models for stats:', modelError);
       console.error('Model error details:', modelError.stack);
-      // If models fail to load, return basic stats without the problematic data
+      
+      // Return basic stats with error logging
+      console.log(`⚠️ Using fallback stats for user ${user._id}`);
+      
       if (user.role === 'host') {
         stats.totalBookings = 0;
         stats.totalListings = 0;
@@ -253,8 +264,13 @@ exports.getUserStats = async (req, res) => {
     
     res.json(stats);
   } catch (err) {
-    console.error('Error in getUserStats:', err);
-    res.status(500).json({ message: 'Server error', error: err.message });
+    console.error('❌ Error in getUserStats:', err);
+    console.error('Error stack:', err.stack);
+    res.status(500).json({ 
+      message: 'Server error while fetching user statistics', 
+      error: err.message,
+      timestamp: new Date().toISOString()
+    });
   }
 };
 

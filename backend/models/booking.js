@@ -85,59 +85,21 @@ bookingSchema.methods.updateStatusBasedOnTime = async function() {
       return this.status;
     }
     
-    // Parse check-in and check-out times from listing
-    const checkInTime = listing.checkIn; // e.g., '14:00'
-    const checkOutTime = listing.checkOut; // e.g., '11:00'
+    // The booking now stores full datetime objects (user date + host time)
+    // So we can use them directly instead of trying to combine dates with times
+    const checkInDateTime = new Date(this.checkIn);
+    const checkOutDateTime = new Date(this.checkOut);
     
-    // Use default times if not set in listing
-    const defaultCheckInTime = '14:00'; // 2:00 PM
-    const defaultCheckOutTime = '11:00'; // 11:00 AM
-    
-    const finalCheckInTime = checkInTime || defaultCheckInTime;
-    const finalCheckOutTime = checkOutTime || defaultCheckOutTime;
-    
-    console.log(`📋 Listing times for ${listing._id}:`);
-    console.log(`  - Original check-in time: ${checkInTime || 'Not set'}`);
-    console.log(`  - Original check-out time: ${checkOutTime || 'Not set'}`);
-    console.log(`  - Using check-in time: ${finalCheckInTime}`);
-    console.log(`  - Using check-out time: ${finalCheckOutTime}`);
-    
-    // Create full datetime objects for check-in and check-out
-    // Use system default timezone (no manual timezone conversion)
-    const checkInDate = new Date(this.checkIn);
-    const checkOutDate = new Date(this.checkOut);
-    
-    // Parse the time strings and set them to the check-in/check-out dates
-    const [checkInHour, checkInMinute] = finalCheckInTime.split(':').map(Number);
-    const [checkOutHour, checkOutMinute] = finalCheckOutTime.split(':').map(Number);
-    
-    // Create datetime objects using system timezone
-    const checkInDateTime = new Date(
-      checkInDate.getFullYear(),
-      checkInDate.getMonth(),
-      checkInDate.getDate(),
-      checkInHour,
-      checkInMinute,
-      0,
-      0
-    );
-    
-    const checkOutDateTime = new Date(
-      checkOutDate.getFullYear(),
-      checkOutDate.getMonth(),
-      checkOutDate.getDate(),
-      checkOutHour,
-      checkOutMinute,
-      0,
-      0
-    );
+    console.log(`📋 Booking datetime for ${this._id}:`);
+    console.log(`  - Check-in datetime (stored): ${this.checkIn}`);
+    console.log(`  - Check-out datetime (stored): ${this.checkOut}`);
+    console.log(`  - Parsed check-in datetime: ${checkInDateTime.toISOString()}`);
+    console.log(`  - Parsed check-out datetime: ${checkOutDateTime.toISOString()}`);
     
     console.log(`🔍 Time check for booking ${this._id}:`);
     console.log(`  - Current time: ${now.toISOString()}`);
     console.log(`  - Check-in datetime: ${checkInDateTime.toISOString()}`);
     console.log(`  - Check-out datetime: ${checkOutDateTime.toISOString()}`);
-    console.log(`  - Check-in time: ${finalCheckInTime}`);
-    console.log(`  - Check-out time: ${finalCheckOutTime}`);
     console.log(`  - Current booking status: ${this.status}`);
     console.log(`  - Already checked in: ${this.checkedIn}`);
     console.log(`  - Already checked out: ${this.checkedOut}`);

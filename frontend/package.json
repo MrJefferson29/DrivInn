@@ -16,6 +16,7 @@
     "date-fns": "^4.1.0",
     "fuse.js": "^7.1.0",
     "leaflet": "^1.9.4",
+    "lucide-react": "^0.540.0",
     "multer": "^2.0.2",
     "react": "^19.1.0",
     "react-bootstrap": "^2.10.10",

@@ -2613,6 +2613,21 @@ const highlightIcons = {
               </div>
             </ReviewsHeader>
             
+            {/* Mobile scroll hint */}
+            <div className="d-block d-md-none" style={{ 
+              textAlign: 'center', 
+              padding: '8px 16px', 
+              background: '#f8f9fa', 
+              borderRadius: '8px', 
+              marginBottom: '16px',
+              fontSize: '0.9rem',
+              color: '#6c757d'
+            }}>
+              <FaChevronLeft style={{ marginRight: '8px' }} />
+              Scroll to see more reviews
+              <FaChevronRight style={{ marginLeft: '8px' }} />
+            </div>
+            
             {listing.totalReviews > 0 && (
               <DetailedRatingsSummary>
                 <h5>Detailed Ratings</h5>
@@ -2640,7 +2655,26 @@ const highlightIcons = {
                   <p>Loading reviews...</p>
                 </div>
               ) : reviews.length > 0 ? (
-                <div className="reviews-grid">
+                <div 
+                  className="reviews-grid" 
+                  onScroll={(e) => {
+                    const element = e.target;
+                    const isAtEnd = element.scrollLeft + element.clientWidth >= element.scrollWidth - 1;
+                    const isAtStart = element.scrollLeft <= 1;
+                    
+                    if (isAtEnd) {
+                      element.classList.add('scrolled-to-end');
+                    } else {
+                      element.classList.remove('scrolled-to-end');
+                    }
+                    
+                    if (isAtStart) {
+                      element.classList.remove('scrolled');
+                    } else {
+                      element.classList.add('scrolled');
+                    }
+                  }}
+                >
                   {reviews.map((review) => (
                     <ReviewCard key={review.id}>
                       <ReviewHeader>

@@ -14,6 +14,10 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
+    phoneNumber: {
+        type: String,
+        default: ''
+    },
     password: {
         type: String,
         required: true,
@@ -61,6 +65,7 @@ const userSchema = new mongoose.Schema({
             country: { type: String }
         },
         businessPhone: { type: String },
+        phoneNumber: { type: String }, // Personal phone number from host application
         ssnLast4: { type: String },
         bankAccount: {
             accountNumber: { type: String },

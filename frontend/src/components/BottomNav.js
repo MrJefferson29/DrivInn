@@ -80,7 +80,7 @@ const ActiveIndicator = styled.div`
 `;
 
 // Routes where bottom nav should be visible
-const bottomNavRoutes = ['/', '/experiences', '/messages', '/bookings'];
+const bottomNavRoutes = ['/', '/experiences', '/messages', '/bookings', '/admin/payments'];
 
 const BottomNav = () => {
   const [visible, setVisible] = useState(true);
@@ -104,7 +104,7 @@ const BottomNav = () => {
 
   const navItems = [
     { to: '/', label: 'Explore', icon: <HiOutlineHome /> },
-    { to: '/experiences', label: secondNavItem.label, icon: secondNavItem.icon },
+    { to: user?.role === 'admin' ? '/admin/payments' : '/experiences', label: secondNavItem.label, icon: secondNavItem.icon },
     { to: '/messages', label: 'Messages', icon: <HiOutlineChatBubbleLeftRight /> },
     { to: '/bookings', label: 'Bookings', icon: <HiOutlineCalendarDays /> },
   ];

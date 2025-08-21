@@ -147,36 +147,36 @@ const Home = () => {
             <h2 className="section-title">Inspiration for your next trip</h2>
           </div>
           <div className="inspiration-grid">
-            <div className="inspiration-item large">
+            <div className="inspiration-item large" onClick={() => navigate('/city/new-york')}>
               <img src="https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=800&h=600&fit=crop&crop=center" alt="New York City" loading="lazy" />
               <div className="inspiration-content">
                 <h3>New York City</h3>
                 <p>New York, USA</p>
               </div>
             </div>
-            <div className="inspiration-item">
+            <div className="inspiration-item" onClick={() => navigate('/city/san-francisco')}>
               <img src="https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=400&h=300&fit=crop&crop=center" alt="San Francisco" loading="lazy" />
               <div className="inspiration-content">
                 <h3>San Francisco</h3>
                 <p>California, USA</p>
               </div>
             </div>
-            <div className="inspiration-item">
-              <img src="https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=400&h=300&fit=crop&crop=center" alt="Los Angeles" loading="lazy" />
+            <div className="inspiration-item" onClick={() => navigate('/city/los-angeles')}>
+              <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=400&h=300&fit=crop&crop=center" alt="Los Angeles" loading="lazy" />
               <div className="inspiration-content">
                 <h3>Los Angeles</h3>
                 <p>California, USA</p>
               </div>
             </div>
-            <div className="inspiration-item">
-              <img src="https://images.unsplash.com/photo-1565967511849-76a60a516170?w=400&h=300&fit=crop&crop=center" alt="Miami" loading="lazy" />
+            <div className="inspiration-item" onClick={() => navigate('/city/miami')}>
+              <img src="https://images.unsplash.com/photo-1514214246283-d427a95c5d2f?w=400&h=300&fit=crop&crop=center" alt="Miami" loading="lazy" />
               <div className="inspiration-content">
                 <h3>Miami</h3>
                 <p>Florida, USA</p>
               </div>
             </div>
-            <div className="inspiration-item">
-              <img src="https://images.unsplash.com/photo-1502602898534-47d22c0d8060?w=400&h=300&fit=crop&crop=center" alt="Chicago" loading="lazy" />
+            <div className="inspiration-item" onClick={() => navigate('/city/chicago')}>
+              <img src="https://images.unsplash.com/photo-1516979187457-637abb4f9353?w=400&h=300&fit=crop&crop=center" alt="Chicago" loading="lazy" />
               <div className="inspiration-content">
                 <h3>Chicago</h3>
                 <p>Illinois, USA</p>

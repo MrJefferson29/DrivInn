@@ -17,16 +17,55 @@ function getLatLngFromLocation(location) {
   if (!location) return null;
   const [city, country] = location.split(',').map(s => s.trim());
   let found = null;
-  if (city && country) {
-    found = worldCities.find(
-      c => c.name.toLowerCase() === city.toLowerCase() && c.country.toLowerCase() === country.toLowerCase()
-    );
+  
+  // Create a mapping of common country abbreviations to full names
+  const countryMapping = {
+    'usa': 'united states',
+    'us': 'united states',
+    'united states of america': 'united states',
+    'uk': 'united kingdom',
+    'england': 'united kingdom',
+    'great britain': 'united kingdom',
+    'gb': 'united kingdom'
+  };
+  
+  // Normalize country name
+  let normalizedCountry = country;
+  if (country) {
+    normalizedCountry = countryMapping[country.toLowerCase()] || country.toLowerCase();
   }
+  
+  if (city && country) {
+    // First try exact match
+    found = worldCities.find(
+      c => c.name.toLowerCase() === city.toLowerCase() && c.country.toLowerCase() === normalizedCountry
+    );
+    
+    // If no exact match, try partial country match
+    if (!found) {
+      found = worldCities.find(
+        c => c.name.toLowerCase() === city.toLowerCase() && 
+             (c.country.toLowerCase().includes(normalizedCountry) || 
+              normalizedCountry.includes(c.country.toLowerCase()))
+      );
+    }
+  }
+  
+  // If still no match, try just city name
   if (!found && city) {
     found = worldCities.find(
       c => c.name.toLowerCase() === city.toLowerCase()
     );
   }
+  
+  // Debug logging
+  if (!found) {
+    console.log(`Location not found: city="${city}", country="${country}", normalized="${normalizedCountry}"`);
+    console.log('Available cities with similar names:', 
+      worldCities.filter(c => c.name.toLowerCase().includes(city.toLowerCase())).slice(0, 3)
+    );
+  }
+  
   return found ? { lat: parseFloat(found.lat), lng: parseFloat(found.lng) } : null;
 }
 

@@ -38,45 +38,16 @@ const testTimeLogic = async () => {
       console.log(`  - Listing Check-out Time: ${booking.home.checkOut || 'Not set'}`);
     }
     
-    // Test the time logic manually
-    const checkInDate = new Date(booking.checkIn);
-    const checkOutDate = new Date(booking.checkOut);
-    
-    // Use default times if not set
-    const defaultCheckInTime = '14:00';
-    const defaultCheckOutTime = '11:00';
-    
-    const checkInTime = booking.home?.checkIn || defaultCheckInTime;
-    const checkOutTime = booking.home?.checkOut || defaultCheckOutTime;
+    // The booking now stores full datetime objects (user date + host time)
+    // So we can use them directly
+    const checkInDateTime = new Date(booking.checkIn);
+    const checkOutDateTime = new Date(booking.checkOut);
     
     console.log(`\n🔍 Time Analysis:`);
-    console.log(`  - Using check-in time: ${checkInTime}`);
-    console.log(`  - Using check-out time: ${checkOutTime}`);
-    
-    // Parse times
-    const [checkInHour, checkInMinute] = checkInTime.split(':').map(Number);
-    const [checkOutHour, checkOutMinute] = checkOutTime.split(':').map(Number);
-    
-    // Create datetime objects
-    const checkInDateTime = new Date(
-      checkInDate.getFullYear(),
-      checkInDate.getMonth(),
-      checkInDate.getDate(),
-      checkInHour,
-      checkInMinute,
-      0,
-      0
-    );
-    
-    const checkOutDateTime = new Date(
-      checkOutDate.getFullYear(),
-      checkOutDate.getMonth(),
-      checkOutDate.getDate(),
-      checkOutHour,
-      checkOutMinute,
-      0,
-      0
-    );
+    console.log(`  - Booking check-in datetime: ${checkInDateTime.toISOString()}`);
+    console.log(`  - Booking check-out datetime: ${checkOutDateTime.toISOString()}`);
+    console.log(`  - Host check-in time: ${booking.home?.checkIn || '14:00 (default)'}`);
+    console.log(`  - Host check-out time: ${booking.home?.checkOut || '11:00 (default)'}`);
     
     console.log(`  - Check-in datetime: ${checkInDateTime.toISOString()}`);
     console.log(`  - Check-out datetime: ${checkOutDateTime.toISOString()}`);

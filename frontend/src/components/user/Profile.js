@@ -1,355 +1,35 @@
 import React, { useEffect, useState } from 'react';
-import styled from 'styled-components';
+import { Container, Row, Col, Card, Badge, Button, Alert } from 'react-bootstrap';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { 
-  FaHeart, 
-  FaEdit, 
-  FaUser, 
-  FaHome, 
-  FaCar, 
-  FaCalendarAlt, 
-  FaStar, 
-  FaDollarSign, 
-  FaCreditCard, 
-  FaBuilding, 
-  FaPhone, 
-  FaMapMarkerAlt, 
-  FaCheckCircle, 
-  FaTimesCircle, 
-  FaExclamationTriangle,
-  FaCog,
-  FaBell,
-  FaShieldAlt,
-  FaChartBar,
-  FaHistory,
-  FaUpload,
-  FaTrash,
-  FaEye,
-  FaRedo
-} from 'react-icons/fa';
+  User,
+  Edit3,
+  Home,
+  Calendar,
+  Star,
+  DollarSign,
+  Shield,
+  Settings,
+  Heart,
+  Eye,
+  BarChart3,
+  Upload,
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Clock,
+  MapPin,
+  Phone,
+  Mail,
+  Building2,
+  CreditCard,
+  RefreshCw,
+  Info,
+  Plus
+} from 'lucide-react';
 import { usersAPI } from '../../services/api';
-
-const ProfileContainer = styled.div`
-  max-width: 1200px;
-  margin: 40px auto;
-  padding: 0 20px;
-`;
-
-const ProfileHeader = styled.div`
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 20px;
-  padding: 40px;
-  color: white;
-  margin-bottom: 32px;
-  position: relative;
-  overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.1);
-    z-index: 1;
-  }
-`;
-
-const HeaderContent = styled.div`
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  
-  @media (max-width: 768px) {
-    flex-direction: column;
-    text-align: center;
-  }
-`;
-
-const ProfileImageContainer = styled.div`
-  position: relative;
-`;
-
-const ProfileImage = styled.img`
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  background: #f7f7f7;
-`;
-
-const ImageUploadButton = styled.button`
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background: #FF385C;
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  
-  &:hover {
-    background: #e31c5f;
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  }
-`;
-
-const ProfileInfo = styled.div`
-  flex: 1;
-`;
-
-const Name = styled.h1`
-  font-size: 2.5rem;
-  font-weight: 800;
-  margin: 0 0 8px 0;
-  
-  @media (max-width: 768px) {
-    font-size: 2rem;
-  }
-`;
-
-const Email = styled.div`
-  font-size: 1.2rem;
-  opacity: 0.9;
-  margin-bottom: 12px;
-`;
-
-const Role = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 1rem;
-`;
-
-const ProfileContent = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
-  
-  @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
-    gap: 24px;
-  }
-  
-  @media (max-width: 768px) {
-    gap: 20px;
-  }
-`;
-
-const ProfileSection = styled.div`
-  background: white;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #eee;
-  
-  @media (max-width: 768px) {
-    padding: 24px;
-  }
-  
-  @media (max-width: 480px) {
-    padding: 20px;
-  }
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #222;
-  margin: 0 0 24px 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 20px;
-  margin-bottom: 24px;
-  
-  @media (max-width: 768px) {
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 16px;
-  }
-  
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-`;
-
-const StatCard = styled.div`
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  border: 1px solid #e9ecef;
-`;
-
-const StatValue = styled.div`
-  font-size: 2rem;
-  font-weight: 800;
-  color: #FF385C;
-  margin-bottom: 8px;
-`;
-
-const StatLabel = styled.div`
-  font-size: 0.9rem;
-  color: #6c757d;
-  font-weight: 500;
-`;
-
-const InfoGrid = styled.div`
-  display: grid;
-  gap: 16px;
-`;
-
-const InfoItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e9ecef;
-`;
-
-const InfoLabel = styled.span`
-  color: #6c757d;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const InfoValue = styled.span`
-  color: #222;
-  font-weight: 600;
-`;
-
-const ActionButtons = styled.div`
-  display: flex;
-  gap: 12px;
-  margin-top: 24px;
-  flex-wrap: wrap;
-`;
-
-const ActionButton = styled.button`
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.3s ease;
-  
-  &.primary {
-    background: #FF385C;
-    color: white;
-    
-    &:hover {
-      background: #e31c5f;
-      transform: translateY(-2px);
-    }
-  }
-  
-  &.secondary {
-    background: #f8f9fa;
-    color: #222;
-    border: 1px solid #dee2e6;
-    
-    &:hover {
-      background: #e9ecef;
-      transform: translateY(-2px);
-    }
-  }
-  
-  &.success {
-    background: #28a745;
-    color: white;
-    
-    &:hover {
-      background: #218838;
-      transform: translateY(-2px);
-    }
-  }
-  
-  &.warning {
-    background: #ffc107;
-    color: #212529;
-    
-    &:hover {
-      background: #e0a800;
-      transform: translateY(-2px);
-    }
-  }
-`;
-
-const StatusBadge = styled.span`
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  
-  &.active {
-    background: #d4edda;
-    color: #155724;
-  }
-  
-  &.pending {
-    background: #fff3cd;
-    color: #856404;
-  }
-  
-  &.restricted {
-    background: #f8d7da;
-    color: #721c24;
-  }
-  
-  &.disabled {
-    background: #e2e3e5;
-    color: #383d41;
-  }
-`;
-
-const Loading = styled.div`
-  text-align: center;
-  margin: 60px 0;
-  color: #FF385C;
-  font-size: 1.2rem;
-`;
-
-const ErrorMsg = styled.div`
-  color: #c00;
-  background: #fff0f0;
-  border-radius: 8px;
-  padding: 16px;
-  margin: 24px 0;
-  text-align: center;
-`;
+import './Profile.css';
 
 const Profile = () => {
   const { user, loading: authLoading } = useAuth();
@@ -373,28 +53,34 @@ const Profile = () => {
       
       console.log('🔍 Fetching profile data for user:', user._id);
       
-      // Fetch detailed profile data and statistics
-      const [profileResponse, statsResponse] = await Promise.all([
-        usersAPI.getMyProfile(),
-        usersAPI.getUserStats()
-      ]);
+      // Fetch profile data first, then stats separately to handle errors gracefully
+      try {
+        const profileResponse = await usersAPI.getMyProfile();
+        console.log('✅ Profile response:', profileResponse);
+        setProfileData(profileResponse.data);
+      } catch (profileErr) {
+        console.error('❌ Error fetching profile:', profileErr);
+        // Don't fail completely if profile fails
+      }
       
-      console.log('✅ Profile response:', profileResponse);
+      try {
+        const statsResponse = await usersAPI.getUserStats();
       console.log('✅ Stats response:', statsResponse);
-      
-      setProfileData(profileResponse.data);
       setStats(statsResponse.data);
+      } catch (statsErr) {
+        console.error('❌ Error fetching stats:', statsErr);
+        // Set empty stats if stats fail
+        setStats({});
+      }
       
       setLoading(false);
     } catch (err) {
-      console.error('❌ Error fetching profile data:', err);
+      console.error('❌ Error in fetchProfileData:', err);
       console.error('❌ Error details:', err.response?.data || err.message);
       setError(`Failed to load profile data: ${err.response?.data?.message || err.message}`);
       setLoading(false);
     }
   };
-
-
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -430,28 +116,52 @@ const Profile = () => {
     }
   };
 
-  if (authLoading || loading) return <Loading>Loading profile...</Loading>;
-  if (!user) return <ErrorMsg>User not found.</ErrorMsg>;
+  if (authLoading || loading) {
+    return (
+      <div className="profile-loading">
+        <div className="loading-spinner">
+          <BarChart3 size={48} />
+        </div>
+        <p>Loading profile...</p>
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return (
+      <div className="profile-error">
+        <Alert variant="danger">
+          <Alert.Heading>User Not Found</Alert.Heading>
+          <p>Unable to load user profile information.</p>
+        </Alert>
+      </div>
+    );
+  }
   
   // Show error with retry option
   if (error) {
     return (
-      <ProfileContainer>
-        <ErrorMsg>
-          <div style={{ marginBottom: '16px' }}>{error}</div>
-          <ActionButton 
-            className="primary"
+      <div className="profile-container">
+        <Container>
+          <Alert variant="danger" className="error-alert">
+            <Alert.Heading>Error Loading Profile</Alert.Heading>
+            <p>{error}</p>
+            <hr />
+            <Button 
+              variant="outline-danger"
             onClick={() => {
               setError(null);
               setRetryCount(prev => prev + 1);
               fetchProfileData();
             }}
+              className="retry-button"
           >
-            <FaRedo />
+              <RefreshCw size={16} />
             Retry ({retryCount + 1})
-          </ActionButton>
-        </ErrorMsg>
-      </ProfileContainer>
+            </Button>
+          </Alert>
+        </Container>
+      </div>
     );
   }
 
@@ -459,28 +169,25 @@ const Profile = () => {
   const isAdmin = user.role === 'admin';
   const isGuest = user.role === 'guest';
 
-  // Debug information
-  console.log('🔍 Profile component render:', {
-    user: user ? { id: user._id, role: user.role, email: user.email } : null,
-    profileData: profileData ? 'loaded' : 'not loaded',
-    stats: stats ? Object.keys(stats) : 'not loaded',
-    loading,
-    error
-  });
-
   return (
-    <ProfileContainer>
+    <div className="profile-container">
       {/* Profile Header */}
-      <ProfileHeader>
-        <HeaderContent>
-          <ProfileImageContainer>
-            <ProfileImage 
-              src={user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.firstName + ' ' + user.lastName)}&size=120&background=FF385C&color=fff`} 
+      <div className="profile-header">
+        <Container>
+          <div className="header-content">
+            <div className="profile-image-section">
+              <div className="profile-image-container">
+                <img 
+                  className="profile-image"
+                  src={user.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.firstName + ' ' + user.lastName)}&size=140&background=FF385C&color=fff`} 
               alt="Profile" 
             />
-            <ImageUploadButton onClick={() => document.getElementById('imageUpload').click()}>
-              <FaUpload size={16} />
-            </ImageUploadButton>
+                <button 
+                  className="image-upload-button"
+                  onClick={() => document.getElementById('imageUpload').click()}
+                >
+                  <Upload size={20} />
+                </button>
             <input
               id="imageUpload"
               type="file"
@@ -488,320 +195,543 @@ const Profile = () => {
               onChange={handleImageUpload}
               style={{ display: 'none' }}
             />
-          </ProfileImageContainer>
-          
-          <ProfileInfo>
-            <Name>{user.firstName} {user.lastName}</Name>
-            <Email>{user.email}</Email>
-            <Role>
-              {isHost && <FaHome />}
-              {isAdmin && <FaShieldAlt />}
-              {isGuest && <FaUser />}
-              {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-            </Role>
-          </ProfileInfo>
-        </HeaderContent>
-      </ProfileHeader>
+              </div>
+              
+              <div className="profile-info">
+                <h1 className="profile-name">{user.firstName} {user.lastName}</h1>
+                <p className="profile-email">{user.email}</p>
+                <div className="profile-role">
+                  {isHost && <Home size={20} />}
+                  {isAdmin && <Shield size={20} />}
+                  {isGuest && <User size={20} />}
+                  <span>{user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </div>
 
       {/* Profile Content */}
-      <ProfileContent>
+      <Container className="profile-content">
+        <Row>
         {/* Left Column */}
-        <div>
+          <Col lg={6} className="mb-4">
           {/* Basic Information */}
-          <ProfileSection>
-            <SectionTitle>
-              <FaUser />
+            <Card className="profile-card">
+              <Card.Header className="card-header">
+                <h2 className="section-title">
+                  <User size={24} />
               Basic Information
-            </SectionTitle>
-            <InfoGrid>
-              <InfoItem>
-                <InfoLabel>
-                  <FaUser />
+                </h2>
+              </Card.Header>
+              <Card.Body>
+                <div className="info-grid">
+                  <div className="info-item">
+                    <div className="info-label">
+                      <User size={18} />
                   Full Name
-                </InfoLabel>
-                <InfoValue>{user.firstName} {user.lastName}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>
-                  <FaUser />
+                    </div>
+                    <div className="info-value">{user.firstName} {user.lastName}</div>
+                  </div>
+                                    <div className="info-item">
+                    <div className="info-label">
+                      <Mail size={18} />
                   Email
-                </InfoLabel>
-                <InfoValue>{user.email}</InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>
-                  <FaCheckCircle />
+                    </div>
+                    <div className="info-value">{user.email}</div>
+                  </div>
+                  
+                  <div className="info-item">
+                    <div className="info-label">
+                      <Phone size={18} />
+                      Phone Number
+                    </div>
+                    <div className="info-value">{user.phoneNumber || 'N/A'}</div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">
+                      <CheckCircle size={18} />
                   Verification Status
-                </InfoLabel>
-                <InfoValue>
+                    </div>
+                    <div className="info-value">
                   {user.isVerified ? (
-                    <span style={{ color: '#28a745' }}>✓ Verified</span>
-                  ) : (
-                    <span style={{ color: '#ffc107' }}>⚠ Not Verified</span>
-                  )}
-                </InfoValue>
-              </InfoItem>
-              <InfoItem>
-                <InfoLabel>
-                  <FaCalendarAlt />
+                        <Badge bg="success" className="status-badge">
+                          <CheckCircle size={16} />
+                          Verified
+                        </Badge>
+                      ) : (
+                        <Badge bg="warning" text="dark" className="status-badge">
+                          <AlertTriangle size={16} />
+                          Not Verified
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="info-item">
+                    <div className="info-label">
+                      <Clock size={18} />
                   Member Since
-                </InfoLabel>
-                <InfoValue>
+                    </div>
+                    <div className="info-value">
                   {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric'
                   }) : 'N/A'}
-                </InfoValue>
-              </InfoItem>
-            </InfoGrid>
-            
-            <ActionButtons>
-              <ActionButton 
-                className="primary"
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="action-buttons">
+                  <Button 
+                    variant="primary"
                 onClick={() => navigate('/edit-profile')}
+                    className="action-button primary"
               >
-                <FaEdit />
+                    <Edit3 size={18} />
                 Edit Profile
-              </ActionButton>
-            </ActionButtons>
-          </ProfileSection>
+                  </Button>
+                </div>
+              </Card.Body>
+            </Card>
 
           {/* Statistics */}
-          <ProfileSection>
-            <SectionTitle>
-              <FaChartBar />
+            <Card className="profile-card">
+              <Card.Header className="card-header">
+                <h2 className="section-title">
+                  <BarChart3 size={24} />
               Statistics
-            </SectionTitle>
+                </h2>
+              </Card.Header>
+              <Card.Body>
             {!stats || Object.keys(stats).length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
-                <FaChartBar size={24} style={{ marginBottom: '8px' }} />
-                <div>Loading statistics...</div>
+                  <div className="empty-stats">
+                    <BarChart3 size={24} />
+                    <p>No statistics available</p>
+                    <small>Statistics will appear here once you have activity</small>
               </div>
             ) : (
-            <StatsGrid>
+                  <div className="stats-grid">
               {isHost && (
                 <>
-                  <StatCard>
-                    <StatValue>{stats?.totalListings || 0}</StatValue>
-                    <StatLabel>Listings</StatLabel>
-                  </StatCard>
-                  <StatCard>
-                    <StatValue>{stats?.totalBookings || 0}</StatValue>
-                    <StatLabel>Bookings</StatLabel>
-                  </StatCard>
-                  <StatCard>
-                    <StatValue>${(stats?.totalRevenue || 0).toLocaleString()}</StatValue>
-                    <StatLabel>Total Revenue</StatLabel>
-                  </StatCard>
-                  <StatCard>
-                    <StatValue>{stats?.averageRating ? stats.averageRating.toFixed(1) : '0.0'}</StatValue>
-                    <StatLabel>Avg Rating</StatLabel>
-                  </StatCard>
+                        <div className="stat-card">
+                          <div className="stat-value">{stats?.totalListings || 0}</div>
+                          <div className="stat-label">Listings</div>
+                        </div>
+                        <div className="stat-card">
+                          <div className="stat-value">{stats?.totalBookings || 0}</div>
+                          <div className="stat-label">Bookings</div>
+                        </div>
+                        <div className="stat-card">
+                          <div className="stat-value">${(stats?.totalRevenue || 0).toLocaleString()}</div>
+                          <div className="stat-label">Total Revenue</div>
+                        </div>
+                        <div className="stat-card">
+                          <div className="stat-value">{stats?.averageRating ? stats.averageRating.toFixed(1) : '0.0'}</div>
+                          <div className="stat-label">Avg Rating</div>
+                        </div>
                 </>
               )}
               
               {isGuest && (
                 <>
-                  <StatCard>
-                    <StatValue>{stats?.totalBookings || 0}</StatValue>
-                    <StatLabel>Bookings</StatLabel>
-                  </StatCard>
-                  <StatCard>
-                    <StatValue>{stats?.totalReviews || 0}</StatValue>
-                    <StatLabel>Reviews</StatLabel>
-                  </StatCard>
-                  <StatCard>
-                    <StatValue>${(stats?.totalSpent || 0).toLocaleString()}</StatValue>
-                    <StatLabel>Total Spent</StatLabel>
-                  </StatCard>
+                        <div className="stat-card">
+                          <div className="stat-value">{stats?.totalBookings || 0}</div>
+                          <div className="stat-label">Bookings</div>
+                        </div>
+                        <div className="stat-card">
+                          <div className="stat-value">{stats?.totalReviews || 0}</div>
+                          <div className="stat-label">Reviews</div>
+                        </div>
+                        <div className="stat-card">
+                          <div className="stat-value">${(stats?.totalSpent || 0).toLocaleString()}</div>
+                          <div className="stat-label">Total Spent</div>
+                        </div>
                 </>
               )}
               
               {isAdmin && (
                 <>
-                  <StatCard>
-                    <StatValue>Admin</StatValue>
-                    <StatLabel>Role</StatLabel>
-                  </StatCard>
-                  <StatCard>
-                    <StatValue>{user.permissions?.length || 0}</StatValue>
-                    <StatLabel>Permissions</StatLabel>
-                  </StatCard>
+                        <div className="stat-card">
+                          <div className="stat-value">Admin</div>
+                          <div className="stat-label">Role</div>
+                        </div>
+                        <div className="stat-card">
+                          <div className="stat-value">{user.permissions?.length || 0}</div>
+                          <div className="stat-label">Permissions</div>
+                        </div>
                 </>
               )}
-            </StatsGrid>
+                  </div>
             )}
-          </ProfileSection>
-        </div>
+              </Card.Body>
+            </Card>
+          </Col>
 
         {/* Right Column */}
-        <div>
-          {/* Role-Specific Information */}
+          <Col lg={6} className="mb-4">
+            {/* Quick Actions */}
+            <Card className="profile-card">
+              <Card.Header className="card-header">
+                <h2 className="section-title">
+                  <Settings size={24} />
+                  Quick Actions
+                </h2>
+              </Card.Header>
+              <Card.Body>
+                <div className="action-buttons">
+                  <Button 
+                    variant="primary"
+                    onClick={() => navigate('/liked-listings')}
+                    className="action-button primary"
+                  >
+                    <Heart size={18} />
+                    Liked Listings
+                  </Button>
+                  
+                  <Button 
+                    variant="outline-secondary"
+                    onClick={() => navigate('/bookings')}
+                    className="action-button secondary"
+                  >
+                    <Calendar size={18} />
+                    My Bookings
+                  </Button>
+                  
+                  {isHost && (
+                    <Button 
+                      variant="success"
+                      onClick={() => navigate('/listings')}
+                      className="action-button success"
+                    >
+                      <Home size={18} />
+                      My Listings
+                    </Button>
+                  )}
+                  
+                  {isAdmin && (
+                    <Button 
+                      variant="warning"
+                      onClick={() => navigate('/admin/host-applications')}
+                      className="action-button warning"
+                    >
+                      <Shield size={18} />
+                      Admin Panel
+                    </Button>
+                  )}
+                </div>
+              </Card.Body>
+            </Card>
+            
+            {/* Host Application Status - For all users */}
+            {!isHost && (
+              <Card className="profile-card">
+                <Card.Header className="card-header">
+                  <h2 className="section-title">
+                    <Shield size={24} />
+                    Become a Host
+                  </h2>
+                </Card.Header>
+                <Card.Body>
+                  <div className="info-grid">
+                    <div className="info-item">
+                      <div className="info-label">
+                        <User size={18} />
+                        Current Role
+                      </div>
+                      <div className="info-value">
+                        <Badge bg="secondary" className="status-badge">
+                          <User size={16} />
+                          {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <div className="info-item">
+                      <div className="info-label">
+                        <Info size={18} />
+                        Host Status
+                      </div>
+                      <div className="info-value">
+                        <Badge bg="info" className="status-badge">
+                          <Info size={16} />
+                          Not Applied
+                        </Badge>
+                      </div>
+                    </div>
+        </div>
+
+                  <div className="action-buttons">
+                    <Button 
+                      variant="primary"
+                      onClick={() => navigate('/become-a-host-info')}
+                      className="action-button primary"
+                    >
+                      <Plus size={18} />
+                      Apply to Become a Host
+                    </Button>
+                  </div>
+                </Card.Body>
+              </Card>
+            )}
+            
+            {/* Host Application Status - Only for hosts */}
           {isHost && (
-            profileData?.hostProfile ? (
-            <ProfileSection>
-              <SectionTitle>
-                <FaHome />
-                Host Profile
-              </SectionTitle>
-              <InfoGrid>
-                <InfoItem>
-                  <InfoLabel>
-                    <FaBuilding />
-                    Business Name
-                  </InfoLabel>
-                  <InfoValue>{profileData.hostProfile.businessName || 'N/A'}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>
-                    <FaPhone />
-                    Business Phone
-                  </InfoLabel>
-                  <InfoValue>{profileData.hostProfile.businessPhone || 'N/A'}</InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>
-                    <FaMapMarkerAlt />
-                    Business Address
-                  </InfoLabel>
-                  <InfoValue>
-                    {profileData.hostProfile.businessAddress ? 
-                      `${profileData.hostProfile.businessAddress.street}, ${profileData.hostProfile.businessAddress.city}, ${profileData.hostProfile.businessAddress.state}` :
+              <Card className="profile-card">
+                <Card.Header className="card-header">
+                  <h2 className="section-title">
+                    <Shield size={24} />
+                    Host Application Status
+                  </h2>
+                </Card.Header>
+                <Card.Body>
+                  {profileData?.hostProfile ? (
+                    <div className="info-grid">
+                      <div className="info-item">
+                        <div className="info-label">
+                          <CheckCircle size={18} />
+                          Application Status
+                        </div>
+                        <div className="info-value">
+                          <Badge bg="success" className="status-badge">
+                            <CheckCircle size={16} />
+                            Approved
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="info-item">
+                        <div className="info-label">
+                          <Calendar size={18} />
+                          Approved Date
+                        </div>
+                        <div className="info-value">
+                          {profileData.hostProfile.applicationApprovedAt ? 
+                            new Date(profileData.hostProfile.applicationApprovedAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            }) :
                       'N/A'
                     }
-                  </InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>
-                    <FaHome />
+                        </div>
+                      </div>
+                      
+                      <div className="info-item">
+                        <div className="info-label">
+                          <Shield size={18} />
+                          Stripe Onboarding
+                        </div>
+                        <div className="info-value">
+                          <Badge 
+                            bg={profileData.hostProfile.stripeConnectStatus === 'active' ? 'success' : 
+                                profileData.hostProfile.stripeConnectStatus === 'pending' ? 'warning' : 'danger'}
+                            className="status-badge"
+                          >
+                            {profileData.hostProfile.stripeConnectStatus === 'active' && <CheckCircle size={16} />}
+                            {profileData.hostProfile.stripeConnectStatus === 'pending' && <AlertTriangle size={16} />}
+                            {profileData.hostProfile.stripeConnectStatus === 'restricted' && <XCircle size={16} />}
+                            {profileData.hostProfile.stripeConnectStatus === 'disabled' && <XCircle size={16} />}
+                            {profileData.hostProfile.stripeConnectStatus ? 
+                              profileData.hostProfile.stripeConnectStatus.charAt(0).toUpperCase() + profileData.hostProfile.stripeConnectStatus.slice(1) :
+                              'Pending'
+                            }
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="empty-host-profile">
+                      <Shield size={24} />
+                      <p>Loading application status...</p>
+                    </div>
+                  )}
+                </Card.Body>
+              </Card>
+            )}
+            
+            {/* Host Profile Section - Only for hosts */}
+            {isHost && (
+              <Card className="profile-card">
+                <Card.Header className="card-header">
+                  <h2 className="section-title">
+                    <Home size={24} />
+                    Host Profile
+                  </h2>
+                </Card.Header>
+                <Card.Body>
+                  {profileData?.hostProfile ? (
+                    <div className="info-grid">
+                      {/* Business Information */}
+                      <div className="info-item">
+                        <div className="info-label">
+                          <Building2 size={18} />
+                          Business Structure
+                        </div>
+                        <div className="info-value">
+                          {profileData.hostProfile.businessStructure ? 
+                            profileData.hostProfile.businessStructure.charAt(0).toUpperCase() + profileData.hostProfile.businessStructure.slice(1) :
+                            'Individual'
+                          }
+                        </div>
+                      </div>
+                      
+                      <div className="info-item">
+                        <div className="info-label">
+                          <Phone size={18} />
+                          Phone Number
+                        </div>
+                        <div className="info-value">
+                          {profileData.hostProfile.phoneNumber || 'N/A'}
+                        </div>
+                      </div>
+                      
+                      <div className="info-item">
+                        <div className="info-label">
+                          <Home size={18} />
                     Property Type
-                  </InfoLabel>
-                  <InfoValue>
+                        </div>
+                        <div className="info-value">
                     {profileData.hostProfile.propertyType ? 
                       profileData.hostProfile.propertyType.charAt(0).toUpperCase() + profileData.hostProfile.propertyType.slice(1) :
                       'N/A'
                     }
-                  </InfoValue>
-                </InfoItem>
-                <InfoItem>
-                  <InfoLabel>
-                    <FaCreditCard />
+                        </div>
+                      </div>
+                      
+                      <div className="info-item">
+                        <div className="info-label">
+                          <Eye size={18} />
+                          Property Description
+                        </div>
+                        <div className="info-value">
+                          {profileData.hostProfile.propertyDescription || 'N/A'}
+                        </div>
+                      </div>
+                      
+                      <div className="info-item">
+                        <div className="info-label">
+                          <Star size={18} />
+                          Hosting Experience
+                        </div>
+                        <div className="info-value">
+                          {profileData.hostProfile.hostingExperience || 'N/A'}
+                        </div>
+                      </div>
+                      
+                      {/* Financial Information */}
+                      <div className="info-item">
+                        <div className="info-label">
+                          <CreditCard size={18} />
+                          Stripe Account ID
+                        </div>
+                        <div className="info-value">
+                          {profileData.hostProfile.stripeConnectAccountId ? 
+                            `${profileData.hostProfile.stripeConnectAccountId.substring(0, 8)}...` :
+                            'N/A'
+                          }
+                        </div>
+                      </div>
+                      
+                      <div className="info-item">
+                        <div className="info-label">
+                          <Shield size={18} />
                     Stripe Status
-                  </InfoLabel>
-                  <InfoValue>
-                    <StatusBadge className={profileData.hostProfile.stripeConnectStatus || 'pending'}>
-                      {profileData.hostProfile.stripeConnectStatus === 'active' && <FaCheckCircle />}
-                      {profileData.hostProfile.stripeConnectStatus === 'pending' && <FaExclamationTriangle />}
-                      {profileData.hostProfile.stripeConnectStatus === 'restricted' && <FaTimesCircle />}
-                      {profileData.hostProfile.stripeConnectStatus === 'disabled' && <FaTimesCircle />}
+                        </div>
+                        <div className="info-value">
+                          <Badge 
+                            bg={profileData.hostProfile.stripeConnectStatus === 'active' ? 'success' : 
+                                profileData.hostProfile.stripeConnectStatus === 'pending' ? 'warning' : 'danger'}
+                            className="status-badge"
+                          >
+                            {profileData.hostProfile.stripeConnectStatus === 'active' && <CheckCircle size={16} />}
+                            {profileData.hostProfile.stripeConnectStatus === 'pending' && <AlertTriangle size={16} />}
+                            {profileData.hostProfile.stripeConnectStatus === 'restricted' && <XCircle size={16} />}
+                            {profileData.hostProfile.stripeConnectStatus === 'disabled' && <XCircle size={16} />}
                       {profileData.hostProfile.stripeConnectStatus ? 
                         profileData.hostProfile.stripeConnectStatus.charAt(0).toUpperCase() + profileData.hostProfile.stripeConnectStatus.slice(1) :
                         'Pending'
                       }
-                    </StatusBadge>
-                  </InfoValue>
-                </InfoItem>
-              </InfoGrid>
-              
-              <ActionButtons>
-                <ActionButton 
-                  className="secondary"
-                  onClick={() => navigate('/edit-profile')}
-                >
-                  <FaEdit />
-                  Edit Host Profile
-                </ActionButton>
-                <ActionButton 
-                  className="success"
-                  onClick={() => navigate('/my-listings')}
-                >
-                  <FaEye />
-                  View My Listings
-                </ActionButton>
-              </ActionButtons>
-            </ProfileSection>
-            ) : (
-              <ProfileSection>
-                <SectionTitle>
-                  <FaHome />
-                  Host Profile
-                </SectionTitle>
-                <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>
-                  <FaHome size={24} style={{ marginBottom: '8px' }} />
-                  <div>Loading host profile...</div>
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      {/* Application Approval Information */}
+                      <div className="info-item">
+                        <div className="info-label">
+                          <CheckCircle size={18} />
+                          Application Approved
+                        </div>
+                        <div className="info-value">
+                          {profileData.hostProfile.applicationApprovedAt ? 
+                            new Date(profileData.hostProfile.applicationApprovedAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            }) :
+                            'N/A'
+                          }
+                        </div>
                 </div>
-              </ProfileSection>
-            )
-          )}
-
-          {/* Permissions */}
-          {user.permissions && user.permissions.length > 0 && (
-            <ProfileSection>
-              <SectionTitle>
-                <FaShieldAlt />
-                Permissions
-              </SectionTitle>
-              <InfoGrid>
-                {user.permissions.map((permission, index) => (
-                  <InfoItem key={index}>
-                    <InfoLabel>
-                      <FaCheckCircle style={{ color: '#28a745' }} />
-                      {permission.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </InfoLabel>
-                  </InfoItem>
-                ))}
-              </InfoGrid>
-            </ProfileSection>
-          )}
-
-          {/* Quick Actions */}
-          <ProfileSection>
-            <SectionTitle>
-              <FaCog />
-              Quick Actions
-            </SectionTitle>
-            <ActionButtons>
-              <ActionButton 
-                className="primary"
-                onClick={() => navigate('/liked-listings')}
-              >
-                <FaHeart />
-                Liked Listings
-              </ActionButton>
-              
-              <ActionButton 
-                className="secondary"
-                onClick={() => navigate('/my-bookings')}
-              >
-                <FaCalendarAlt />
-                My Bookings
-              </ActionButton>
-              
-              {isHost && (
-                <ActionButton 
-                  className="success"
-                  onClick={() => navigate('/my-listings')}
-                >
-                  <FaHome />
-                  My Listings
-                </ActionButton>
-              )}
-              
-              {isAdmin && (
-                <ActionButton 
-                  className="warning"
-                  onClick={() => navigate('/admin')}
-                >
-                  <FaShieldAlt />
-                  Admin Panel
-                </ActionButton>
-              )}
-            </ActionButtons>
-          </ProfileSection>
+                      
+                      {/* Bank Account Information (if available) */}
+                      {profileData.hostProfile.bankAccount && (
+                        <>
+                          <div className="info-item">
+                            <div className="info-label">
+                              <CreditCard size={18} />
+                              Bank Account Type
+                            </div>
+                            <div className="info-value">
+                              {profileData.hostProfile.bankAccount.accountType ? 
+                                profileData.hostProfile.bankAccount.accountType.charAt(0).toUpperCase() + profileData.hostProfile.bankAccount.accountType.slice(1) :
+                                'N/A'
+                              }
+                            </div>
+                          </div>
+                          
+                          <div className="info-item">
+                            <div className="info-label">
+                              <CreditCard size={18} />
+                              Account Number
+                            </div>
+                            <div className="info-value">
+                              {profileData.hostProfile.bankAccount.accountNumber ? 
+                                `****${profileData.hostProfile.bankAccount.accountNumber.slice(-4)}` :
+                                'N/A'
+                              }
+                            </div>
+                          </div>
+                          
+                          <div className="info-item">
+                            <div className="info-label">
+                              <CreditCard size={18} />
+                              Routing Number
+                            </div>
+                            <div className="info-value">
+                              {profileData.hostProfile.bankAccount.routingNumber ? 
+                                `****${profileData.hostProfile.bankAccount.routingNumber.slice(-4)}` :
+                                'N/A'
+                              }
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="empty-host-profile">
+                      <Home size={24} />
+                      <p>Loading host profile...</p>
+                    </div>
+                  )}
+                </Card.Body>
+              </Card>
+            )}
+          </Col>
+        </Row>
+      </Container>
         </div>
-      </ProfileContent>
-    </ProfileContainer>
   );
 };
 

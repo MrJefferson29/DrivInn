@@ -33,6 +33,10 @@ import BookingSuccess from './components/BookingSuccess';
 import BookingCancel from './components/BookingCancel';
 import TestBookingStatus from './components/TestBookingStatus';
 import About from './components/About';
+import Experience from './components/Experience';
+import Contact from './components/Contact';
+import Help from './components/Help';
+import CityListings from './components/CityListings';
 
 function App() {
   return (
@@ -65,8 +69,13 @@ function App() {
           <Route path="/booking-success" element={<BookingSuccess />} />
           <Route path="/booking-cancel" element={<BookingCancel />} />
           <Route path="/test-booking-status" element={<TestBookingStatus />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/messages" element={<ChatRoomsList />} />
+                  <Route path="/about" element={<About />} />
+        <Route path="/contact" element={<Contact />} />
+        <Route path="/experiences" element={<Experience />} />
+        <Route path="/help" element={<Help />} />
+        <Route path="/city/:cityName" element={<CityListings />} />
+        <Route path="/settings" element={<Profile />} />
+        <Route path="/messages" element={<ChatRoomsList />} />
           <Route path="/messages/:roomId" element={<ChatScreen />} />
           <Route path="/listing/:id" element={<ListingDetails />} />
           <Route path="/profile" element={<Profile />} />
