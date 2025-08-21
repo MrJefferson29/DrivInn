@@ -1112,7 +1112,8 @@ exports.submitApplication = async (req, res) => {
       application.stripeConnect = {
         accountId: account.id,
         accountStatus: account.charges_enabled && account.payouts_enabled ? 'active' : 'pending',
-        onboardingCompleted: account.charges_enabled
+        onboardingCompleted: account.charges_enabled,
+        dashboardUrl: actualDashboardUrl
       };
 
       // Store any pending requirements for better guidance
@@ -1139,6 +1140,25 @@ exports.submitApplication = async (req, res) => {
       }
 
       console.log('Account link created successfully:', accountLink.url);
+
+      // Get the actual dashboard URL from Stripe by creating a login link
+      console.log('Getting actual dashboard URL from Stripe...');
+      let actualDashboardUrl;
+      try {
+        const loginLink = await stripe.accounts.createLoginLink(account.id);
+        if (loginLink && loginLink.url) {
+          // Extract the dashboard URL from the login link
+          // The login link format is: https://connect.stripe.com/express/acct_{ACCOUNT_ID}/{UNIQUE_CODE}
+          actualDashboardUrl = loginLink.url;
+          console.log('Actual dashboard URL captured:', actualDashboardUrl);
+        } else {
+          console.log('Could not get actual dashboard URL, using fallback');
+          actualDashboardUrl = generateStripeDashboardUrl(account.id);
+        }
+      } catch (loginLinkError) {
+        console.log('Error getting login link, using fallback dashboard URL:', loginLinkError.message);
+        actualDashboardUrl = generateStripeDashboardUrl(account.id);
+      }
 
       // Save the updated application
       try {
@@ -1176,8 +1196,8 @@ exports.submitApplication = async (req, res) => {
           id: account.id,
           status: account.charges_enabled && account.payouts_enabled ? 'active' : 'pending',
           onboardingUrl: accountLink.url,
-          dashboardUrl: generateStripeDashboardUrl(account.id),
-        loginUrl: accountLink.url
+          dashboardUrl: actualDashboardUrl,
+          loginUrl: accountLink.url
         }
       });
 
@@ -1329,7 +1349,7 @@ exports.approveApplication = async (req, res) => {
       stripeAccount: {
         id: application.stripeConnect.accountId,
         status: application.stripeConnect.accountStatus,
-        dashboardUrl: generateStripeDashboardUrl(application.stripeConnect.accountId),
+        dashboardUrl: application.stripeConnect.dashboardUrl || generateStripeDashboardUrl(application.stripeConnect.accountId),
         onboardingUrl: await (async () => {
           try {
             const accountLink = await stripe.accountLinks.create({
@@ -1488,7 +1508,7 @@ exports.getStripeSetupStatus = async (req, res) => {
       chargesEnabled: account.charges_enabled,
       payoutsEnabled: account.payouts_enabled,
       requirements: account.requirements,
-      dashboardUrl: generateStripeDashboardUrl(application.stripeConnect.accountId),
+      dashboardUrl: application.stripeConnect.dashboardUrl || generateStripeDashboardUrl(application.stripeConnect.accountId),
       onboardingUrl: onboardingUrl
     });
     
@@ -1510,8 +1530,8 @@ exports.getStripeSetupStatus = async (req, res) => {
           chargesEnabled: false,
           payoutsEnabled: false,
           requirements: null,
-          dashboardUrl: generateStripeDashboardUrl(application.stripeConnect.accountId),
-          onboardingUrl: generateStripeDashboardUrl(application.stripeConnect.accountId)
+          dashboardUrl: application.stripeConnect.dashboardUrl || generateStripeDashboardUrl(application.stripeConnect.accountId),
+          onboardingUrl: application.stripeConnect.dashboardUrl || generateStripeDashboardUrl(application.stripeConnect.accountId)
         });
         return;
       }
@@ -1542,15 +1562,64 @@ exports.createStripeLoginLink = async (req, res) => {
     // Create a login link to the host's Stripe dashboard using Connect API
     const loginLink = await stripe.accounts.createLoginLink(application.stripeConnect.accountId);
     
+    // Update the stored dashboard URL with the fresh login link
+    if (loginLink && loginLink.url) {
+      application.stripeConnect.dashboardUrl = loginLink.url;
+      await application.save();
+      console.log('Updated stored dashboard URL with fresh login link');
+    }
+    
     res.json({ 
       message: 'Stripe dashboard login link created',
       loginUrl: loginLink.url,
       expiresAt: loginLink.expires_at,
-      accountId: application.stripeConnect.accountId
+      accountId: application.stripeConnect.accountId,
+      dashboardUrl: application.stripeConnect.dashboardUrl
     });
     
   } catch (err) {
     console.error('Error creating Stripe login link:', err);
     res.status(500).json({ message: 'Error creating login link', error: err.message });
+  }
+};
+
+// Refresh dashboard URL for existing applications
+exports.refreshDashboardUrl = async (req, res) => {
+  try {
+    const application = await HostApplication.findOne({ 
+      user: req.user._id, 
+      status: 'approved' 
+    });
+    
+    if (!application) {
+      return res.status(404).json({ message: 'No approved application found' });
+    }
+    
+    if (!application.stripeConnect?.accountId) {
+      return res.status(404).json({ message: 'No Stripe account found' });
+    }
+    
+    // Create a fresh login link to get the current dashboard URL
+    const loginLink = await stripe.accounts.createLoginLink(application.stripeConnect.accountId);
+    
+    if (loginLink && loginLink.url) {
+      // Update the stored dashboard URL
+      application.stripeConnect.dashboardUrl = loginLink.url;
+      await application.save();
+      
+      console.log('Dashboard URL refreshed successfully');
+      
+      res.json({ 
+        message: 'Dashboard URL refreshed successfully',
+        dashboardUrl: loginLink.url,
+        accountId: application.stripeConnect.accountId
+      });
+    } else {
+      throw new Error('Failed to create login link');
+    }
+    
+  } catch (err) {
+    console.error('Error refreshing dashboard URL:', err);
+    res.status(500).json({ message: 'Error refreshing dashboard URL', error: err.message });
   }
 }; 

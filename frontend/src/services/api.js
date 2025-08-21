@@ -104,6 +104,7 @@ export const hostApplicationsAPI = {
   refreshStripeStatus: () => api.post('/host-applications/refresh-stripe-status'),
   createStripeLoginLink: () => api.post('/host-applications/create-stripe-login-link'),
   getStripeSetupStatus: () => api.get('/host-applications/stripe-setup-status'),
+  refreshDashboardUrl: () => api.post('/host-applications/refresh-dashboard-url'),
   // Admin
   list: (status) => api.get('/host-applications', { params: status ? { status } : {} }),
   approve: (id, data) => api.put(`/host-applications/${id}/approve`, data),

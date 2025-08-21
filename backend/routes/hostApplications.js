@@ -28,5 +28,6 @@ router.put('/:id/decline', verifyToken, requireAdmin, hostAppController.declineA
 router.post('/refresh-stripe-status', verifyToken, hostAppController.refreshStripeAccountStatus);
 router.post('/create-stripe-login-link', verifyToken, hostAppController.createStripeLoginLink);
 router.get('/stripe-setup-status', verifyToken, hostAppController.getStripeSetupStatus);
+router.post('/refresh-dashboard-url', verifyToken, hostAppController.refreshDashboardUrl);
 
 module.exports = router; 

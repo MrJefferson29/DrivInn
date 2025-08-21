@@ -148,6 +148,10 @@ const hostApplicationSchema = new mongoose.Schema({
     pendingRequirements: {
       type: mongoose.Schema.Types.Mixed,
       required: false
+    },
+    dashboardUrl: {
+      type: String,
+      required: false
     }
   },
   // Property Information

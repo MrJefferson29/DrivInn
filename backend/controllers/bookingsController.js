@@ -169,7 +169,7 @@ exports.createBooking = async (req, res) => {
           hostGuidance: {
             message: 'Your Stripe account needs additional verification to enable automatic payouts',
             action: 'Visit your Stripe dashboard to complete verification',
-            dashboardUrl: generateStripeDashboardUrl(hostApplication.stripeConnect.accountId),
+            dashboardUrl: hostApplication.stripeConnect.dashboardUrl || generateStripeDashboardUrl(hostApplication.stripeConnect.accountId),
             commonIssues: [
               'Identity documents not yet verified',
               'Bank account information not provided',

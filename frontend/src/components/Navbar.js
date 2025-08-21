@@ -78,9 +78,8 @@ const NavbarComponent = () => {
       hostApplicationsAPI.getStripeSetupStatus()
         .then(res => {
           if (res.data && res.data.accountId) {
-            // Construct the correct Stripe Connect dashboard URL format
-            // Format: https://connect.stripe.com/express/acct_{ACCOUNT_ID}/bKsxnuQI7PAK
-            const stripeDashboardUrl = `https://connect.stripe.com/express/acct_${res.data.accountId}/bKsxnuQI7PAK`;
+            // Use the stored dashboard URL from the backend, or fallback to constructed URL
+            const stripeDashboardUrl = res.data.dashboardUrl || `https://connect.stripe.com/express/acct_${res.data.accountId}/bKsxnuQI7PAK`;
             
             setStripeConnectAccount({
               accountId: res.data.accountId,
