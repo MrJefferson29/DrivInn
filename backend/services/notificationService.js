@@ -343,7 +343,7 @@ class NotificationService {
       await this.createNotification({
         user: userId,
         type: 'welcome',
-        title: 'Welcome to Airbnb!',
+        title: 'Welcome to DrivInn!',
         message: `Welcome ${user.firstName}! We're excited to have you on board. Start exploring amazing places to stay.`,
         metadata: {
           welcomeNotification: true

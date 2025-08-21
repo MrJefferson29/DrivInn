@@ -45,18 +45,18 @@ const sendPasswordResetEmail = async (email, resetToken) => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Password Reset Request - Airbnb Clone',
+      subject: 'Password Reset Request - DrivInn',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #FF385C; margin: 0;">Airbnb Clone</h1>
+            <h1 style="color: #FF385C; margin: 0;">DrivInn</h1>
             <p style="color: #717171; margin: 10px 0;">Reset Your Password</p>
           </div>
           
           <div style="background: #f8f9fa; padding: 30px; border-radius: 12px; margin-bottom: 20px;">
             <h2 style="color: #222222; margin-bottom: 20px;">Hello!</h2>
             <p style="color: #717171; line-height: 1.6; margin-bottom: 20px;">
-              You requested a password reset for your Airbnb Clone account. 
+              You requested a password reset for your DrivInn account. 
               Click the button below to reset your password:
             </p>
             
@@ -85,7 +85,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
           <div style="text-align: center; color: #717171; font-size: 12px;">
             <p>This link will expire in 1 hour for security reasons.</p>
             <p>If you didn't request this password reset, please ignore this email.</p>
-            <p>© 2024 Airbnb Clone. All rights reserved.</p>
+            <p>© 2024 DrivInn. All rights reserved.</p>
           </div>
         </div>
       `
@@ -108,17 +108,17 @@ const sendWelcomeEmail = async (email, firstName) => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Welcome to Airbnb Clone!',
+      subject: 'Welcome to DrivInn!',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #FF385C; margin: 0;">Welcome to Airbnb Clone!</h1>
+            <h1 style="color: #FF385C; margin: 0;">Welcome to DrivInn!</h1>
           </div>
           
           <div style="background: #f8f9fa; padding: 30px; border-radius: 12px;">
             <h2 style="color: #222222; margin-bottom: 20px;">Hello ${firstName}!</h2>
             <p style="color: #717171; line-height: 1.6; margin-bottom: 20px;">
-              Welcome to Airbnb Clone! We're excited to have you join our community of travelers and hosts.
+              Welcome to DrivInn! We're excited to have you join our community of travelers and hosts.
             </p>
             
             <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
@@ -132,12 +132,12 @@ const sendWelcomeEmail = async (email, firstName) => {
             </div>
             
             <p style="color: #717171; line-height: 1.6;">
-              Start exploring and create unforgettable memories with Airbnb Clone!
+              Start exploring and create unforgettable memories with DrivInn!
             </p>
           </div>
           
           <div style="text-align: center; color: #717171; font-size: 12px; margin-top: 20px;">
-            <p>© 2024 Airbnb Clone. All rights reserved.</p>
+            <p>© 2024 DrivInn. All rights reserved.</p>
           </div>
         </div>
       `
