@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { hostApplicationsAPI } from '../services/api';
 import styled, { keyframes } from 'styled-components';
 import { FaCheckCircle, FaEye, FaHome, FaIdCard, FaBuilding, FaCreditCard, FaCheck, FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCalendarAlt, FaFileAlt, FaStar, FaInfoCircle, FaCamera } from 'react-icons/fa';
+import usaCitiesData from '../data/usaCities.json';
 
 // Airbnb-style Host Application Form Components
 const Container = styled.div`
@@ -654,6 +655,33 @@ const FormGroup = styled.div`
   gap: 8px;
 `;
 
+const ConditionalField = styled.div`
+  transition: all 0.3s ease;
+  opacity: ${props => props.visible ? 1 : 0.7};
+  
+  ${props => props.visible && `
+    animation: ${fadeIn} 0.3s ease-out;
+  `}
+`;
+
+const CountrySelect = styled(Select)`
+  ${props => props.selected && `
+    border-color: #00a699;
+    background-color: #f0f9f8;
+  `}
+`;
+
+const StateCityGroup = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+`;
+
 const steps = [
   { id: 0, label: 'Personal Info', icon: FaUser },
   { id: 1, label: 'Identity Verification', icon: FaIdCard },
@@ -708,6 +736,36 @@ const HostApplicationForm = () => {
   });
   const [success, setSuccess] = useState(false);
   const [applicationData, setApplicationData] = useState(null);
+
+  // US States and Cities data
+  const [usStates, setUsStates] = useState([]);
+  const [usCities, setUsCities] = useState([]);
+  const [filteredCities, setFilteredCities] = useState([]);
+
+  // Process US cities data to extract unique states and cities
+  useEffect(() => {
+    if (usaCitiesData && usaCitiesData.length > 0) {
+      // Extract unique states
+      const uniqueStates = [...new Set(usaCitiesData.map(city => city.state))].sort();
+      setUsStates(uniqueStates);
+      
+      // Store all cities
+      setUsCities(usaCitiesData);
+    }
+  }, []);
+
+  // Filter cities when state changes
+  useEffect(() => {
+    if (formData.state && formData.country === 'United States') {
+      const citiesInState = usCities
+        .filter(city => city.state === formData.state)
+        .map(city => city.name)
+        .sort();
+      setFilteredCities(citiesInState);
+    } else {
+      setFilteredCities([]);
+    }
+  }, [formData.state, formData.country, usCities]);
 
   // Load existing application data if in edit mode
   useEffect(() => {
@@ -770,6 +828,25 @@ const HostApplicationForm = () => {
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // If country changes, reset state and city
+    if (field === 'country') {
+      setFormData(prev => ({ 
+        ...prev, 
+        [field]: value,
+        state: '',
+        city: ''
+      }));
+    }
+    
+    // If state changes, reset city
+    if (field === 'state') {
+      setFormData(prev => ({ 
+        ...prev, 
+        [field]: value,
+        city: ''
+      }));
+    }
   };
 
   const handleFileChange = (field, file) => {
@@ -780,6 +857,45 @@ const HostApplicationForm = () => {
   const canProceedToNextStep = () => {
     // Allow users to navigate freely through all steps
     return true;
+  };
+
+  const validateCurrentStep = () => {
+    switch (currentStep) {
+      case 0: // Personal Info
+        if (formData.country === 'United States') {
+          // For US addresses, ensure state and city are selected from dropdowns
+          if (!formData.state || !formData.city) {
+            return false;
+          }
+        }
+        
+        // Basic validation for required fields
+        const basicFieldsValid = formData.firstName && formData.lastName && formData.email && 
+               formData.phoneNumber && formData.street && formData.city && 
+               formData.state && formData.postalCode && formData.country && 
+               formData.dateOfBirth;
+        
+        if (!basicFieldsValid) return false;
+        
+        // Country-specific validation
+        if (formData.country === 'United States') {
+          // US postal code should be 5 digits or 5+4 format
+          const usPostalCodeRegex = /^\d{5}(-\d{4})?$/;
+          if (!usPostalCodeRegex.test(formData.postalCode)) {
+            return false;
+          }
+        } else if (formData.country === 'United Kingdom') {
+          // UK postal code format validation
+          const ukPostalCodeRegex = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i;
+          if (!ukPostalCodeRegex.test(formData.postalCode)) {
+            return false;
+          }
+        }
+        
+        return true;
+      default:
+        return true;
+    }
   };
 
   const nextStep = () => {
@@ -795,8 +911,24 @@ const HostApplicationForm = () => {
   };
 
   const handleNextStep = () => {
-    if (canProceedToNextStep()) {
+    if (validateCurrentStep()) {
       nextStep();
+    } else {
+      let errorMessage = 'Please fill in all required fields correctly.';
+      
+      if (formData.country === 'United States') {
+        if (!formData.state || !formData.city) {
+          errorMessage = 'For US addresses, please select both state and city from the dropdowns.';
+        } else if (!/^\d{5}(-\d{4})?$/.test(formData.postalCode)) {
+          errorMessage = 'Please enter a valid US postal code (e.g., 12345 or 12345-6789).';
+        }
+      } else if (formData.country === 'United Kingdom') {
+        if (!/^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i.test(formData.postalCode)) {
+          errorMessage = 'Please enter a valid UK postal code (e.g., SW1A 1AA).';
+        }
+      }
+      
+      setError(errorMessage);
     }
   };
 
@@ -942,27 +1074,61 @@ const HostApplicationForm = () => {
           />
         </FormGroup>
         
-        <FormGroup>
-          <Label><FaMapMarkerAlt /> City <RequiredField>*</RequiredField></Label>
-          <Input
-            type="text"
-            value={formData.city}
-            onChange={(e) => handleInputChange('city', e.target.value)}
-            placeholder="City"
-            required
-          />
-        </FormGroup>
-        
-        <FormGroup>
-          <Label><FaMapMarkerAlt /> State/Province <RequiredField>*</RequiredField></Label>
-          <Input
-            type="text"
-            value={formData.state}
-            onChange={(e) => handleInputChange('state', e.target.value)}
-            placeholder="State or Province"
-            required
-          />
-        </FormGroup>
+        <StateCityGroup>
+          <FormGroup>
+            <Label><FaMapMarkerAlt /> City <RequiredField>*</RequiredField></Label>
+            <ConditionalField visible={formData.country === 'United States' && formData.state}>
+              {formData.country === 'United States' && formData.state ? (
+                <CountrySelect
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  selected={!!formData.city}
+                  required
+                >
+                  <option value="">Select City</option>
+                  {filteredCities.map(city => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </CountrySelect>
+              ) : (
+                <Input
+                  type="text"
+                  value={formData.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  placeholder="City"
+                  required
+                />
+              )}
+            </ConditionalField>
+          </FormGroup>
+          
+          <FormGroup>
+            <Label><FaMapMarkerAlt /> State/Province <RequiredField>*</RequiredField></Label>
+            <ConditionalField visible={formData.country === 'United States'}>
+              {formData.country === 'United States' ? (
+                <CountrySelect
+                  value={formData.state}
+                  onChange={(e) => handleInputChange('state', e.target.value)}
+                  selected={!!formData.state}
+                  required
+                >
+                  <option value="">Select State</option>
+                  {usStates.map(state => (
+                    <option key={state} value={state}>{state}</option>
+                  ))}
+                </CountrySelect>
+              ) : (
+                <Input
+                  type="text"
+                  value={formData.state}
+                  onChange={(e) => handleInputChange('state', e.target.value)}
+                  placeholder="State or Province"
+                  required
+                />
+              )}
+            </ConditionalField>
+          </FormGroup>
+        </StateCityGroup>
         
         <FormGroup>
           <Label><FaMapMarkerAlt /> Postal Code <RequiredField>*</RequiredField></Label>
@@ -970,20 +1136,25 @@ const HostApplicationForm = () => {
             type="text"
             value={formData.postalCode}
             onChange={(e) => handleInputChange('postalCode', e.target.value)}
-            placeholder="12345 or A1B 2C3"
+            placeholder={formData.country === 'United States' ? '12345 or 12345-6789' : 
+                        formData.country === 'United Kingdom' ? 'SW1A 1AA' : 
+                        '12345 or A1B 2C3'}
             required
           />
         </FormGroup>
         
         <FormGroup>
           <Label><FaMapMarkerAlt /> Country <RequiredField>*</RequiredField></Label>
-          <Input
-            type="text"
+          <CountrySelect
             value={formData.country}
             onChange={(e) => handleInputChange('country', e.target.value)}
-            placeholder="United States"
+            selected={!!formData.country}
             required
-          />
+          >
+            <option value="">Select Country</option>
+            <option value="United States">United States</option>
+            <option value="United Kingdom">United Kingdom</option>
+          </CountrySelect>
         </FormGroup>
 
         <FormGroup>
@@ -996,6 +1167,26 @@ const HostApplicationForm = () => {
           />
         </FormGroup>
       </FormGrid>
+
+      {formData.country === 'United States' && (
+        <InfoBox>
+          <InfoIcon>ℹ️</InfoIcon>
+          <InfoText>
+            <strong>US Address Help:</strong> When you select "United States", you can use the dropdown menus to easily select your state and city. 
+            This helps ensure accurate address information and faster processing of your application.
+          </InfoText>
+        </InfoBox>
+      )}
+      
+      {formData.country === 'United Kingdom' && (
+        <InfoBox>
+          <InfoIcon>ℹ️</InfoIcon>
+          <InfoText>
+            <strong>UK Address Help:</strong> For UK addresses, please use the standard UK format. 
+            Postal codes should follow the format like "SW1A 1AA" or "M1 1AA".
+          </InfoText>
+        </InfoBox>
+      )}
     </>
   );
 
