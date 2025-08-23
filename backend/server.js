@@ -396,7 +396,44 @@ app.get('/webhook-health', (req, res) => {
 
 // JSON parser for all other routes
 app.use(express.json());
-app.use(morgan('dev'));
+
+// Enhanced logging for production
+const logFormat = process.env.NODE_ENV === 'production' 
+  ? ':method :url :status :res[content-length] - :response-time ms'
+  : 'dev';
+
+app.use(morgan(logFormat));
+
+// Custom request logging middleware
+app.use((req, res, next) => {
+  console.log(`📥 ${req.method} ${req.url} - ${new Date().toISOString()}`);
+  console.log(`📥 Headers:`, req.headers);
+  if (req.body && Object.keys(req.body).length > 0) {
+    console.log(`📥 Body:`, JSON.stringify(req.body, null, 2));
+  }
+  next();
+});
+
+// Force console logging in production
+if (process.env.NODE_ENV === 'production') {
+  console.log('🌍 Production environment detected - forcing console logging');
+  // Override console methods to ensure they work in production
+  const originalLog = console.log;
+  const originalError = console.error;
+  
+  console.log = (...args) => {
+    originalLog(...args);
+    // Also log to stderr to ensure visibility
+    process.stderr.write(`[LOG] ${args.join(' ')}\n`);
+  };
+  
+  console.error = (...args) => {
+    originalError(...args);
+    // Also log to stderr to ensure visibility
+    process.stderr.write(`[ERROR] ${args.join(' ')}\n`);
+  };
+}
+
 // CORS configuration
 app.use(cors({
   origin: ['https://driv-inn.vercel.app', 'http://localhost:3000'],
@@ -418,6 +455,29 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Test endpoint to verify server is working
+app.get('/test', (req, res) => {
+  console.log('🧪 Test endpoint hit at:', new Date().toISOString());
+  res.json({ 
+    message: 'Server is working!', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    nodeVersion: process.version,
+    memoryUsage: process.memoryUsage(),
+    uptime: process.uptime()
+  });
+});
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  console.log('🏥 Health check endpoint hit at:', new Date().toISOString());
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
 
 app.use('/', IndexRoute);
 
