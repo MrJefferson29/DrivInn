@@ -287,6 +287,17 @@ exports.createBooking = async (req, res) => {
     console.log(`  - Final check-in datetime: ${checkInDateTime.toISOString()}`);
     console.log(`  - Final check-out datetime: ${checkOutDateTime.toISOString()}`);
     
+    console.log('📋 About to create booking with data:', {
+      user: userId,
+      home: listing,
+      checkIn: checkInDateTime,
+      checkOut: checkOutDateTime,
+      guests,
+      totalPrice,
+      status: 'pending',
+      paymentSessionId: session.id
+    });
+    
     const booking = await Booking.create({
       user: userId,
       home: listing, // Map listing to home
@@ -301,6 +312,23 @@ exports.createBooking = async (req, res) => {
     console.log('✅ Booking created with pending status:', booking._id);
 
     // 3️⃣ Create payment record
+    console.log('💳 About to create payment record with data:', {
+      user: userId,
+      booking: booking._id,
+      amount: totalPrice,
+      currency: 'usd',
+      status: 'pending',
+      paymentMethod: paymentMethod,
+      stripeSessionId: session.id,
+      metadata: {
+        paymentMethod: paymentMethod,
+        hasTransferData: false,
+        stripePaymentIntentId: session.payment_intent,
+        stripeValidationStatus: hasTransfersEnabled ? 'verified' : 'timeout_skipped',
+        hostStripeAccountId: hostApplication.stripeConnect.accountId
+      }
+    });
+    
     const payment = await Payment.create({
       user: userId,
       booking: booking._id,
@@ -342,7 +370,14 @@ exports.createBooking = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error creating booking:', error);
+    console.error('❌ Error creating booking:', error);
+    console.error('❌ Error stack:', error.stack);
+    console.error('❌ Error details:', {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      type: error.type
+    });
     
     // Handle specific Stripe errors
     if (error.type === 'StripeInvalidRequestError') {
@@ -370,9 +405,27 @@ exports.createBooking = async (req, res) => {
       });
     }
     
+    // Handle database errors
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: 'Invalid booking data. Please check your information.',
+        error: 'VALIDATION_ERROR',
+        details: error.message
+      });
+    }
+    
+    if (error.name === 'MongoError' || error.code === 11000) {
+      return res.status(400).json({ 
+        message: 'Database error. Please try again.',
+        error: 'DATABASE_ERROR',
+        details: error.message
+      });
+    }
+    
     res.status(500).json({ 
       message: 'Failed to create booking. Please try again.',
-      error: 'INTERNAL_SERVER_ERROR'
+      error: 'INTERNAL_SERVER_ERROR',
+      details: error.message
     });
   }
 };
