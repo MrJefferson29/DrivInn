@@ -276,16 +276,68 @@ exports.createBooking = async (req, res) => {
     const hostCheckOutTime = listingDoc.checkOut || '11:00'; // Default to 11:00 AM if not set
     
     // Create full datetime objects by combining dates with times
-    const checkInDateTime = new Date(`${startDate}T${hostCheckInTime}:00`);
-    const checkOutDateTime = new Date(`${endDate}T${hostCheckOutTime}:00`);
+    // Parse the dates properly and handle timezone issues
+    let checkInDateTime, checkOutDateTime;
     
-    console.log('🕐 Creating booking with combined date and time:');
-    console.log(`  - User selected check-in date: ${startDate}`);
-    console.log(`  - User selected check-out date: ${endDate}`);
-    console.log(`  - Host check-in time: ${hostCheckInTime}`);
-    console.log(`  - Host check-out time: ${hostCheckOutTime}`);
-    console.log(`  - Final check-in datetime: ${checkInDateTime.toISOString()}`);
-    console.log(`  - Final check-out datetime: ${checkOutDateTime.toISOString()}`);
+    try {
+      // Parse the start date and add the host's check-in time
+      console.log('🔍 Debugging date parsing:');
+      console.log(`  - Raw startDate: ${startDate} (type: ${typeof startDate})`);
+      console.log(`  - Raw endDate: ${endDate} (type: ${typeof endDate})`);
+      console.log(`  - Raw hostCheckInTime: ${hostCheckInTime} (type: ${typeof hostCheckInTime})`);
+      console.log(`  - Raw hostCheckOutTime: ${hostCheckOutTime} (type: ${typeof hostCheckOutTime})`);
+      
+      const startDateObj = new Date(startDate);
+      console.log(`  - Parsed startDateObj: ${startDateObj} (valid: ${!isNaN(startDateObj.getTime())})`);
+      
+      const [checkInHour, checkInMinute] = hostCheckInTime.split(':').map(Number);
+      console.log(`  - Parsed checkInHour: ${checkInHour}, checkInMinute: ${checkInMinute}`);
+      
+      checkInDateTime = new Date(startDateObj);
+      checkInDateTime.setHours(checkInHour, checkInMinute, 0, 0);
+      console.log(`  - Created checkInDateTime: ${checkInDateTime} (valid: ${!isNaN(checkInDateTime.getTime())})`);
+      
+      // Parse the end date and add the host's check-out time
+      const endDateObj = new Date(endDate);
+      console.log(`  - Parsed endDateObj: ${endDateObj} (valid: ${!isNaN(endDateObj.getTime())})`);
+      
+      const [checkOutHour, checkOutMinute] = hostCheckOutTime.split(':').map(Number);
+      console.log(`  - Parsed checkOutHour: ${checkOutHour}, checkOutMinute: ${checkOutMinute}`);
+      
+      checkOutDateTime = new Date(endDateObj);
+      checkOutDateTime.setHours(checkOutHour, checkOutMinute, 0, 0);
+      console.log(`  - Created checkOutDateTime: ${checkOutDateTime} (valid: ${!isNaN(checkOutDateTime.getTime())})`);
+      
+      // Validate the dates
+      if (isNaN(checkInDateTime.getTime()) || isNaN(checkOutDateTime.getTime())) {
+        throw new Error('Invalid date/time combination');
+      }
+      
+      console.log('🕐 Creating booking with combined date and time:');
+      console.log(`  - User selected check-in date: ${startDate}`);
+      console.log(`  - User selected check-out date: ${endDate}`);
+      console.log(`  - Host check-in time: ${hostCheckInTime}`);
+      console.log(`  - Host check-out time: ${hostCheckOutTime}`);
+      
+      // Safe logging of datetime objects
+      try {
+        console.log(`  - Final check-in datetime: ${checkInDateTime.toISOString()}`);
+        console.log(`  - Final check-out datetime: ${checkOutDateTime.toISOString()}`);
+      } catch (logError) {
+        console.log(`  - Final check-in datetime: ${checkInDateTime} (raw)`);
+        console.log(`  - Final check-out datetime: ${checkOutDateTime} (raw)`);
+        console.log(`  - Check-in timestamp: ${checkInDateTime.getTime()}`);
+        console.log(`  - Check-out timestamp: ${checkOutDateTime.getTime()}`);
+      }
+      
+    } catch (dateError) {
+      console.error('❌ Error creating datetime objects:', dateError);
+      return res.status(400).json({
+        message: 'Invalid date/time combination. Please try again.',
+        error: 'INVALID_DATETIME',
+        details: dateError.message
+      });
+    }
     
     console.log('📋 About to create booking with data:', {
       user: userId,
