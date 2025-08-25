@@ -12,27 +12,34 @@ const updateBookingStatuses = async () => {
     
     if (bookingsToUpdate.length === 0) {
       console.log('✅ No bookings need status updates at this time');
-      return;
-    }
-    
-    console.log(`📋 Found ${bookingsToUpdate.length} bookings that need status updates`);
-    
-    // Log details about each booking found
-    for (const booking of bookingsToUpdate) {
-      console.log(`  📖 Booking ${booking._id}:`);
-      console.log(`    - Current Status: ${booking.status}`);
-      console.log(`    - Check-in: ${booking.checkIn}`);
-      console.log(`    - Check-out: ${booking.checkOut}`);
-      console.log(`    - Checked In: ${booking.checkedIn}`);
-      console.log(`    - Checked Out: ${booking.checkedOut}`);
-      console.log(`    - Payment Status: ${booking.paymentStatus}`);
+    } else {
+      console.log(`📋 Found ${bookingsToUpdate.length} bookings that need status updates`);
+      
+      // Log details about each booking found
+      for (const booking of bookingsToUpdate) {
+        console.log(`  📖 Booking ${booking._id}:`);
+        console.log(`    - Current Status: ${booking.status}`);
+        console.log(`    - Check-in: ${booking.checkIn}`);
+        console.log(`    - Check-out: ${booking.checkOut}`);
+        console.log(`    - Checked In: ${booking.checkedIn}`);
+        console.log(`    - Checked Out: ${booking.checkedOut}`);
+        console.log(`    - Payment Status: ${booking.paymentStatus}`);
+      }
     }
     
     let updatedCount = 0;
     let errorCount = 0;
+    let skippedCount = 0;
     
     for (const booking of bookingsToUpdate) {
       try {
+        // CRITICAL SECURITY CHECK: Verify payment is completed before allowing check-in/check-out
+        if (booking.paymentStatus !== 'completed') {
+          console.log(`⚠️ Skipping booking ${booking._id} - payment status is ${booking.paymentStatus}, must be 'completed' for status updates`);
+          skippedCount++;
+          continue;
+        }
+        
         const oldStatus = booking.status;
         const newStatus = await booking.updateStatusBasedOnTime();
         
@@ -58,6 +65,73 @@ const updateBookingStatuses = async () => {
       }
     }
     
+    // CRITICAL: Auto-cancel bookings with pending payments for more than 24 hours
+    console.log('🔍 Checking for pending payments that exceed 24 hours...');
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    const pendingPaymentsToCancel = await Booking.find({
+      status: 'pending',
+      paymentStatus: 'pending',
+      createdAt: { $lt: twentyFourHoursAgo }
+    }).populate('user', 'firstName lastName email').populate('home', 'title owner').populate('home.owner');
+    
+    if (pendingPaymentsToCancel.length > 0) {
+      console.log(`📋 Found ${pendingPaymentsToCancel.length} bookings with pending payments for more than 24 hours`);
+      
+      for (const booking of pendingPaymentsToCancel) {
+        try {
+          console.log(`🚫 Auto-cancelling booking ${booking._id}:`);
+          console.log(`  - User: ${booking.user?.firstName} ${booking.user?.lastName} (${booking.user?.email})`);
+          console.log(`  - Listing: ${booking.home?.title}`);
+          console.log(`  - Created: ${booking.createdAt}`);
+          console.log(`  - Hours Pending: ${Math.round((Date.now() - booking.createdAt.getTime()) / (1000 * 60 * 60))}`);
+          
+          const oldStatus = booking.status;
+          booking.status = 'cancelled';
+          booking.updatedAt = new Date();
+          
+          await booking.save();
+          updatedCount++;
+          
+          console.log(`✅ Auto-cancelled booking ${booking._id}: ${oldStatus} → cancelled`);
+          
+          // Send cancellation notification to user
+          try {
+            await NotificationService.createNotification({
+              user: booking.user._id,
+              type: 'booking',
+              title: 'Booking Cancelled - Payment Not Completed',
+              message: `Your booking for ${booking.home.title} has been automatically cancelled because payment was not completed within 24 hours. Please make a new booking when you're ready to complete payment.`,
+              booking: booking._id
+            });
+            console.log(`✅ Cancellation notification sent to user ${booking.user._id}`);
+          } catch (notificationError) {
+            console.error(`❌ Error sending cancellation notification:`, notificationError.message);
+          }
+          
+          // Send notification to host about cancelled booking
+          try {
+            await NotificationService.createNotification({
+              user: booking.home.owner._id,
+              type: 'booking',
+              title: 'Booking Cancelled - Payment Not Completed',
+              message: `A booking for ${booking.home.title} has been automatically cancelled because the guest did not complete payment within 24 hours. The dates are now available for other guests.`,
+              booking: booking._id
+            });
+            console.log(`✅ Cancellation notification sent to host ${booking.home.owner._id}`);
+          } catch (notificationError) {
+            console.error(`❌ Error sending host cancellation notification:`, notificationError.message);
+          }
+          
+        } catch (error) {
+          errorCount++;
+          console.error(`❌ Error auto-cancelling booking ${booking._id}:`, error.message);
+        }
+      }
+    } else {
+      console.log('✅ No pending payments exceed 24 hours');
+    }
+    
     // Also check for past bookings that should be marked as completed
     console.log('🔍 Checking for past bookings that should be completed...');
     const pastBookings = await Booking.find({
@@ -70,6 +144,13 @@ const updateBookingStatuses = async () => {
       
       for (const booking of pastBookings) {
         try {
+          // CRITICAL SECURITY CHECK: Only mark as completed if payment was completed
+          if (booking.paymentStatus !== 'completed') {
+            console.log(`⚠️ Skipping completion for booking ${booking._id} - payment status is ${booking.paymentStatus}, must be 'completed'`);
+            skippedCount++;
+            continue;
+          }
+          
           if (booking.status !== 'completed') {
             const oldStatus = booking.status;
             booking.status = 'completed';
@@ -98,55 +179,60 @@ const updateBookingStatuses = async () => {
     const now = new Date();
     const bookingsToCheckIn = await Booking.find({
       status: 'reserved',
-      paymentStatus: 'completed',
+      checkIn: { $lte: now },
       checkedIn: false,
-      checkIn: { $lte: now }
-    }).populate('user', 'firstName lastName email').populate('home', 'title owner').populate('home.owner');
+      paymentStatus: 'completed' // CRITICAL: Only include completed payments
+    }).populate('home', 'checkIn checkOut').populate('user', 'firstName lastName email').populate('home.owner');
     
     if (bookingsToCheckIn.length > 0) {
-      console.log(`📋 Found ${bookingsToCheckIn.length} bookings that should be checked in`);
+      console.log(`📋 Found ${bookingsToCheckIn.length} reserved bookings that should be checked in`);
       
       for (const booking of bookingsToCheckIn) {
         try {
+          // Double-check payment status for security
+          if (booking.paymentStatus !== 'completed') {
+            console.log(`⚠️ Skipping check-in for booking ${booking._id} - payment status is ${booking.paymentStatus}, must be 'completed'`);
+            skippedCount++;
+            continue;
+          }
+          
           const oldStatus = booking.status;
           booking.status = 'checked_in';
           booking.checkedIn = true;
-          booking.checkInDate = now;
-          booking.canReview = true;
+          if (!booking.checkInDate) {
+            booking.checkInDate = new Date(booking.checkIn);
+          }
           
           await booking.save();
           updatedCount++;
           
           console.log(`✅ Marked booking ${booking._id} as checked in (was: ${oldStatus})`);
           
-          // Update payment status since check-in occurred
-          try {
-            await updatePaymentOnCheckIn(booking);
-            console.log(`✅ Payment status update initiated for booking ${booking._id}`);
-          } catch (paymentError) {
-            console.error(`❌ Error updating payment status for booking ${booking._id}:`, paymentError.message);
-          }
-          
-          // Send check-in notification
+          // Send notification for check-in
           await sendStatusChangeNotifications(booking, oldStatus, 'checked_in');
           
-          // Update payment status since check-in occurred
+          // Update payment status for payout processing
           await updatePaymentOnCheckIn(booking);
         } catch (error) {
           errorCount++;
-          console.error(`❌ Error updating check-in for booking ${booking._id}:`, error.message);
+          console.error(`❌ Error updating booking ${booking._id} to checked in:`, error.message);
         }
       }
     }
     
-    console.log(`✅ Booking status update completed:`);
-    console.log(`  - Updated: ${updatedCount} bookings`);
-    console.log(`  - Errors: ${errorCount} bookings`);
+    console.log(`\n📊 Summary:`);
+    console.log(`  - Total Bookings Processed: ${bookingsToUpdate.length + pastBookings.length + bookingsToCheckIn.length}`);
+    console.log(`  - Updated: ${updatedCount}`);
+    console.log(`  - Skipped (Payment Not Completed): ${skippedCount}`);
+    console.log(`  - Errors: ${errorCount}`);
+    
+    // Log auto-cancellation summary
+    if (pendingPaymentsToCancel.length > 0) {
+      console.log(`  - Auto-Cancelled (24h+ Pending): ${pendingPaymentsToCancel.length}`);
+    }
     
   } catch (error) {
-    console.error('❌ Error in automatic booking status update:', error);
-    console.error('  - Error details:', error.message);
-    console.error('  - Stack trace:', error.stack);
+    console.error('❌ Error in update booking statuses:', error);
   }
 };
 
@@ -245,6 +331,93 @@ const updatePaymentOnCheckIn = async (booking) => {
   }
 };
 
+// Function to manually check and cancel overdue pending payments
+const cancelOverduePendingPayments = async () => {
+  try {
+    console.log('🔍 Manually checking for overdue pending payments...');
+    
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    
+    const overdueBookings = await Booking.find({
+      status: 'pending',
+      paymentStatus: 'pending',
+      createdAt: { $lt: twentyFourHoursAgo }
+    }).populate('user', 'firstName lastName email').populate('home', 'title owner').populate('home.owner');
+    
+    if (overdueBookings.length === 0) {
+      console.log('✅ No overdue pending payments found');
+      return { cancelled: 0, errors: 0 };
+    }
+    
+    console.log(`📋 Found ${overdueBookings.length} overdue pending payments to cancel`);
+    
+    let cancelledCount = 0;
+    let errorCount = 0;
+    
+    for (const booking of overdueBookings) {
+      try {
+        console.log(`🚫 Cancelling overdue booking ${booking._id}:`);
+        console.log(`  - User: ${booking.user?.firstName} ${booking.user?.lastName} (${booking.user?.email})`);
+        console.log(`  - Listing: ${booking.home?.title}`);
+        console.log(`  - Created: ${booking.createdAt}`);
+        console.log(`  - Hours Overdue: ${Math.round((Date.now() - booking.createdAt.getTime()) / (1000 * 60 * 60))}`);
+        
+        const oldStatus = booking.status;
+        booking.status = 'cancelled';
+        booking.updatedAt = new Date();
+        
+        await booking.save();
+        cancelledCount++;
+        
+        console.log(`✅ Cancelled overdue booking ${booking._id}: ${oldStatus} → cancelled`);
+        
+        // Send cancellation notification to user
+        try {
+          await NotificationService.createNotification({
+            user: booking.user._id,
+            type: 'booking',
+            title: 'Booking Cancelled - Payment Not Completed',
+            message: `Your booking for ${booking.home.title} has been automatically cancelled because payment was not completed within 24 hours. Please make a new booking when you're ready to complete payment.`,
+            booking: booking._id
+          });
+          console.log(`✅ Cancellation notification sent to user ${booking.user._id}`);
+        } catch (notificationError) {
+          console.error(`❌ Error sending cancellation notification:`, notificationError.message);
+        }
+        
+        // Send notification to host about cancelled booking
+        try {
+          await NotificationService.createNotification({
+            user: booking.home.owner._id,
+            type: 'booking',
+            title: 'Booking Cancelled - Payment Not Completed',
+            message: `A booking for ${booking.home.title} has been automatically cancelled because the guest did not complete payment within 24 hours. The dates are now available for other guests.`,
+            booking: booking._id
+          });
+          console.log(`✅ Cancellation notification sent to host ${booking.home.owner._id}`);
+        } catch (notificationError) {
+          console.error(`❌ Error sending host cancellation notification:`, notificationError.message);
+        }
+        
+      } catch (error) {
+        errorCount++;
+        console.error(`❌ Error cancelling overdue booking ${booking._id}:`, error.message);
+      }
+    }
+    
+    console.log(`\n📊 Overdue Payment Cleanup Summary:`);
+    console.log(`  - Total Overdue: ${overdueBookings.length}`);
+    console.log(`  - Cancelled: ${cancelledCount}`);
+    console.log(`  - Errors: ${errorCount}`);
+    
+    return { cancelled: cancelledCount, errors: errorCount };
+    
+  } catch (error) {
+    console.error('❌ Error in overdue payment cleanup:', error);
+    return { cancelled: 0, errors: 0 };
+  }
+};
+
 // Start the booking status scheduler
 const startBookingStatusScheduler = () => {
   console.log('⏰ Starting booking status scheduler...');
@@ -288,5 +461,6 @@ const runInitialStatusCheck = async () => {
 module.exports = {
   startBookingStatusScheduler,
   runInitialStatusCheck,
-  updateBookingStatuses
+  updateBookingStatuses,
+  cancelOverduePendingPayments
 };

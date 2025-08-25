@@ -6,9 +6,25 @@ const Listing = require('../models/listing');
 const HostApplication = require('../models/HostApplication');
 
 // Helper function to generate Stripe Connect dashboard URL
-// Format: https://connect.stripe.com/express/acct_{ACCOUNT_ID}/bKsxnuQI7PAK
-const generateStripeDashboardUrl = (accountId) => {
-  return `https://connect.stripe.com/express/acct_${accountId}/bKsxnuQI7PAK`;
+// Helper function to generate Stripe Connect Express dashboard URL
+// This fetches the actual unique code from Stripe and constructs the proper URL
+const generateStripeDashboardUrl = async (accountId) => {
+  try {
+    // Fetch the actual unique code from Stripe using createLoginLink
+    const loginLink = await stripe.accounts.createLoginLink(accountId);
+    
+    if (loginLink && loginLink.url) {
+      console.log('✅ Successfully fetched unique code from Stripe for fallback URL');
+      return loginLink.url; // This contains the full URL with the correct unique code
+    } else {
+      throw new Error('Login link creation returned no URL');
+    }
+  } catch (error) {
+    console.error('❌ Error fetching unique code from Stripe for fallback:', error.message);
+    // If we can't get the unique code, return a generic URL that will redirect
+    // This is better than a broken hardcoded URL
+    return `https://connect.stripe.com/express/acct_${accountId}`;
+  }
 };
 
 // Helper function to check for date overlaps

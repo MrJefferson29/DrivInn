@@ -68,41 +68,41 @@ bookingSchema.pre('save', function(next) {
 
 // Method to automatically update booking status based on check-in/check-out dates and times
 bookingSchema.methods.updateStatusBasedOnTime = async function() {
-  const now = new Date();
-  
-  // Only update status for relevant bookings (not cancelled or already completed)
-  if (this.status === 'cancelled' || this.status === 'completed') {
-    return this.status;
-  }
-  
   try {
-    // Get the listing to access check-in/check-out times
-    const Listing = require('./listing');
-    const listing = await Listing.findById(this.home);
+    const now = new Date();
+    console.log(`🔄 Updating status for booking ${this._id} at ${now.toISOString()}`);
+    console.log(`  - Current status: ${this.status}`);
+    console.log(`  - Current payment status: ${this.paymentStatus}`);
+    console.log(`  - Check-in: ${this.checkIn}`);
+    console.log(`  - Check-out: ${this.checkOut}`);
+    console.log(`  - Already checked in: ${this.checkedIn}`);
+    console.log(`  - Already checked out: ${this.checkedOut}`);
     
-    if (!listing) {
-      console.error('Listing not found for booking:', this._id);
+    // CRITICAL SECURITY CHECK: Never allow status changes without completed payment
+    if (this.paymentStatus !== 'completed') {
+      console.log(`⚠️ Security: Cannot update status for booking ${this._id} - payment status is ${this.paymentStatus}, must be 'completed'`);
       return this.status;
     }
     
-    // The booking now stores full datetime objects (user date + host time)
-    // So we can use them directly instead of trying to combine dates with times
+    // Parse the check-in and check-out times from the host's settings
+    const Listing = require('./listing');
+    const listing = await Listing.findById(this.home);
+    if (!listing || !listing.checkIn || !listing.checkOut) {
+      console.log(`⚠️ Cannot update status - missing listing or check-in/check-out times`);
+      return this.status;
+    }
+    
+    // Get the full datetime objects for check-in and check-out
     const checkInDateTime = new Date(this.checkIn);
     const checkOutDateTime = new Date(this.checkOut);
     
-    console.log(`📋 Booking datetime for ${this._id}:`);
-    console.log(`  - Check-in datetime (stored): ${this.checkIn}`);
-    console.log(`  - Check-out datetime (stored): ${this.checkOut}`);
-    console.log(`  - Parsed check-in datetime: ${checkInDateTime.toISOString()}`);
-    console.log(`  - Parsed check-out datetime: ${checkOutDateTime.toISOString()}`);
+    if (isNaN(checkInDateTime.getTime()) || isNaN(checkOutDateTime.getTime())) {
+      console.log(`⚠️ Invalid check-in or check-out dates`);
+      return this.status;
+    }
     
-    console.log(`🔍 Time check for booking ${this._id}:`);
-    console.log(`  - Current time: ${now.toISOString()}`);
     console.log(`  - Check-in datetime: ${checkInDateTime.toISOString()}`);
     console.log(`  - Check-out datetime: ${checkOutDateTime.toISOString()}`);
-    console.log(`  - Current booking status: ${this.status}`);
-    console.log(`  - Already checked in: ${this.checkedIn}`);
-    console.log(`  - Already checked out: ${this.checkedOut}`);
     
     // Check if it's check-in time (within 2 hours of the actual check-in datetime for more flexibility)
     const checkInWindowStart = new Date(checkInDateTime.getTime() - 2 * 60 * 60 * 1000); // 2 hours before
@@ -129,7 +129,7 @@ bookingSchema.methods.updateStatusBasedOnTime = async function() {
     }
     
     // Only proceed with check-in/check-out logic for confirmed or reserved bookings
-    // AND only if payment has been completed
+    // AND only if payment has been completed (double-check for security)
     if ((this.status === 'confirmed' || this.status === 'reserved') && this.paymentStatus === 'completed') {
       // Check if we're past check-in time and should mark as checked in
       if (now >= checkInWindowStart && !this.checkedIn) {

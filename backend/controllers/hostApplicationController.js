@@ -12,9 +12,25 @@ cloudinary.config({
 });
 
 // Helper function to generate Stripe Connect Express dashboard URL
-// Format: https://connect.stripe.com/express/acct_{ACCOUNT_ID}/bKsxnuQI7PAK
-const generateStripeDashboardUrl = (accountId) => {
-  return `https://connect.stripe.com/express/acct_${accountId}/bKsxnuQI7PAK`;
+// Helper function to generate Stripe Connect Express dashboard URL
+// This fetches the actual unique code from Stripe and constructs the proper URL
+const generateStripeDashboardUrl = async (accountId) => {
+  try {
+    // Fetch the actual unique code from Stripe using createLoginLink
+    const loginLink = await stripe.accounts.createLoginLink(accountId);
+    
+    if (loginLink && loginLink.url) {
+      console.log('✅ Successfully fetched unique code from Stripe for fallback URL');
+      return loginLink.url; // This contains the full URL with the correct unique code
+    } else {
+      throw new Error('Login link creation returned no URL');
+    }
+  } catch (error) {
+    console.error('❌ Error fetching unique code from Stripe for fallback:', error.message);
+    // If we can't get the unique code, return a generic URL that will redirect
+    // This is better than a broken hardcoded URL
+    return `https://connect.stripe.com/express/acct_${accountId}`;
+  }
 };
 
 // Helper function to upload file to Stripe and get file ID
@@ -1150,14 +1166,16 @@ exports.submitApplication = async (req, res) => {
           // Extract the dashboard URL from the login link
           // The login link format is: https://connect.stripe.com/express/acct_{ACCOUNT_ID}/{UNIQUE_CODE}
           actualDashboardUrl = loginLink.url;
-          console.log('Actual dashboard URL captured:', actualDashboardUrl);
+          console.log('✅ Actual dashboard URL captured:', actualDashboardUrl);
         } else {
-          console.log('Could not get actual dashboard URL, using fallback');
-          actualDashboardUrl = generateStripeDashboardUrl(account.id);
+          console.log('⚠️ Could not get actual dashboard URL from Stripe');
+          throw new Error('Login link creation returned no URL');
         }
       } catch (loginLinkError) {
-        console.log('Error getting login link, using fallback dashboard URL:', loginLinkError.message);
-        actualDashboardUrl = generateStripeDashboardUrl(account.id);
+        console.error('❌ Error getting login link from Stripe:', loginLinkError.message);
+        console.log('⚠️ Using fallback function to fetch unique code from Stripe');
+        actualDashboardUrl = await generateStripeDashboardUrl(account.id);
+        console.log('⚠️ Fallback URL:', actualDashboardUrl);
       }
 
       // Save the updated application
@@ -1349,7 +1367,7 @@ exports.approveApplication = async (req, res) => {
       stripeAccount: {
         id: application.stripeConnect.accountId,
         status: application.stripeConnect.accountStatus,
-        dashboardUrl: application.stripeConnect.dashboardUrl || generateStripeDashboardUrl(application.stripeConnect.accountId),
+        dashboardUrl: application.stripeConnect.dashboardUrl || await generateStripeDashboardUrl(application.stripeConnect.accountId),
         onboardingUrl: await (async () => {
           try {
             const accountLink = await stripe.accountLinks.create({
@@ -1530,8 +1548,8 @@ exports.getStripeSetupStatus = async (req, res) => {
           chargesEnabled: false,
           payoutsEnabled: false,
           requirements: null,
-          dashboardUrl: application.stripeConnect.dashboardUrl || generateStripeDashboardUrl(application.stripeConnect.accountId),
-          onboardingUrl: application.stripeConnect.dashboardUrl || generateStripeDashboardUrl(application.stripeConnect.accountId)
+          dashboardUrl: application.stripeConnect.dashboardUrl || await generateStripeDashboardUrl(application.stripeConnect.accountId),
+          onboardingUrl: application.stripeConnect.dashboardUrl || await generateStripeDashboardUrl(application.stripeConnect.accountId)
         });
         return;
       }

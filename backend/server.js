@@ -173,6 +173,43 @@ app.post(
             console.log('✅ Payment payout status kept as pending for delayed processing');
           } else {
             console.log('⚠️ No payment record found for session:', session.id);
+            
+            // CRITICAL: Create payment record if it doesn't exist to prevent security issues
+            try {
+              console.log('🔧 Creating missing payment record for security...');
+              const newPayment = await Payment.create({
+                user: booking.user,
+                booking: booking._id,
+                amount: Math.round(session.amount_total / 100), // Convert from cents
+                currency: session.currency || 'usd',
+                status: 'completed',
+                paymentMethod: session.metadata?.paymentMethod || 'card',
+                stripeSessionId: session.id,
+                stripePaymentIntentId: session.payment_intent,
+                transactionId: session.payment_intent,
+                payoutMethod: 'stripe_connect',
+                payoutStatus: 'pending',
+                completedAt: new Date(),
+                metadata: {
+                  stripeSessionId: session.id,
+                  paymentIntentId: session.payment_intent,
+                  listingId: session.metadata?.listingId,
+                  hostId: session.metadata?.hostId,
+                  checkInDate: session.metadata?.checkInDate,
+                  payoutMethod: session.metadata?.payoutMethod,
+                  webhookProcessed: true,
+                  webhookEventId: event.id,
+                  webhookProcessedAt: new Date(),
+                  createdViaWebhook: true
+                }
+              });
+              
+              console.log('✅ Created missing payment record:', newPayment._id);
+              console.log('🔒 Security: Payment record now properly linked to booking');
+            } catch (createError) {
+              console.error('❌ Critical error creating payment record:', createError);
+              console.error('❌ This could lead to security issues - payment completed but no record exists');
+            }
           }
 
           // Send notification to host about new booking
