@@ -1,6 +1,6 @@
 <h1>DrivInn | Full-Stack Car & Accommodation Booking Platform</h1>
 DrivInn is a robust, production-ready marketplace application designed to handle dual-category listings (vehicles and apartments). Built with a modern JavaScript stack, the platform manages end-to-end booking lifecycles, precise time-zone-aware scheduling, secure payment processing, and an automated host payout workflow.
-
+<img width="1868" height="884" alt="Image" src="https://github.com/user-attachments/assets/5567f061-046b-452b-b50c-d651f247f3e7" />
 🚀 Key Architectural Highlights (Portfolio Features)
 Deterministic Booking Time Logic: Implemented a robust data-modeling fix that combines user-selected dates with host-defined check-in/check-out times into singular, unified UTC ISO DateTime objects at the database layer. This eliminates edge-case timezone slippage during automated status transitions.
 
@@ -88,3 +88,10 @@ The platform is fully decoupled and optimized for deployment across isolated clo
 Production API Gateway Host: https://drivinn.onrender.com (Deployed via Render)
 
 Production Client Layer Host: https://driv-inn.vercel.app (Deployed via Vercel)
+
+<img width="1850" height="4790" alt="Image" src="https://github.com/user-attachments/assets/b62f7760-cd01-4c48-bdd4-2298ab6b0e13" />
+<img width="597" height="1280" alt="Image" src="https://github.com/user-attachments/assets/921bffc4-ed8a-4409-9f6c-ec3fb1c598c8" />
+<img width="597" height="1280" alt="Image" src="https://github.com/user-attachments/assets/a18cce62-598c-487a-8db2-0541617eb6a3" />
+<img width="319" height="1280" alt="Image" src="https://github.com/user-attachments/assets/1a8df205-638c-41d9-82b7-3ff760ae2b45" />
+<img width="597" height="1280" alt="Image" src="https://github.com/user-attachments/assets/52d721ea-e5e5-4766-9ca9-1674f41ed1f2" />
+<img width="328" height="1280" alt="Image" src="https://github.com/user-attachments/assets/99586620-382d-4368-af3f-3d95106ebac3" />
