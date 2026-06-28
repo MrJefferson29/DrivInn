@@ -8,7 +8,7 @@ Decoupled Delayed Payout Engine: Engineered a background cron/processor capable 
 
 Production-Ready Network Topology: Refactored the global networking layout away from rigid local configurations (localhost) into highly flexible environment configurations, successfully routing secure production traffic across decoupled deployments on Vercel and Render.
 
-🛠️ Tech Stack
+<h3>🛠️ Tech Stack</h3>
 Frontend: React.js, Context API, React Router, Socket.io-client (Real-time Messaging)
 
 Backend: Node.js, Express.js, Socket.io (WebSockets), Passport.js (OAuth 2.0 Authentication)
@@ -17,8 +17,8 @@ Database: MongoDB & Mongoose ODM
 
 Third-Party Integrations: Stripe (Payments & Connect Escrow Platform)
 
-📦 System Architecture & Component Breakdown
-1. Booking Workflow & State Machine
+<h3>📦 System Architecture & Component Breakdown</h3>
+<h5>1. Booking Workflow & State Machine</h5>
 The core scheduling engine leverages an exact time-matching system. Instead of matching generic date strings, the backend intercepts frontend payloads and hydration scripts to inject defaults dynamically.
 
 [User Selects Dates] -> [Fetch Host Constraints] -> [Commit Unified DateTime Object]
@@ -29,7 +29,7 @@ The core scheduling engine leverages an exact time-matching system. Instead of m
                                               │                                   │
                                               ▼                                   ▼
                                       [Status: Checked In]               [Status: Completed]
-2. Financial Processing & Host Payouts (backend/services/)
+<h5>2. Financial Processing & Host Payouts (backend/services/)</h5>
 The platform uses a delayed disbursement pattern to protect consumers while ensuring consistent host revenue streams. The processing logic acts as a deterministic state evaluator:
 
 Booking Status	Payment Status	Payout Status	System Action
